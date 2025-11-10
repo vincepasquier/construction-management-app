@@ -1,8 +1,8 @@
-// Fonctions d'export et d'import de donnÃ©es
+// Fonctions d'export et d'import de données
 
 window.exportToCSV = (data, filename) => {
     if (!data || data.length === 0) {
-        alert('Aucune donnÃ©e Ã  exporter');
+        alert('Aucune donnée à exporter');
         return;
     }
     
@@ -47,7 +47,7 @@ window.exportAllData = (data) => {
         ...data
     };
     window.exportToJSON(allData, 'projet_construction_complet');
-    alert('âœ… Toutes les donnÃ©es ont Ã©tÃ© exportÃ©es !');
+    alert('✅ Toutes les données ont été exportées !');
 };
 
 window.importAllData = (file, callbacks) => {
@@ -55,45 +55,168 @@ window.importAllData = (file, callbacks) => {
     reader.onload = (e) => {
         try {
             const data = JSON.parse(e.target.result);
-            if (confirm('âš ï¸ Cela va remplacer toutes vos donnÃ©es actuelles. Continuer ?')) {
+            if (confirm('⚠️ Cela va remplacer toutes vos données actuelles. Continuer ?')) {
                 Object.keys(callbacks).forEach(key => {
                     if (data[key] && callbacks[key]) {
                         callbacks[key](data[key]);
                     }
                 });
-                alert('âœ… DonnÃ©es importÃ©es avec succÃ¨s !');
+                alert('✅ Données importées avec succès !');
             }
         } catch (error) {
-            alert('âŒ Erreur lors de l\'import: ' + error.message);
+            alert('❌ Erreur lors de l\'import: ' + error.message);
         }
     };
     reader.readAsText(file);
 };
 
+// 🆕 FONCTION AMÉLIORÉE pour gérer le format CSV spécifique
 window.importCSVData = (file, dataType, callback) => {
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
-            const lines = e.target.result.trim().split('\n');
+            // Supprimer le BOM UTF-8 si présent
+            let text = e.target.result.replace(/^\ufeff/, '');
+            
+            const lines = text.trim().split('\n');
+            if (lines.length === 0) {
+                alert('❌ Le fichier CSV est vide');
+                return;
+            }
+            
+            // Détecter le séparateur
             const separator = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ',';
-            const headers = lines[0].split(separator).map(h => h.trim());
+            
+            // Lire les en-têtes et nettoyer AGRESSIVEMENT
+            const rawHeaders = lines[0].split(separator).map(h => h.trim().replace(/\s+/g, ' '));
+            
+            console.log('Headers bruts:', rawHeaders); // Pour debug
+            
+            // 🆕 MAPPING AMÉLIORÉ des noms de colonnes
+            const headerMapping = {
+                // Variations de "Lot"
+                'Lot': 'lots',
+                'lot': 'lots',
+                'lots': 'lots',
+                'LOT': 'lots',
+                
+                // Variations de "Position 0"
+                'Position 0': 'positions0',
+                'position 0': 'positions0',
+                'Position0': 'positions0',
+                'position0': 'positions0',
+                'positions0': 'positions0',
+                'POSITION 0': 'positions0',
+                
+                // Variations de "Position 1"
+                'Position 1': 'positions1',
+                'position 1': 'positions1',
+                'Position1': 'positions1',
+                'position1': 'positions1',
+                'positions1': 'positions1',
+                'POSITION 1': 'positions1',
+                
+                // Variations de "Montant"
+                'Montant CHF': 'montant',
+                'montant chf': 'montant',
+                'Montant': 'montant',
+                'montant': 'montant',
+                'MONTANT CHF': 'montant',
+                'MONTANT': 'montant',
+                
+                // Variations de "Etape"
+                'Etape': 'etape',
+                'etape': 'etape',
+                'Étape': 'etape',
+                'étape': 'etape',
+                'ETAPE': 'etape',
+                
+                // Autres champs
+                'Phase': 'phase',
+                'phase': 'phase',
+                'Description': 'description',
+                'description': 'description',
+                'Remarques': 'remarques',
+                'remarques': 'remarques'
+            };
+            
+            // Mapper les en-têtes avec LOG pour debug
+            const headers = rawHeaders.map((h, idx) => {
+                const cleaned = h.trim();
+                const mapped = headerMapping[cleaned] || cleaned.toLowerCase().replace(/\s+/g, '_');
+                console.log(`Colonne ${idx}: "${h}" → "${cleaned}" → "${mapped}"`);
+                return mapped;
+            });
+            
+            console.log('Headers mappés:', headers);
+            
             const imported = [];
 
+            // Traiter chaque ligne
             for (let i = 1; i < lines.length; i++) {
                 if (!lines[i].trim()) continue;
-                const values = lines[i].split(separator).map(v => v.trim());
+                
+                const values = lines[i].split(separator);
                 const row = {};
-                headers.forEach((h, idx) => row[h] = values[idx] || '');
+                
+                headers.forEach((header, idx) => {
+                    if (idx >= values.length) return;
+                    
+                    let value = values[idx] ? values[idx].trim() : '';
+                    
+                    // 🆕 Traiter spécialement le montant
+                    if (header === 'montant') {
+                        // Supprimer TOUS les espaces, apostrophes, et convertir en nombre
+                        value = value.replace(/[\s']/g, '').replace(',', '.');
+                        const number = parseFloat(value);
+                        row[header] = isNaN(number) ? 0 : number;
+                    }
+                    // 🆕 Convertir les lots et positions en tableaux
+                    else if (header === 'lots' || header === 'positions0' || header === 'positions1') {
+                        if (value && value !== '-') {
+                            row[header] = [value];
+                        } else {
+                            row[header] = [];
+                        }
+                    }
+                    // 🆕 Étape : garder comme string
+                    else if (header === 'etape') {
+                        row[header] = value;
+                    }
+                    else {
+                        row[header] = value;
+                    }
+                });
+                
+                // 🆕 Ajouter un ID unique
+                if (!row.id) {
+                    row.id = `EST-${Date.now()}-${i}`;
+                }
+                
+                // Log première ligne pour debug
+                if (i === 1) {
+                    console.log('Première ligne importée:', row);
+                }
+                
                 imported.push(row);
             }
 
-            if (confirm(`Importer ${imported.length} ligne(s) de ${dataType} ? Cela remplacera les donnÃ©es existantes.`)) {
+            console.log(`Total lignes importées: ${imported.length}`);
+            console.log('Aperçu des 3 premières lignes:', imported.slice(0, 3));
+
+            if (imported.length === 0) {
+                alert('❌ Aucune donnée valide trouvée dans le CSV');
+                return;
+            }
+
+            if (confirm(`Importer ${imported.length} ligne(s) de ${dataType} ?\n\nCela remplacera les données existantes de type "${dataType}".`)) {
                 callback(imported);
-                alert(`âœ… ${imported.length} ligne(s) importÃ©e(s) !`);
+                console.log('Données sauvegardées dans localStorage');
             }
         } catch (error) {
-            alert('âŒ Erreur lors de l\'import CSV: ' + error.message);
+            console.error('Erreur import CSV:', error);
+            alert('❌ Erreur lors de l\'import CSV: ' + error.message);
         }
     };
-    reader.readAsText(file);
+    reader.readAsText(file, 'UTF-8');
 };
