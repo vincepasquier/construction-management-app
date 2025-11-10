@@ -10,7 +10,7 @@ const ConstructionManagement = () => {
     const [offresComplementaires, setOffresComplementaires] = useState([]);
     const [regies, setRegies] = useState([]);
     const [factures, setFactures] = useState([]);
-    const [appelOffres, setAppelOffres] = useState([]); // 🆕 NOUVEAU
+    const [appelOffres, setAppelOffres] = useState([]);
     
     // États UI
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -20,8 +20,8 @@ const ConstructionManagement = () => {
     const [showOffreCompModal, setShowOffreCompModal] = useState(false);
     const [showRegieModal, setShowRegieModal] = useState(false);
     const [showFactureModal, setShowFactureModal] = useState(false);
-    const [showAppelOffreModal, setShowAppelOffreModal] = useState(false); // 🆕 NOUVEAU
-    const [showAppelOffreDetail, setShowAppelOffreDetail] = useState(false); // 🆕 NOUVEAU
+    const [showAppelOffreModal, setShowAppelOffreModal] = useState(false);
+    const [showAppelOffreDetail, setShowAppelOffreDetail] = useState(false);
     
     // États d'édition
     const [editingOffre, setEditingOffre] = useState(null);
@@ -29,8 +29,8 @@ const ConstructionManagement = () => {
     const [editingFacture, setEditingFacture] = useState(null);
     const [editingOffreComp, setEditingOffreComp] = useState(null);
     const [editingRegie, setEditingRegie] = useState(null);
-    const [editingAppelOffre, setEditingAppelOffre] = useState(null); // 🆕 NOUVEAU
-    const [selectedAppelOffre, setSelectedAppelOffre] = useState(null); // 🆕 NOUVEAU
+    const [editingAppelOffre, setEditingAppelOffre] = useState(null);
+    const [selectedAppelOffre, setSelectedAppelOffre] = useState(null);
 
     // Chargement initial des données
     useEffect(() => {
@@ -45,7 +45,7 @@ const ConstructionManagement = () => {
         setOffresComplementaires(data.offresComplementaires);
         setRegies(data.regies);
         setFactures(data.factures);
-        setAppelOffres(data.appelOffres || []); // 🆕 NOUVEAU
+        setAppelOffres(data.appelOffres || []);
     };
 
     // Handlers pour OffreModal
@@ -54,7 +54,7 @@ const ConstructionManagement = () => {
             offres.map(o => o.id === editingOffre.id ? offre : o) : 
             [...offres, offre];
         
-        // 🆕 NOUVEAU : Mettre à jour les favorites si l'offre est liée à un AO
+        // Mettre à jour les favorites si l'offre est liée à un AO
         if (offre.appelOffreId && offre.isFavorite) {
             updated = updated.map(o => {
                 if (o.appelOffreId === offre.appelOffreId && o.id !== offre.id) {
@@ -156,7 +156,7 @@ const ConstructionManagement = () => {
         alert(editingFacture ? '✅ Facture modifiée' : '✅ Facture créée');
     };
 
-    // 🆕 NOUVEAU : Handlers pour AppelOffreModal
+    // Handlers pour AppelOffreModal
     const handleSaveAppelOffre = (appelOffre) => {
         const updated = editingAppelOffre ? 
             appelOffres.map(ao => ao.id === editingAppelOffre.id ? appelOffre : ao) : 
@@ -169,13 +169,13 @@ const ConstructionManagement = () => {
         alert(editingAppelOffre ? '✅ Appel d\'offres modifié' : '✅ Appel d\'offres créé');
     };
 
-    // 🆕 NOUVEAU : Mettre à jour les offres favorites depuis la vue détaillée
+    // Mettre à jour les offres favorites depuis la vue détaillée
     const handleUpdateFavorites = (updatedOffres) => {
         setOffres(updatedOffres);
         window.saveData('offres', updatedOffres);
     };
 
-    // 🆕 NOUVEAU : Créer une commande depuis un AO
+    // Créer une commande depuis un AO
     const handleCreateCommandeFromAO = (offreFavorite, appelOffre) => {
         const commande = {
             id: `CMD-${Date.now()}`,
@@ -186,6 +186,7 @@ const ConstructionManagement = () => {
             lots: offreFavorite.lots || [],
             positions0: offreFavorite.positions0 || [],
             positions1: offreFavorite.positions1 || [],
+            etape: offreFavorite.etape || '',
             montant: offreFavorite.montant,
             statut: 'En cours',
             source: 'Offre',
@@ -229,7 +230,7 @@ const ConstructionManagement = () => {
             offresComplementaires,
             regies,
             factures,
-            appelOffres // 🆕 NOUVEAU
+            appelOffres
         });
     };
 
@@ -244,49 +245,43 @@ const ConstructionManagement = () => {
                             <p className="text-gray-600 mt-2">Suivi complet des estimations, offres, commandes et factures</p>
                         </div>
                         <div className="flex gap-2">
-    <button
-        onClick={handleExportAllData}
-        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-        title="Exporter toutes les données (JSON)"
-    >
-        💾 Exporter tout
-    </button>
-    <button
-        onClick={() => setShowImportModal(true)}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-        title="Importer des données"
-    >
-        📥 Importer
-    </button>
-    <button
-        onClick={() => {
-            if (confirm('⚠️ ATTENTION !\n\nCette action va SUPPRIMER TOUTES LES DONNÉES de manière IRRÉVERSIBLE.\n\nÊtes-vous absolument sûr de vouloir continuer ?')) {
-                if (confirm('Dernière confirmation : Toutes les estimations, offres, commandes, régies, factures et appels d\'offres seront supprimés.\n\nConfirmer la suppression ?')) {
-                    // Supprimer toutes les données
-                    localStorage.clear();
-                    
-                    // Réinitialiser tous les états
-                    setEstimations([]);
-                    setOffres([]);
-                    setCommandes([]);
-                    setOffresComplementaires([]);
-                    setRegies([]);
-                    setFactures([]);
-                    setAppelOffres([]);
-                    
-                    alert('✅ Toutes les données ont été supprimées !');
-                    
-                    // Recharger la page pour repartir de zéro
-                    window.location.reload();
-                }
-            }
-        }}
-        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
-        title="Supprimer toutes les données"
-    >
-        🗑️ Reset
-    </button>
-</div>
+                            <button
+                                onClick={handleExportAllData}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                title="Exporter toutes les données (JSON)"
+                            >
+                                💾 Exporter tout
+                            </button>
+                            <button
+                                onClick={() => setShowImportModal(true)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                                title="Importer des données"
+                            >
+                                📥 Importer
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (confirm('⚠️ ATTENTION !\n\nCette action va SUPPRIMER TOUTES LES DONNÉES de manière IRRÉVERSIBLE.\n\nÊtes-vous absolument sûr de vouloir continuer ?')) {
+                                        if (confirm('Dernière confirmation : Toutes les estimations, offres, commandes, régies, factures et appels d\'offres seront supprimés.\n\nConfirmer la suppression ?')) {
+                                            localStorage.clear();
+                                            setEstimations([]);
+                                            setOffres([]);
+                                            setCommandes([]);
+                                            setOffresComplementaires([]);
+                                            setRegies([]);
+                                            setFactures([]);
+                                            setAppelOffres([]);
+                                            alert('✅ Toutes les données ont été supprimées !');
+                                            window.location.reload();
+                                        }
+                                    }
+                                }}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
+                                title="Supprimer toutes les données"
+                            >
+                                🗑️ Reset
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -296,7 +291,7 @@ const ConstructionManagement = () => {
                         {[
                             { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
                             { id: 'estimations', label: '📋 Estimations', icon: '📋' },
-                            { id: 'appelOffres', label: '🎯 Appels d\'Offres', icon: '🎯' }, // 🆕 NOUVEAU
+                            { id: 'appelOffres', label: '🎯 Appels d\'Offres', icon: '🎯' },
                             { id: 'offres', label: '💼 Offres', icon: '💼' },
                             { id: 'offresComplementaires', label: '➕ OC', icon: '➕' },
                             { id: 'commandes', label: '📦 Commandes', icon: '📦' },
@@ -333,77 +328,107 @@ const ConstructionManagement = () => {
                         />
                     )}
 
-            {/* Estimations */}
-            {activeTab === 'estimations' && (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="flex justify-between mb-6">
-            <h2 className="text-xl font-bold">Estimations Budgétaires</h2>
-            <div className="flex gap-2">
-                <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer flex items-center gap-2">
-                    📥 Importer CSV
-                    <input
-                        type="file"
-                        accept=".csv"
-                        className="hidden"
-                        onChange={(e) => {
-                            const file = e.target.files[0];
-                            if (file) {
-                                window.importCSVData(file, 'Estimations', (data) => {
-                                    setEstimations(data);
-                                    window.saveData('estimations', data);
-                                    alert('✅ Estimations importées !');
-                                });
-                            }
-                        }}
-                    />
-                </label>
-                <button
-                    onClick={() => window.exportToCSV(estimations, 'estimations')}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                >
-                    💾 Exporter CSV
-                </button>
-            </div>
-        </div>
+                    {/* Estimations */}
+                    {activeTab === 'estimations' && (
+                        <div className="bg-white rounded-lg shadow-lg p-6">
+                            <div className="flex justify-between mb-6">
+                                <h2 className="text-xl font-bold">Estimations Budgétaires</h2>
+                                <div className="flex gap-2">
+                                    <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer flex items-center gap-2">
+                                        📥 Importer CSV
+                                        <input
+                                            type="file"
+                                            accept=".csv"
+                                            className="hidden"
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    window.importCSVData(file, 'Estimations', (data) => {
+                                                        setEstimations(data);
+                                                        window.saveData('estimations', data);
+                                                        alert('✅ Estimations importées !');
+                                                    });
+                                                }
+                                                e.target.value = '';
+                                            }}
+                                        />
+                                    </label>
+                                    <button
+                                        onClick={() => window.exportToCSV(estimations, 'estimations')}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                                    >
+                                        💾 Exporter CSV
+                                    </button>
+                                </div>
+                            </div>
                             {estimations.length === 0 ? (
                                 <div className="text-center py-12 text-gray-500">
                                     <p>Aucune estimation. Importez vos données pour commencer.</p>
                                 </div>
                             ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-4 py-3 text-left text-sm">Lot</th>
-                                                <th className="px-4 py-3 text-left text-sm">Position 0</th>
-                                                <th className="px-4 py-3 text-left text-sm">Position 1</th>
-                                                <th className="px-4 py-3 text-right text-sm">Montant (CHF)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {estimations.map((est, idx) => (
-                                                <tr key={idx} className="border-t hover:bg-gray-50">
-                                                    <td className="px-4 py-3">{est.lots?.join(', ') || '-'}</td>
-                                                    <td className="px-4 py-3">{est.positions0?.join(', ') || '-'}</td>
-                                                    <td className="px-4 py-3">{est.positions1?.join(', ') || '-'}</td>
-                                                    <td className="px-4 py-3 text-right font-medium">
-                                                        {est.montant?.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                                                    </td>
+                                <>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                            <thead className="bg-gray-50">
+                                                <tr>
+                                                    <th className="px-4 py-3 text-left text-sm">Lot</th>
+                                                    <th className="px-4 py-3 text-left text-sm">Position 0</th>
+                                                    <th className="px-4 py-3 text-left text-sm">Position 1</th>
+                                                    <th className="px-4 py-3 text-center text-sm">Étape</th>
+                                                    <th className="px-4 py-3 text-right text-sm">Montant (CHF)</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                                        <p className="font-semibold">
-                                            Total estimations: {estimations.reduce((sum, e) => sum + (e.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                                        </p>
+                                            </thead>
+                                            <tbody>
+                                                {estimations.map((est, idx) => (
+                                                    <tr key={idx} className="border-t hover:bg-gray-50">
+                                                        <td className="px-4 py-3">{est.lots?.join(', ') || '-'}</td>
+                                                        <td className="px-4 py-3">{est.positions0?.join(', ') || '-'}</td>
+                                                        <td className="px-4 py-3">{est.positions1?.join(', ') || '-'}</td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            {est.etape ? (
+                                                                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                                    est.etape === '1' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                                                                }`}>
+                                                                    Étape {est.etape}
+                                                                </span>
+                                                            ) : '-'}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right font-medium">
+                                                            {est.montant?.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
                                     </div>
-                                </div>
+                                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div>
+                                                <p className="text-sm text-gray-600">Total Général</p>
+                                                <p className="text-xl font-bold text-blue-600">
+                                                    {estimations.reduce((sum, e) => sum + (e.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-600">Total Étape 1</p>
+                                                <p className="text-xl font-bold text-blue-600">
+                                                    {estimations.filter(e => e.etape === '1').reduce((sum, e) => sum + (e.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-600">Total Étape 2</p>
+                                                <p className="text-xl font-bold text-purple-600">
+                                                    {estimations.filter(e => e.etape === '2').reduce((sum, e) => sum + (e.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
                             )}
                         </div>
                     )}
 
-                    {/* 🆕 NOUVEAU : Onglet Appels d'Offres */}
+                    {/* Onglet Appels d'Offres */}
                     {activeTab === 'appelOffres' && (
                         <div className="bg-white rounded-lg shadow-lg p-6">
                             <div className="flex justify-between mb-6">
@@ -558,6 +583,7 @@ const ConstructionManagement = () => {
                                                     <th className="px-4 py-3 text-left text-sm">Fournisseur</th>
                                                     <th className="px-4 py-3 text-left text-sm">Date</th>
                                                     <th className="px-4 py-3 text-left text-sm">Lots</th>
+                                                    <th className="px-4 py-3 text-center text-sm">Étape</th>
                                                     <th className="px-4 py-3 text-right text-sm">Montant (CHF)</th>
                                                     <th className="px-4 py-3 text-left text-sm">Statut</th>
                                                     <th className="px-4 py-3 text-center text-sm">Actions</th>
@@ -592,6 +618,15 @@ const ConstructionManagement = () => {
                                                             {new Date(offre.dateOffre).toLocaleDateString('fr-CH')}
                                                         </td>
                                                         <td className="px-4 py-3 text-xs">{offre.lots?.join(', ') || '-'}</td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            {offre.etape ? (
+                                                                <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                                    offre.etape === '1' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                                                                }`}>
+                                                                    Ét. {offre.etape}
+                                                                </span>
+                                                            ) : '-'}
+                                                        </td>
                                                         <td className="px-4 py-3 text-right font-medium">
                                                             {offre.montant?.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
                                                         </td>
@@ -634,7 +669,7 @@ const ConstructionManagement = () => {
                         </div>
                     )}
 
-                    {/* Autres onglets (OC, Commandes, Régies, Factures) - Code existant maintenu */}
+                    {/* Autres onglets (OC, Commandes, Régies, Factures) */}
                     {activeTab === 'offresComplementaires' && (
                         <div className="bg-white rounded-lg shadow-lg p-6">
                             <div className="flex justify-between mb-6">
@@ -746,8 +781,8 @@ const ConstructionManagement = () => {
                     }}
                     onSave={handleSaveOffre}
                     estimations={estimations}
-                    appelOffres={appelOffres} // 🆕 NOUVEAU
-                    offres={offres} // 🆕 NOUVEAU
+                    appelOffres={appelOffres}
+                    offres={offres}
                 />
             )}
 
@@ -803,7 +838,6 @@ const ConstructionManagement = () => {
                 />
             )}
 
-            {/* 🆕 NOUVEAU : Modal Appel d'Offres */}
             {showAppelOffreModal && (
                 <window.AppelOffreModal
                     initialData={editingAppelOffre}
@@ -816,7 +850,6 @@ const ConstructionManagement = () => {
                 />
             )}
 
-            {/* 🆕 NOUVEAU : Vue détaillée Appel d'Offres */}
             {showAppelOffreDetail && selectedAppelOffre && (
                 <window.AppelOffreDetailView
                     appelOffre={selectedAppelOffre}
