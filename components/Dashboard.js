@@ -33,7 +33,10 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
     // Calcul des statistiques globales
     const stats = useMemo(() => {
         const totalEstimation = estimations.reduce((sum, e) => sum + (e.montant || 0), 0);
-        const totalOffres = offres.reduce((sum, o) => sum + (o.montant || 0), 0);
+        const totalOffres = offres
+            .filter(applyFilters)
+            .filter(o => o.isFavorite === true || !o.appelOffreId)
+            .reduce((sum, o) => sum + (o.montant || 0), 0);
         const totalOffresComp = offresComplementaires.reduce((sum, oc) => sum + (oc.montant || 0), 0);
         const totalCommandes = commandes.reduce((sum, c) => sum + (c.calculatedMontant || c.montant || 0), 0);
         const totalRegies = regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
