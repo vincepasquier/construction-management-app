@@ -1,27 +1,44 @@
-// Modal de gestion des offres avec versioning
+// Modal de gestion des offres complÃ©mentaires
 const { useState } = React;
 
-window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
+window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations = [], offres = [] }) => {
     const [formData, setFormData] = useState(initialData || {
         numero: '',
+        offreOriginaleId: '',
         fournisseur: '',
         dateOffre: new Date().toISOString().split('T')[0],
-        validite: '',
         lots: [],
         positions0: [],
         positions1: [],
         montant: '',
         description: '',
         statut: 'En attente',
-        version: 1,
-        versions: []
+        motif: ''
     });
-
-    const [showVersions, setShowVersions] = useState(false);
 
     const allLots = [...new Set(estimations.flatMap(e => e.lots || []))].sort();
     const allPos0 = [...new Set(estimations.flatMap(e => e.positions0 || []))].sort();
     const allPos1 = [...new Set(estimations.flatMap(e => e.positions1 || []))].sort();
+
+    // PrÃ©-remplir les informations depuis l'offre originale
+    const handleOffreOriginaleChange = (offreId) => {
+        const offre = offres.find(o => o.id === offreId);
+        if (offre) {
+            setFormData({
+                ...formData,
+                offreOriginaleId: offreId,
+                fournisseur: offre.fournisseur,
+                lots: offre.lots || [],
+                positions0: offre.positions0 || [],
+                positions1: offre.positions1 || []
+            });
+        } else {
+            setFormData({
+                ...formData,
+                offreOriginaleId: offreId
+            });
+        }
+    };
 
     const handleSubmit = () => {
         if (!formData.numero || !formData.fournisseur || !formData.montant) {
@@ -29,41 +46,15 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
             return;
         }
 
-        const offre = {
+        const offreComp = {
             ...formData,
-            id: initialData?.id || `OFF-${Date.now()}`,
+            id: initialData?.id || `OC-${Date.now()}`,
             dateCreation: initialData?.dateCreation || new Date().toISOString(),
             montant: parseFloat(formData.montant) || 0
         };
 
-        onSave(offre);
+        onSave(offreComp);
         onClose();
-    };
-
-    const createNewVersion = () => {
-        if (!formData.montant) {
-            alert('âš ï¸ Le montant est requis pour crÃ©er une version');
-            return;
-        }
-
-        const currentVersion = {
-            version: formData.version,
-            date: new Date().toISOString(),
-            montant: parseFloat(formData.montant),
-            description: formData.description,
-            validite: formData.validite
-        };
-
-        setFormData({
-            ...formData,
-            version: formData.version + 1,
-            versions: [...(formData.versions || []), currentVersion],
-            montant: '',
-            description: '',
-            validite: ''
-        });
-
-        alert(`âœ… Version ${formData.version} sauvegardÃ©e ! Vous crÃ©ez maintenant la version ${formData.version + 1}`);
     };
 
     return (
@@ -71,63 +62,50 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
             <div className="bg-white rounded-lg p-6 w-full max-w-4xl my-8">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold">
-                        {initialData ? 'Modifier l\'offre' : 'Nouvelle offre'}
-                        <span className="text-sm text-gray-500 ml-3">Version {formData.version}</span>
+                        {initialData ? 'Modifier l\'offre complÃ©mentaire' : 'Nouvelle offre complÃ©mentaire'}
                     </h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
                         <window.Icons.X />
                     </button>
                 </div>
 
-                {/* Versions prÃ©cÃ©dentes */}
-                {formData.versions && formData.versions.length > 0 && (
-                    <div className="mb-4 p-3 bg-blue-50 rounded">
-                        <button 
-                            onClick={() => setShowVersions(!showVersions)}
-                            className="flex items-center gap-2 text-blue-600 font-medium w-full"
-                        >
-                            {showVersions ? <window.Icons.ChevronDown /> : <window.Icons.ChevronRight />}
-                            {formData.versions.length} version(s) prÃ©cÃ©dente(s)
-                        </button>
-                        
-                        {showVersions && (
-                            <div className="mt-3 space-y-2">
-                                {formData.versions.map((v, idx) => (
-                                    <div key={idx} className="p-2 bg-white rounded border text-sm">
-                                        <div className="flex justify-between">
-                                            <span className="font-medium">Version {v.version}</span>
-                                            <span className="text-gray-600">
-                                                {new Date(v.date).toLocaleDateString('fr-CH')}
-                                            </span>
-                                        </div>
-                                        <div className="text-gray-700">
-                                            Montant: {v.montant?.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                                        </div>
-                                        {v.validite && <div className="text-gray-600 text-xs">ValiditÃ©: {v.validite}</div>}
-                                        {v.description && <div className="text-gray-600 text-xs">{v.description}</div>}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
-
                 <div className="space-y-4 max-h-[60vh] overflow-y-auto">
                     {/* Informations de base */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">
-                                NÂ° Offre <span className="text-red-500">*</span>
+                                NÂ° Offre ComplÃ©mentaire <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
                                 value={formData.numero}
                                 onChange={(e) => setFormData({...formData, numero: e.target.value})}
                                 className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="Ex: OFF-2024-001"
+                                placeholder="Ex: OC-2024-001"
                             />
                         </div>
 
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Offre originale</label>
+                            <select
+                                value={formData.offreOriginaleId}
+                                onChange={(e) => handleOffreOriginaleChange(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-lg"
+                            >
+                                <option value="">-- Aucune --</option>
+                                {offres.map(offre => (
+                                    <option key={offre.id} value={offre.id}>
+                                        {offre.numero} - {offre.fournisseur}
+                                    </option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">
+                                SÃ©lectionner pour prÃ©-remplir les informations
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">
                                 Fournisseur <span className="text-red-500">*</span>
@@ -140,9 +118,7 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                                 placeholder="Nom du fournisseur"
                             />
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">Date de l'offre</label>
                             <input
@@ -152,17 +128,26 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                                 className="w-full px-3 py-2 border rounded-lg"
                             />
                         </div>
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-1">ValiditÃ©</label>
-                            <input
-                                type="text"
-                                value={formData.validite}
-                                onChange={(e) => setFormData({...formData, validite: e.target.value})}
-                                className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="Ex: 30 jours, 3 mois"
-                            />
-                        </div>
+                    {/* Motif de l'offre complÃ©mentaire */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">
+                            Motif de l'offre complÃ©mentaire
+                        </label>
+                        <select
+                            value={formData.motif}
+                            onChange={(e) => setFormData({...formData, motif: e.target.value})}
+                            className="w-full px-3 py-2 border rounded-lg"
+                        >
+                            <option value="">-- SÃ©lectionner --</option>
+                            <option value="Travaux supplÃ©mentaires">Travaux supplÃ©mentaires</option>
+                            <option value="Modification du projet">Modification du projet</option>
+                            <option value="ImprÃ©vus">ImprÃ©vus</option>
+                            <option value="Demande client">Demande client</option>
+                            <option value="Mise Ã  jour technique">Mise Ã  jour technique</option>
+                            <option value="Autre">Autre</option>
+                        </select>
                     </div>
 
                     {/* Lots et Positions */}
@@ -220,7 +205,7 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                         </div>
                     </div>
 
-                    {/* Montant et Description */}
+                    {/* Montant et Statut */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">
@@ -251,45 +236,34 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                         </div>
                     </div>
 
+                    {/* Description */}
                     <div>
-                        <label className="block text-sm font-medium mb-1">Description / Notes</label>
+                        <label className="block text-sm font-medium mb-1">Description / Justification</label>
                         <textarea
                             value={formData.description}
                             onChange={(e) => setFormData({...formData, description: e.target.value})}
                             className="w-full px-3 py-2 border rounded-lg"
                             rows="3"
-                            placeholder="Description de l'offre, conditions particuliÃ¨res..."
+                            placeholder="DÃ©tails des travaux supplÃ©mentaires, justification de l'offre complÃ©mentaire..."
                         />
                     </div>
                 </div>
 
                 {/* Boutons d'action */}
-                <div className="flex justify-between mt-6 pt-4 border-t">
-                    <div>
-                        {initialData && (
-                            <button
-                                onClick={createNewVersion}
-                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
-                            >
-                                ðŸ”„ Nouvelle version
-                            </button>
-                        )}
-                    </div>
-                    <div className="flex gap-3">
-                        <button
-                            onClick={onClose}
-                            className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-                        >
-                            Annuler
-                        </button>
-                        <button
-                            onClick={handleSubmit}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                        >
-                            <window.Icons.Save />
-                            {initialData ? 'Mettre Ã  jour' : 'CrÃ©er'}
-                        </button>
-                    </div>
+                <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                    >
+                        <window.Icons.Save />
+                        {initialData ? 'Mettre Ã  jour' : 'CrÃ©er'}
+                    </button>
                 </div>
             </div>
         </div>
