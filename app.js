@@ -305,8 +305,8 @@ const ConstructionManagement = () => {
                         />
                     )}
 
-{/* Estimations */}
-{activeTab === 'estimations' && (
+            {/* Estimations */}
+            {activeTab === 'estimations' && (
     <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex justify-between mb-6">
             <h2 className="text-xl font-bold">Estimations Budgétaires</h2>
