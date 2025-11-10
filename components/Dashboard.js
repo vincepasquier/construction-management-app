@@ -6,7 +6,8 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
         lot: '',
         position0: '',
         position1: '',
-        fournisseur: ''
+        fournisseur: '',
+        etape: '' // 🆕 NOUVEAU
     });
 
     // Extraction des listes uniques pour les filtres
@@ -34,7 +35,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
     const stats = useMemo(() => {
         const totalEstimation = estimations.reduce((sum, e) => sum + (e.montant || 0), 0);
         
-        // 🆕 MODIFICATION : Ne compter que les offres favorites ou sans AO
+        // Ne compter que les offres favorites ou sans AO
         const totalOffres = offres
             .filter(o => o.isFavorite === true || !o.appelOffreId)
             .reduce((sum, o) => sum + (o.montant || 0), 0);
@@ -66,6 +67,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
             if (filters.position0 && !item.positions0?.includes(filters.position0)) return false;
             if (filters.position1 && !item.positions1?.includes(filters.position1)) return false;
             if (filters.fournisseur && item.fournisseur !== filters.fournisseur) return false;
+            if (filters.etape && item.etape !== filters.etape) return false; // 🆕 NOUVEAU
             return true;
         };
 
@@ -85,7 +87,8 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
             lot: '',
             position0: '',
             position1: '',
-            fournisseur: ''
+            fournisseur: '',
+            etape: '' // 🆕 NOUVEAU
         });
     };
 
@@ -108,7 +111,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                         </button>
                     )}
                 </div>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-5 gap-3">
                     <div>
                         <label className="block text-sm font-medium mb-1">Lot</label>
                         <select
@@ -159,6 +162,19 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                             {allFournisseurs.map(f => (
                                 <option key={f} value={f}>{f}</option>
                             ))}
+                        </select>
+                    </div>
+                    {/* 🆕 NOUVEAU FILTRE ÉTAPE */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Étape</label>
+                        <select
+                            value={filters.etape}
+                            onChange={(e) => setFilters({...filters, etape: e.target.value})}
+                            className="w-full px-3 py-2 border rounded-lg text-sm"
+                        >
+                            <option value="">Toutes</option>
+                            <option value="1">Étape 1</option>
+                            <option value="2">Étape 2</option>
                         </select>
                     </div>
                 </div>
