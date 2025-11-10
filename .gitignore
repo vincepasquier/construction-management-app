@@ -1,0 +1,56 @@
+# Fichiers et dossiers à ignorer par Git
+
+# Fichiers système macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Fichiers système Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Fichiers éditeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Dépendances Node.js (si tu utilises npm plus tard)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Fichiers de build (si tu compiles plus tard)
+dist/
+build/
+*.min.js
+*.min.css
+
+# Fichiers temporaires
+*.tmp
+*.temp
+.cache/
+
+# Données de test (si tu veux éviter de commit des données)
+# data/
+# *.json (décommenter si tu veux ignorer les JSON)
+
+# Environnement local
+.env
+.env.local
+.env.*.local
+
+# Backups
+*.bak
+*.backup
+*_backup.*
