@@ -1,7 +1,7 @@
 // Modal de gestion des offres avec versioning
 const { useState } = React;
 
-window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
+window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffres = [], offres = [] }) => {
     const [formData, setFormData] = useState(initialData || {
         numero: '',
         fournisseur: '',
@@ -10,11 +10,14 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
         lots: [],
         positions0: [],
         positions1: [],
+        etape: '', // 🆕 NOUVEAU
         montant: '',
         description: '',
         statut: 'En attente',
         version: 1,
-        versions: []
+        versions: [],
+        appelOffreId: '',
+        isFavorite: false
     });
 
     const [showVersions, setShowVersions] = useState(false);
@@ -25,7 +28,7 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
 
     const handleSubmit = () => {
         if (!formData.numero || !formData.fournisseur || !formData.montant) {
-            alert('âš ï¸ Veuillez remplir tous les champs obligatoires (NÂ°, Fournisseur, Montant)');
+            alert('⚠️ Veuillez remplir tous les champs obligatoires (N°, Fournisseur, Montant)');
             return;
         }
 
@@ -42,7 +45,7 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
 
     const createNewVersion = () => {
         if (!formData.montant) {
-            alert('âš ï¸ Le montant est requis pour crÃ©er une version');
+            alert('⚠️ Le montant est requis pour créer une version');
             return;
         }
 
@@ -63,7 +66,23 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
             validite: ''
         });
 
-        alert(`âœ… Version ${formData.version} sauvegardÃ©e ! Vous crÃ©ez maintenant la version ${formData.version + 1}`);
+        alert(`✅ Version ${formData.version} sauvegardée ! Vous créez maintenant la version ${formData.version + 1}`);
+    };
+
+    // Gestion automatique de la favorite si liée à un AO
+    const handleAppelOffreChange = (aoId) => {
+        setFormData({...formData, appelOffreId: aoId});
+        
+        if (aoId && formData.montant) {
+            // Vérifier si cette offre serait la moins chère
+            const offresLiees = offres.filter(o => o.appelOffreId === aoId && o.id !== formData.id);
+            const montantActuel = parseFloat(formData.montant);
+            const estLaMoinsChère = offresLiees.every(o => montantActuel < (o.montant || Infinity));
+            
+            if (estLaMoinsChère && offresLiees.length > 0) {
+                setFormData(prev => ({...prev, isFavorite: true, appelOffreId: aoId}));
+            }
+        }
     };
 
     return (
@@ -79,7 +98,7 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                     </button>
                 </div>
 
-                {/* Versions prÃ©cÃ©dentes */}
+                {/* Versions précédentes */}
                 {formData.versions && formData.versions.length > 0 && (
                     <div className="mb-4 p-3 bg-blue-50 rounded">
                         <button 
@@ -87,7 +106,7 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                             className="flex items-center gap-2 text-blue-600 font-medium w-full"
                         >
                             {showVersions ? <window.Icons.ChevronDown /> : <window.Icons.ChevronRight />}
-                            {formData.versions.length} version(s) prÃ©cÃ©dente(s)
+                            {formData.versions.length} version(s) précédente(s)
                         </button>
                         
                         {showVersions && (
@@ -100,11 +119,13 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                                                 {new Date(v.date).toLocaleDateString('fr-CH')}
                                             </span>
                                         </div>
-                                        <div className="text-gray-700">
-                                            Montant: {v.montant?.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                                        <div className="mt-1">
+                                            <span className="font-semibold">{v.montant.toLocaleString('fr-CH')} CHF</span>
+                                            {v.validite && <span className="text-gray-600 ml-2">• Validité: {v.validite}</span>}
                                         </div>
-                                        {v.validite && <div className="text-gray-600 text-xs">ValiditÃ©: {v.validite}</div>}
-                                        {v.description && <div className="text-gray-600 text-xs">{v.description}</div>}
+                                        {v.description && (
+                                            <p className="text-gray-600 mt-1">{v.description}</p>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -112,19 +133,20 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                     </div>
                 )}
 
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                {/* Formulaire */}
+                <div className="space-y-4">
                     {/* Informations de base */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">
-                                NÂ° Offre <span className="text-red-500">*</span>
+                                N° Offre <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
                                 value={formData.numero}
                                 onChange={(e) => setFormData({...formData, numero: e.target.value})}
                                 className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="Ex: OFF-2024-001"
+                                placeholder="OFF-2025-001"
                             />
                         </div>
 
@@ -154,37 +176,67 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">ValiditÃ©</label>
+                            <label className="block text-sm font-medium mb-1">Validité</label>
                             <input
                                 type="text"
                                 value={formData.validite}
                                 onChange={(e) => setFormData({...formData, validite: e.target.value})}
                                 className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="Ex: 30 jours, 3 mois"
+                                placeholder="30 jours, 3 mois, etc."
                             />
                         </div>
                     </div>
 
-                    {/* Lots et Positions */}
-                    <div className="grid grid-cols-3 gap-4">
+                    {/* 🆕 Appel d'Offres */}
+                    {appelOffres.length > 0 && (
                         <div>
-                            <label className="block text-sm font-medium mb-1">Lots</label>
+                            <label className="block text-sm font-medium mb-1">
+                                Lier à un Appel d'Offres
+                            </label>
                             <select
-                                multiple
-                                value={formData.lots}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    lots: Array.from(e.target.selectedOptions, option => option.value)
-                                })}
-                                className="w-full px-3 py-2 border rounded-lg h-24"
+                                value={formData.appelOffreId || ''}
+                                onChange={(e) => handleAppelOffreChange(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-lg"
                             >
-                                {allLots.map(lot => (
-                                    <option key={lot} value={lot}>{lot}</option>
-                                ))}
+                                <option value="">-- Aucun (offre indépendante) --</option>
+                                {appelOffres
+                                    .filter(ao => ao.statut === 'En consultation')
+                                    .map(ao => (
+                                        <option key={ao.id} value={ao.id}>
+                                            {ao.numero} - {ao.designation}
+                                        </option>
+                                    ))
+                                }
                             </select>
-                            <p className="text-xs text-gray-500 mt-1">Maintenez Ctrl pour sÃ©lection multiple</p>
+                            {formData.appelOffreId && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                    💡 L'offre la moins chère sera automatiquement marquée comme favorite
+                                </p>
+                            )}
                         </div>
+                    )}
 
+                    {/* Lots et Positions */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Lots</label>
+                        <select
+                            multiple
+                            value={formData.lots}
+                            onChange={(e) => setFormData({
+                                ...formData,
+                                lots: Array.from(e.target.selectedOptions, option => option.value)
+                            })}
+                            className="w-full px-3 py-2 border rounded-lg"
+                            size="3"
+                        >
+                            {allLots.map(lot => (
+                                <option key={lot} value={lot}>{lot}</option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">Maintenez Ctrl (Cmd sur Mac) pour sélectionner plusieurs lots</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">Positions Niveau 0</label>
                             <select
@@ -194,7 +246,8 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                                     ...formData,
                                     positions0: Array.from(e.target.selectedOptions, option => option.value)
                                 })}
-                                className="w-full px-3 py-2 border rounded-lg h-24"
+                                className="w-full px-3 py-2 border rounded-lg"
+                                size="3"
                             >
                                 {allPos0.map(pos => (
                                     <option key={pos} value={pos}>{pos}</option>
@@ -211,13 +264,30 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                                     ...formData,
                                     positions1: Array.from(e.target.selectedOptions, option => option.value)
                                 })}
-                                className="w-full px-3 py-2 border rounded-lg h-24"
+                                className="w-full px-3 py-2 border rounded-lg"
+                                size="3"
                             >
                                 {allPos1.map(pos => (
                                     <option key={pos} value={pos}>{pos}</option>
                                 ))}
                             </select>
                         </div>
+                    </div>
+
+                    {/* 🆕 ÉTAPE */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">
+                            Étape
+                        </label>
+                        <select
+                            value={formData.etape}
+                            onChange={(e) => setFormData({...formData, etape: e.target.value})}
+                            className="w-full px-3 py-2 border rounded-lg"
+                        >
+                            <option value="">-- Sélectionner --</option>
+                            <option value="1">Étape 1</option>
+                            <option value="2">Étape 2</option>
+                        </select>
                     </div>
 
                     {/* Montant et Description */}
@@ -244,9 +314,9 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                                 className="w-full px-3 py-2 border rounded-lg"
                             >
                                 <option value="En attente">En attente</option>
-                                <option value="AcceptÃ©e">AcceptÃ©e</option>
-                                <option value="RefusÃ©e">RefusÃ©e</option>
-                                <option value="ExpirÃ©e">ExpirÃ©e</option>
+                                <option value="Acceptée">Acceptée</option>
+                                <option value="Refusée">Refusée</option>
+                                <option value="Expirée">Expirée</option>
                             </select>
                         </div>
                     </div>
@@ -258,24 +328,43 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                             onChange={(e) => setFormData({...formData, description: e.target.value})}
                             className="w-full px-3 py-2 border rounded-lg"
                             rows="3"
-                            placeholder="Description de l'offre, conditions particuliÃ¨res..."
+                            placeholder="Détails, conditions particulières, etc."
                         />
                     </div>
+
+                    {/* Favorite (si lié à un AO) */}
+                    {formData.appelOffreId && (
+                        <div className="p-3 bg-purple-50 rounded-lg">
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.isFavorite || false}
+                                    onChange={(e) => setFormData({...formData, isFavorite: e.target.checked})}
+                                    className="w-4 h-4"
+                                />
+                                <span className="font-medium">⭐ Marquer comme offre favorite</span>
+                            </label>
+                            <p className="text-xs text-gray-600 mt-1">
+                                L'offre favorite sera utilisée pour créer la commande et sera comptabilisée dans le dashboard
+                            </p>
+                        </div>
+                    )}
                 </div>
 
-                {/* Boutons d'action */}
+                {/* Boutons */}
                 <div className="flex justify-between mt-6 pt-4 border-t">
-                    <div>
+                    <div className="flex gap-2">
                         {initialData && (
                             <button
                                 onClick={createNewVersion}
-                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                                title="Créer une nouvelle version de cette offre"
                             >
-                                ðŸ”„ Nouvelle version
+                                📋 Nouvelle version
                             </button>
                         )}
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                         <button
                             onClick={onClose}
                             className="px-4 py-2 border rounded-lg hover:bg-gray-50"
@@ -284,10 +373,9 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                         </button>
                         <button
                             onClick={handleSubmit}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                         >
-                            <window.Icons.Save />
-                            {initialData ? 'Mettre Ã  jour' : 'CrÃ©er'}
+                            {initialData ? 'Modifier' : 'Créer'}
                         </button>
                     </div>
                 </div>
