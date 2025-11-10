@@ -1,4 +1,4 @@
-// Modal de gestion des offres complÃ©mentaires
+// Modal de gestion des offres complémentaires
 const { useState } = React;
 
 window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations = [], offres = [] }) => {
@@ -20,7 +20,7 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
     const allPos0 = [...new Set(estimations.flatMap(e => e.positions0 || []))].sort();
     const allPos1 = [...new Set(estimations.flatMap(e => e.positions1 || []))].sort();
 
-    // PrÃ©-remplir les informations depuis l'offre originale
+    // Pré-remplir les informations depuis l'offre originale
     const handleOffreOriginaleChange = (offreId) => {
         const offre = offres.find(o => o.id === offreId);
         if (offre) {
@@ -42,7 +42,7 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
 
     const handleSubmit = () => {
         if (!formData.numero || !formData.fournisseur || !formData.montant) {
-            alert('âš ï¸ Veuillez remplir tous les champs obligatoires (NÂ°, Fournisseur, Montant)');
+            alert('⚠️ Veuillez remplir tous les champs obligatoires (N°, Fournisseur, Montant)');
             return;
         }
 
@@ -62,7 +62,7 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
             <div className="bg-white rounded-lg p-6 w-full max-w-4xl my-8">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold">
-                        {initialData ? 'Modifier l\'offre complÃ©mentaire' : 'Nouvelle offre complÃ©mentaire'}
+                        {initialData ? 'Modifier l\'offre complémentaire' : 'Nouvelle offre complémentaire'}
                     </h2>
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
                         <window.Icons.X />
@@ -74,7 +74,7 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-1">
-                                NÂ° Offre ComplÃ©mentaire <span className="text-red-500">*</span>
+                                N° Offre Complémentaire <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -100,7 +100,7 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                                 ))}
                             </select>
                             <p className="text-xs text-gray-500 mt-1">
-                                SÃ©lectionner pour prÃ©-remplir les informations
+                                Sélectionner pour pré-remplir les informations
                             </p>
                         </div>
                     </div>
@@ -130,22 +130,22 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                         </div>
                     </div>
 
-                    {/* Motif de l'offre complÃ©mentaire */}
+                    {/* Motif de l'offre complémentaire */}
                     <div>
                         <label className="block text-sm font-medium mb-1">
-                            Motif de l'offre complÃ©mentaire
+                            Motif de l'offre complémentaire
                         </label>
                         <select
                             value={formData.motif}
                             onChange={(e) => setFormData({...formData, motif: e.target.value})}
                             className="w-full px-3 py-2 border rounded-lg"
                         >
-                            <option value="">-- SÃ©lectionner --</option>
-                            <option value="Travaux supplÃ©mentaires">Travaux supplÃ©mentaires</option>
+                            <option value="">-- Sélectionner --</option>
+                            <option value="Travaux supplémentaires">Travaux supplémentaires</option>
                             <option value="Modification du projet">Modification du projet</option>
-                            <option value="ImprÃ©vus">ImprÃ©vus</option>
+                            <option value="Imprévus">Imprévus</option>
                             <option value="Demande client">Demande client</option>
-                            <option value="Mise Ã  jour technique">Mise Ã  jour technique</option>
+                            <option value="Mise à jour technique">Mise à jour technique</option>
                             <option value="Autre">Autre</option>
                         </select>
                     </div>
@@ -167,7 +167,7 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                                     <option key={lot} value={lot}>{lot}</option>
                                 ))}
                             </select>
-                            <p className="text-xs text-gray-500 mt-1">Maintenez Ctrl pour sÃ©lection multiple</p>
+                            <p className="text-xs text-gray-500 mt-1">Maintenez Ctrl pour sélection multiple</p>
                         </div>
 
                         <div>
@@ -229,9 +229,9 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                                 className="w-full px-3 py-2 border rounded-lg"
                             >
                                 <option value="En attente">En attente</option>
-                                <option value="AcceptÃ©e">AcceptÃ©e</option>
-                                <option value="RefusÃ©e">RefusÃ©e</option>
-                                <option value="ExpirÃ©e">ExpirÃ©e</option>
+                                <option value="Acceptée">Acceptée</option>
+                                <option value="Refusée">Refusée</option>
+                                <option value="Expirée">Expirée</option>
                             </select>
                         </div>
                     </div>
@@ -244,7 +244,7 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                             onChange={(e) => setFormData({...formData, description: e.target.value})}
                             className="w-full px-3 py-2 border rounded-lg"
                             rows="3"
-                            placeholder="DÃ©tails des travaux supplÃ©mentaires, justification de l'offre complÃ©mentaire..."
+                            placeholder="Détails des travaux supplémentaires, justification de l'offre complémentaire..."
                         />
                     </div>
                 </div>
@@ -262,7 +262,7 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                         className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
                     >
                         <window.Icons.Save />
-                        {initialData ? 'Mettre Ã  jour' : 'CrÃ©er'}
+                        {initialData ? 'Mettre à jour' : 'Créer'}
                     </button>
                 </div>
             </div>
