@@ -244,21 +244,49 @@ const ConstructionManagement = () => {
                             <p className="text-gray-600 mt-2">Suivi complet des estimations, offres, commandes et factures</p>
                         </div>
                         <div className="flex gap-2">
-                            <button
-                                onClick={handleExportAllData}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-                                title="Exporter toutes les données (JSON)"
-                            >
-                                💾 Exporter tout
-                            </button>
-                            <button
-                                onClick={() => setShowImportModal(true)}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                                title="Importer des données"
-                            >
-                                📥 Importer
-                            </button>
-                        </div>
+    <button
+        onClick={handleExportAllData}
+        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+        title="Exporter toutes les données (JSON)"
+    >
+        💾 Exporter tout
+    </button>
+    <button
+        onClick={() => setShowImportModal(true)}
+        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        title="Importer des données"
+    >
+        📥 Importer
+    </button>
+    <button
+        onClick={() => {
+            if (confirm('⚠️ ATTENTION !\n\nCette action va SUPPRIMER TOUTES LES DONNÉES de manière IRRÉVERSIBLE.\n\nÊtes-vous absolument sûr de vouloir continuer ?')) {
+                if (confirm('Dernière confirmation : Toutes les estimations, offres, commandes, régies, factures et appels d\'offres seront supprimés.\n\nConfirmer la suppression ?')) {
+                    // Supprimer toutes les données
+                    localStorage.clear();
+                    
+                    // Réinitialiser tous les états
+                    setEstimations([]);
+                    setOffres([]);
+                    setCommandes([]);
+                    setOffresComplementaires([]);
+                    setRegies([]);
+                    setFactures([]);
+                    setAppelOffres([]);
+                    
+                    alert('✅ Toutes les données ont été supprimées !');
+                    
+                    // Recharger la page pour repartir de zéro
+                    window.location.reload();
+                }
+            }
+        }}
+        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
+        title="Supprimer toutes les données"
+    >
+        🗑️ Reset
+    </button>
+</div>
                     </div>
                 </div>
 
