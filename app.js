@@ -305,18 +305,38 @@ const ConstructionManagement = () => {
                         />
                     )}
 
-                    {/* Estimations */}
-                    {activeTab === 'estimations' && (
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <div className="flex justify-between mb-6">
-                                <h2 className="text-xl font-bold">Estimations Budgétaires</h2>
-                                <button
-                                    onClick={() => window.exportToCSV(estimations, 'estimations')}
-                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                                >
-                                    💾 Exporter CSV
-                                </button>
-                            </div>
+{/* Estimations */}
+{activeTab === 'estimations' && (
+    <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex justify-between mb-6">
+            <h2 className="text-xl font-bold">Estimations Budgétaires</h2>
+            <div className="flex gap-2">
+                <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer flex items-center gap-2">
+                    📥 Importer CSV
+                    <input
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                                window.importCSVData(file, 'Estimations', (data) => {
+                                    setEstimations(data);
+                                    window.saveData('estimations', data);
+                                    alert('✅ Estimations importées !');
+                                });
+                            }
+                        }}
+                    />
+                </label>
+                <button
+                    onClick={() => window.exportToCSV(estimations, 'estimations')}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                    💾 Exporter CSV
+                </button>
+            </div>
+        </div>
                             {estimations.length === 0 ? (
                                 <div className="text-center py-12 text-gray-500">
                                     <p>Aucune estimation. Importez vos données pour commencer.</p>
