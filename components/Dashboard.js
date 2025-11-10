@@ -33,15 +33,17 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
     // Calcul des statistiques globales
     const stats = useMemo(() => {
         const totalEstimation = estimations.reduce((sum, e) => sum + (e.montant || 0), 0);
+        
+        // 🆕 MODIFICATION : Ne compter que les offres favorites ou sans AO
         const totalOffres = offres
-            .filter(applyFilters)
             .filter(o => o.isFavorite === true || !o.appelOffreId)
             .reduce((sum, o) => sum + (o.montant || 0), 0);
+            
         const totalOffresComp = offresComplementaires.reduce((sum, oc) => sum + (oc.montant || 0), 0);
         const totalCommandes = commandes.reduce((sum, c) => sum + (c.calculatedMontant || c.montant || 0), 0);
         const totalRegies = regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
         const totalFactures = factures.reduce((sum, f) => sum + (f.montantHT || 0), 0);
-        const totalFacturesPayees = factures.filter(f => f.statut === 'PayÃ©e').reduce((sum, f) => sum + (f.montantHT || 0), 0);
+        const totalFacturesPayees = factures.filter(f => f.statut === 'Payée').reduce((sum, f) => sum + (f.montantHT || 0), 0);
 
         return {
             totalEstimation,
@@ -57,7 +59,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
         };
     }, [estimations, offres, offresComplementaires, commandes, regies, factures]);
 
-    // DonnÃ©es filtrÃ©es
+    // Données filtrées
     const filteredData = useMemo(() => {
         const filterItem = (item) => {
             if (filters.lot && !item.lots?.includes(filters.lot)) return false;
@@ -77,7 +79,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
         };
     }, [estimations, offres, offresComplementaires, commandes, regies, factures, filters]);
 
-    // RÃ©initialiser les filtres
+    // Réinitialiser les filtres
     const resetFilters = () => {
         setFilters({
             lot: '',
@@ -91,18 +93,18 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
 
     return (
         <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-6">ðŸ“Š Tableau de Bord</h2>
+            <h2 className="text-2xl font-bold mb-6">📊 Tableau de Bord</h2>
 
             {/* Filtres */}
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
                 <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-semibold">ðŸ” Filtres</h3>
+                    <h3 className="font-semibold">🔍 Filtres</h3>
                     {hasActiveFilters && (
                         <button
                             onClick={resetFilters}
                             className="text-sm text-blue-600 hover:underline"
                         >
-                            âœ– RÃ©initialiser
+                            ✖ Réinitialiser
                         </button>
                     )}
                 </div>
@@ -173,7 +175,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                 </div>
 
                 <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-gray-600">EngagÃ©</p>
+                    <p className="text-sm text-gray-600">Engagé</p>
                     <p className="text-2xl font-bold text-green-600">
                         {stats.totalDepenses.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
                     </p>
@@ -183,7 +185,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                 </div>
 
                 <div className={`p-4 rounded-lg ${stats.ecartEstimation >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                    <p className="text-sm text-gray-600">Ã‰cart Budget</p>
+                    <p className="text-sm text-gray-600">Écart Budget</p>
                     <p className={`text-2xl font-bold ${stats.ecartEstimation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                         {stats.ecartEstimation.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
                     </p>
@@ -191,27 +193,27 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                 </div>
 
                 <div className="p-4 bg-purple-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Factures PayÃ©es</p>
+                    <p className="text-sm text-gray-600">Factures Payées</p>
                     <p className="text-2xl font-bold text-purple-600">
                         {stats.totalFacturesPayees.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
                     </p>
                     <p className="text-xs text-gray-500">
-                        {stats.totalFactures > 0 ? ((stats.totalFacturesPayees / stats.totalFactures) * 100).toFixed(1) : 0}% payÃ©
+                        {stats.totalFactures > 0 ? ((stats.totalFacturesPayees / stats.totalFactures) * 100).toFixed(1) : 0}% payé
                     </p>
                 </div>
             </div>
 
-            {/* DÃ©tails par catÃ©gorie */}
+            {/* Détails par catégorie */}
             <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="p-4 border rounded-lg">
-                    <h3 className="font-semibold mb-3">ðŸ’° Flux Financiers</h3>
+                    <h3 className="font-semibold mb-3">💰 Flux Financiers</h3>
                     <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                             <span>Offres:</span>
                             <span className="font-medium">{stats.totalOffres.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF</span>
                         </div>
                         <div className="flex justify-between">
-                            <span>Offres ComplÃ©mentaires:</span>
+                            <span>Offres Complémentaires:</span>
                             <span className="font-medium">{stats.totalOffresComp.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF</span>
                         </div>
                         <div className="flex justify-between">
@@ -219,7 +221,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                             <span className="font-medium">{stats.totalCommandes.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF</span>
                         </div>
                         <div className="flex justify-between">
-                            <span>RÃ©gies:</span>
+                            <span>Régies:</span>
                             <span className="font-medium">{stats.totalRegies.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF</span>
                         </div>
                         <div className="flex justify-between border-t pt-2">
@@ -230,7 +232,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                 </div>
 
                 <div className="p-4 border rounded-lg">
-                    <h3 className="font-semibold mb-3">ðŸ“‹ Compteurs</h3>
+                    <h3 className="font-semibold mb-3">📋 Compteurs</h3>
                     <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                             <span>Estimations:</span>
@@ -241,7 +243,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                             <span className="font-medium">{filteredData.offres.length} / {offres.length}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span>Offres ComplÃ©mentaires:</span>
+                            <span>Offres Complémentaires:</span>
                             <span className="font-medium">{filteredData.offresComplementaires.length} / {offresComplementaires.length}</span>
                         </div>
                         <div className="flex justify-between">
@@ -249,7 +251,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                             <span className="font-medium">{filteredData.commandes.length} / {commandes.length}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span>RÃ©gies:</span>
+                            <span>Régies:</span>
                             <span className="font-medium">{filteredData.regies.length} / {regies.length}</span>
                         </div>
                         <div className="flex justify-between">
@@ -264,25 +266,25 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
             <div className="space-y-3">
                 {stats.ecartEstimation < 0 && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-800 font-semibold">âš ï¸ DÃ©passement de budget</p>
+                        <p className="text-red-800 font-semibold">⚠️ Dépassement de budget</p>
                         <p className="text-sm text-red-700">
-                            Le budget est dÃ©passÃ© de {Math.abs(stats.ecartEstimation).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                            Le budget est dépassé de {Math.abs(stats.ecartEstimation).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
                         </p>
                     </div>
                 )}
 
                 {stats.tauxEngagement > 90 && stats.ecartEstimation >= 0 && (
                     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-yellow-800 font-semibold">âš ï¸ Budget presque Ã©puisÃ©</p>
+                        <p className="text-yellow-800 font-semibold">⚠️ Budget presque épuisé</p>
                         <p className="text-sm text-yellow-700">
-                            {stats.tauxEngagement.toFixed(1)}% du budget est engagÃ©
+                            {stats.tauxEngagement.toFixed(1)}% du budget est engagé
                         </p>
                     </div>
                 )}
 
                 {factures.filter(f => f.statut === 'En retard').length > 0 && (
                     <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                        <p className="text-orange-800 font-semibold">ðŸ“… Factures en retard</p>
+                        <p className="text-orange-800 font-semibold">📅 Factures en retard</p>
                         <p className="text-sm text-orange-700">
                             {factures.filter(f => f.statut === 'En retard').length} facture(s) en retard de paiement
                         </p>
