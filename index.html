@@ -1,1 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application de Gestion de Construction</title>
+    
+    <!-- React et ReactDOM depuis CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel Standalone pour JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Configuration TailwindCSS -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {}
+                }
+            }
+        }
+    </script>
+    
+    <!-- Styles personnalisés -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+    </style>
+    
+    <!-- ========================================
+         UTILITAIRES
+         ======================================== -->
+    <script type="text/babel" src="utils/icons.js"></script>
+    <script type="text/babel" src="utils/storage.js"></script>
+    <script type="text/babel" src="utils/export.js"></script>
+    
+    <!-- ========================================
+         COMPOSANTS - MODALS
+         ======================================== -->
+    <script type="text/babel" src="components/ImportModal.js"></script>
+    <script type="text/babel" src="components/OffreModal.js"></script>
+    <script type="text/babel" src="components/OffreComplementaireModal.js"></script>
+    
+    <!-- 🆕 NOUVEAUX COMPOSANTS APPELS D'OFFRES -->
+    <script type="text/babel" src="components/AppelOffreModal.js"></script>
+    <script type="text/babel" src="components/AppelOffreDetailView.js"></script>
+    
+    <script type="text/babel" src="components/CommandeModal.js"></script>
+    <script type="text/babel" src="components/RegieModal.js"></script>
+    <script type="text/babel" src="components/FactureModal.js"></script>
+    
+    <!-- ========================================
+         COMPOSANTS - VUES
+         ======================================== -->
+    <script type="text/babel" src="components/Dashboard.js"></script>
+    <script type="text/babel" src="components/AlignementBudgetaire.js"></script>
+    
+    <!-- ========================================
+         APPLICATION PRINCIPALE
+         ======================================== -->
+    <script type="text/babel" src="app.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Point de montage de l'application React -->
+    <div id="root"></div>
+</body>
+</html>
+```
 
+---
+
+## ✅ COMMENT L'UTILISER
+
+### Sur GitHub.dev (Recommandé)
+
+1. Sur ton repo GitHub, appuyer sur **"."** (point)
+2. Ouvrir `index.html`
+3. **Sélectionner TOUT le contenu** (Ctrl+A)
+4. **Supprimer**
+5. **Copier-coller** le code ci-dessus
+6. **Ctrl+S** pour sauvegarder
+7. Source Control → Message : "Mise à jour index.html avec AO" → Commit & Push
+
+### Directement sur GitHub.com
+
+1. Sur ton repo, cliquer sur `index.html`
+2. Cliquer sur l'icône **crayon** ✏️ (Edit)
+3. **Sélectionner tout** (Ctrl+A)
+4. **Supprimer**
+5. **Copier-coller** le code ci-dessus
+6. Scroller en bas
+7. Message : "Mise à jour index.html avec composants AO"
+8. Cliquer **"Commit changes"**
+
+---
+
+## 🎯 CE QUI EST INCLUS
+
+✅ **React 18** + ReactDOM + Babel  
+✅ **TailwindCSS** pour le design  
+✅ **3 utilitaires** : icons.js, storage.js, export.js  
+✅ **10 composants** :
+- ImportModal
+- OffreModal (version modifiée)
+- OffreComplementaireModal
+- **AppelOffreModal** 🆕
+- **AppelOffreDetailView** 🆕
+- CommandeModal
+- RegieModal
+- FactureModal
+- Dashboard
+- AlignementBudgetaire
+
+✅ **app.js** en dernier (ordre correct !)
+
+---
+
+## 📋 ORDRE DE CHARGEMENT
+
+L'ordre est **crucial** pour que tout fonctionne :
+```
+1. Librairies externes (React, Babel, Tailwind)
+2. Utilitaires
+3. Composants modals
+4. Composants de vue
+5. app.js (TOUJOURS en dernier !)
