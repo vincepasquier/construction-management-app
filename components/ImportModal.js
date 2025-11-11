@@ -138,9 +138,11 @@ window.ImportModal = ({ onClose, onImport, onSessionRestore }) => {
 
         try {
             if (fileType === 'csv') {
-                await window.importCSVData(selectedFile, importType, (data) => {
+               await window.importCSVData(selectedFile, importType, (data) => {
+                    // IMPORTANT : Sauvegarder les données !
+                    window.saveData(importType, data);
+                    
                     saveImportHistory(selectedFile.name, importType, data.length);
-                    alert(`✅ ${data.length} ligne(s) importée(s) !`);
                     onImport();
                     onClose();
                 });
