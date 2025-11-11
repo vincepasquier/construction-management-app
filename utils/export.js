@@ -1,3 +1,107 @@
+// Fonctions d'export et d'import de données
+
+// Export CSV avec en-têtes français
+window.exportToCSV = (data, filename) => {
+    if (!data || data.length === 0) {
+        alert('Aucune donnée à exporter');
+        return;
+    }
+    
+    // Mapping des noms de colonnes techniques vers noms affichés
+    const headerMapping = {
+        'lots': 'Lot',
+        'positions0': 'Position 0',
+        'positions1': 'Position 1',
+        'phase': 'Phase',
+        'etape': 'Etape',
+        'montant': 'Montant CHF',
+        'description': 'Description',
+        'remarques': 'Remarques',
+        'id': 'ID',
+        'numero': 'Numero',
+        'fournisseur': 'Fournisseur',
+        'dateOffre': 'Date Offre',
+        'dateCommande': 'Date Commande',
+        'statut': 'Statut',
+        'dateFacture': 'Date Facture',
+        'montantHT': 'Montant HT',
+        'montantTVA': 'Montant TVA',
+        'montantTTC': 'Montant TTC'
+    };
+    
+    // Obtenir les headers originaux
+    const originalHeaders = Object.keys(data[0]);
+    
+    // Mapper vers les noms français
+    const frenchHeaders = originalHeaders.map(h => headerMapping[h] || h);
+    
+    // Générer le CSV
+    const csvContent = [
+        frenchHeaders.join(';'),
+        ...data.map(row => originalHeaders.map(header => {
+            const value = row[header];
+            if (value === null || value === undefined) return '';
+            if (Array.isArray(value)) return value.join(', ');
+            return String(value).replace(/;/g, ',');
+        }).join(';'))
+    ].join('\n');
+    
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
+
+// Export JSON
+window.exportToJSON = (data, filename) => {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+};
+
+// Export complet de toutes les données
+window.exportAllData = (data) => {
+    const allData = {
+        exportDate: new Date().toISOString(),
+        ...data
+    };
+    window.exportToJSON(allData, 'projet_construction_complet');
+    alert('✅ Toutes les données ont été exportées !');
+};
+
+// Import de données JSON complètes
+window.importAllData = (file, callbacks) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (confirm('⚠️ Cela va remplacer toutes vos données actuelles. Continuer ?')) {
+                Object.keys(callbacks).forEach(key => {
+                    if (data[key] && callbacks[key]) {
+                        callbacks[key](data[key]);
+                    }
+                });
+                alert('✅ Données importées avec succès !');
+            }
+        } catch (error) {
+            alert('❌ Erreur lors de l\'import: ' + error.message);
+        }
+    };
+    reader.readAsText(file);
+};
+
 // Import CSV amélioré avec conversion automatique des arrays
 window.importCSVData = (file, dataType, callback) => {
     const reader = new FileReader();
@@ -22,44 +126,33 @@ window.importCSVData = (file, dataType, callback) => {
             
             // Mapping des noms de colonnes
             const headerMapping = {
-                // Variations de "Lot"
                 'Lot': 'lots',
                 'lot': 'lots',
                 'lots': 'lots',
                 'LOT': 'lots',
-                
-                // Variations de "Position 0"
                 'Position 0': 'positions0',
                 'position 0': 'positions0',
                 'Position0': 'positions0',
                 'position0': 'positions0',
                 'positions0': 'positions0',
                 'POSITION 0': 'positions0',
-                
-                // Variations de "Position 1"
                 'Position 1': 'positions1',
                 'position 1': 'positions1',
                 'Position1': 'positions1',
                 'position1': 'positions1',
                 'positions1': 'positions1',
                 'POSITION 1': 'positions1',
-                
-                // Variations de "Montant"
                 'Montant CHF': 'montant',
                 'montant chf': 'montant',
                 'Montant': 'montant',
                 'montant': 'montant',
                 'MONTANT CHF': 'montant',
                 'MONTANT': 'montant',
-                
-                // Variations de "Etape"
                 'Etape': 'etape',
                 'etape': 'etape',
                 'Étape': 'etape',
                 'étape': 'etape',
                 'ETAPE': 'etape',
-                
-                // Autres champs
                 'Phase': 'phase',
                 'phase': 'phase',
                 'Description': 'description',
@@ -101,14 +194,12 @@ window.importCSVData = (file, dataType, callback) => {
                         const number = parseFloat(value);
                         row[header] = isNaN(number) ? 0 : number;
                     }
-                    // 🆕 CORRECTION : Convertir les lots et positions en arrays
+                    // Convertir les lots et positions en arrays
                     else if (header === 'lots' || header === 'positions0' || header === 'positions1') {
                         if (value && value !== '-' && value !== '') {
-                            // Si la valeur contient des virgules, c'est déjà une liste
                             if (value.includes(',')) {
                                 row[header] = value.split(',').map(v => v.trim());
                             } else {
-                                // Sinon, mettre dans un array
                                 row[header] = [value];
                             }
                         } else {
