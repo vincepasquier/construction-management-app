@@ -1,12 +1,13 @@
-// Modal d'import avancé avec drag & drop et prévisualisation
+// Modal d'import avancé avec restauration de session
 const { useState, useRef } = React;
 
-window.ImportModal = ({ onClose, onImport }) => {
+window.ImportModal = ({ onClose, onImport, onSessionRestore }) => {
     const [dragActive, setDragActive] = useState(false);
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileType, setFileType] = useState('');
     const [importType, setImportType] = useState('estimations');
     const [previewData, setPreviewData] = useState(null);
+    const [detectedSession, setDetectedSession] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [importHistory, setImportHistory] = useState([]);
     const fileInputRef = useRef(null);
@@ -14,7 +15,7 @@ window.ImportModal = ({ onClose, onImport }) => {
     // Charger l'historique depuis localStorage
     useState(() => {
         const history = JSON.parse(localStorage.getItem('importHistory') || '[]');
-        setImportHistory(history.slice(0, 5)); // Garder les 5 derniers
+        setImportHistory(history.slice(0, 5));
     }, []);
 
     const handleDrag = (e) => {
@@ -67,11 +68,12 @@ window.ImportModal = ({ onClose, onImport }) => {
 
     const previewFile = async (file, type) => {
         setIsProcessing(true);
+        setDetectedSession(null);
 
         try {
             if (type === 'csv') {
                 const text = await file.text();
-                const lines = text.trim().split('\n').slice(0, 6); // 5 premières lignes + header
+                const lines = text.trim().split('\n').slice(0, 6);
                 const separator = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ',';
                 
                 const preview = lines.map(line => 
@@ -86,15 +88,31 @@ window.ImportModal = ({ onClose, onImport }) => {
             } else if (type === 'json') {
                 const text = await file.text();
                 const data = JSON.parse(text);
+                
+                // Détecter si c'est un export de session
+                if (data.sessionName) {
+                    setDetectedSession(data.sessionName);
+                }
+                
                 const dataArray = Array.isArray(data) ? data : [data];
                 
                 setPreviewData({
                     headers: Object.keys(dataArray[0] || {}),
                     rows: dataArray.slice(0, 5).map(obj => Object.values(obj)),
-                    totalRows: dataArray.length
+                    totalRows: dataArray.length,
+                    isSessionExport: !!data.sessionName,
+                    sessionInfo: data.sessionName ? {
+                        name: data.sessionName,
+                        exportDate: data.exportDate,
+                        hasEstimations: !!data.estimations,
+                        hasOffres: !!data.offres,
+                        hasCommandes: !!data.commandes,
+                        hasRegies: !!data.regies,
+                        hasFactures: !!data.factures,
+                        hasAppelOffres: !!data.appelOffres
+                    } : null
                 });
             } else if (type === 'excel') {
-                // Pour Excel, on affiche juste les infos du fichier
                 setPreviewData({
                     headers: ['Fichier Excel détecté'],
                     rows: [['Le fichier sera traité lors de l\'import']],
@@ -127,32 +145,40 @@ window.ImportModal = ({ onClose, onImport }) => {
                     onClose();
                 });
             } else if (fileType === 'json') {
-                await window.importAllData(selectedFile, {
-                    estimations: (data) => {
-                        window.saveData('estimations', data);
-                    },
-                    offres: (data) => {
-                        window.saveData('offres', data);
-                    },
-                    commandes: (data) => {
-                        window.saveData('commandes', data);
-                    },
-                    offresComplementaires: (data) => {
-                        window.saveData('offresComplementaires', data);
-                    },
-                    regies: (data) => {
-                        window.saveData('regies', data);
-                    },
-                    factures: (data) => {
-                        window.saveData('factures', data);
-                    },
-                    appelOffres: (data) => {
-                        window.saveData('appelOffres', data);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        
+                        // Restaurer le nom de session si présent
+                        if (data.sessionName && onSessionRestore) {
+                            onSessionRestore(data.sessionName);
+                        }
+                        
+                        if (confirm(`⚠️ Importer les données ${data.sessionName ? 'de la session "' + data.sessionName + '"' : ''} ?\n\nCela remplacera vos données actuelles.`)) {
+                            // Import de toutes les données
+                            if (data.estimations) window.saveData('estimations', data.estimations);
+                            if (data.offres) window.saveData('offres', data.offres);
+                            if (data.commandes) window.saveData('commandes', data.commandes);
+                            if (data.offresComplementaires) window.saveData('offresComplementaires', data.offresComplementaires);
+                            if (data.regies) window.saveData('regies', data.regies);
+                            if (data.factures) window.saveData('factures', data.factures);
+                            if (data.appelOffres) window.saveData('appelOffres', data.appelOffres);
+                            
+                            saveImportHistory(selectedFile.name, data.sessionName || 'Données complètes', '?');
+                            
+                            alert(`✅ Données importées avec succès !${data.sessionName ? '\n📁 Session restaurée : ' + data.sessionName : ''}`);
+                            onImport();
+                            onClose();
+                        } else {
+                            setIsProcessing(false);
+                        }
+                    } catch (error) {
+                        alert('❌ Erreur lors de l\'import JSON: ' + error.message);
+                        setIsProcessing(false);
                     }
-                });
-                saveImportHistory(selectedFile.name, 'Données complètes', '?');
-                onImport();
-                onClose();
+                };
+                reader.readAsText(selectedFile);
             } else if (fileType === 'excel') {
                 alert('⚠️ Import Excel en cours de développement. Utilisez CSV pour le moment.');
                 setIsProcessing(false);
@@ -195,6 +221,44 @@ window.ImportModal = ({ onClose, onImport }) => {
                         <window.Icons.X />
                     </button>
                 </div>
+
+                {/* Session détectée */}
+                {detectedSession && (
+                    <div className="mb-6 p-4 bg-purple-50 border-2 border-purple-300 rounded-lg">
+                        <div className="flex items-center gap-3">
+                            <span className="text-3xl">📁</span>
+                            <div className="flex-1">
+                                <p className="font-bold text-purple-900">Session détectée !</p>
+                                <p className="text-sm text-purple-700">
+                                    Le fichier contient une session nommée : <span className="font-semibold">{detectedSession}</span>
+                                </p>
+                                <p className="text-xs text-purple-600 mt-1">
+                                    Le nom de la session sera automatiquement restauré lors de l'import
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Info session dans preview */}
+                {previewData?.isSessionExport && previewData.sessionInfo && (
+                    <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                        <h3 className="font-semibold mb-2">📦 Contenu de la session</h3>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                            {previewData.sessionInfo.hasEstimations && <div>✓ Estimations</div>}
+                            {previewData.sessionInfo.hasAppelOffres && <div>✓ Appels d'Offres</div>}
+                            {previewData.sessionInfo.hasOffres && <div>✓ Offres</div>}
+                            {previewData.sessionInfo.hasCommandes && <div>✓ Commandes</div>}
+                            {previewData.sessionInfo.hasRegies && <div>✓ Régies</div>}
+                            {previewData.sessionInfo.hasFactures && <div>✓ Factures</div>}
+                        </div>
+                        {previewData.sessionInfo.exportDate && (
+                            <p className="text-xs text-gray-600 mt-2">
+                                Exporté le : {new Date(previewData.sessionInfo.exportDate).toLocaleString('fr-CH')}
+                            </p>
+                        )}
+                    </div>
+                )}
 
                 {/* Type d'import */}
                 <div className="mb-6">
@@ -272,6 +336,7 @@ window.ImportModal = ({ onClose, onImport }) => {
                                 onClick={() => {
                                     setSelectedFile(null);
                                     setPreviewData(null);
+                                    setDetectedSession(null);
                                 }}
                                 className="text-sm text-red-600 hover:underline"
                             >
@@ -282,7 +347,7 @@ window.ImportModal = ({ onClose, onImport }) => {
                 </div>
 
                 {/* Prévisualisation */}
-                {previewData && (
+                {previewData && !previewData.isSessionExport && (
                     <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                         <h3 className="font-semibold mb-3">
                             👁️ Aperçu ({previewData.totalRows} ligne(s) au total)
