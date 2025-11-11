@@ -15,6 +15,7 @@ const ConstructionManagement = () => {
     // États UI
     const [activeTab, setActiveTab] = useState('dashboard');
     const [showImportModal, setShowImportModal] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
     const [showOffreModal, setShowOffreModal] = useState(false);
     const [showCommandeModal, setShowCommandeModal] = useState(false);
     const [showOffreCompModal, setShowOffreCompModal] = useState(false);
@@ -771,6 +772,20 @@ const ConstructionManagement = () => {
                     onImport={loadAllData}
                 />
             )}
+                     {showExportModal && (
+    <window.ExportModal
+        onClose={() => setShowExportModal(false)}
+        data={{
+            estimations,
+            offres,
+            commandes,
+            offresComplementaires,
+            regies,
+            factures,
+            appelOffres
+        }}
+    />
+)}
 
             {showOffreModal && (
                 <window.OffreModal
