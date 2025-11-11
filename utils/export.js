@@ -133,16 +133,51 @@ window.importCSVData = (file, dataType, callback) => {
                     row[h] = values[idx] || '';
                 });
                 
-                // Transformation GARANTIE en arrays
-                row.lots = row['Lot'] ? [String(row['Lot'])] : [];
-                row.positions0 = (row['Position 0'] || row['Position Niv. 0']) ? [String(row['Position 0'] || row['Position Niv. 0'])] : [];
-                row.positions1 = (row['Position 1'] || row['Position Niv. 1']) ? [String(row['Position 1'] || row['Position Niv. 1'])] : [];
-                row.etape = row['Étape'] || row['Etape'] || '';
-                
-                const montantStr = row['Montant (CHF)'] || row['Montant CHF'] || row['Montant'] || '0';
-                row.montant = parseFloat(String(montantStr).replace(/[^0-9.-]/g, '')) || 0;
-                
-                row.id = row['id'] || row['ID'] || `est-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                // Transformation selon le type
+                if (dataType === 'Estimations' || dataType === 'estimations') {
+                    // Transformation GARANTIE en arrays pour estimations
+                    row.lots = row['Lot'] ? [String(row['Lot'])] : [];
+                    row.positions0 = (row['Position 0'] || row['Position Niv. 0']) ? [String(row['Position 0'] || row['Position Niv. 0'])] : [];
+                    row.positions1 = (row['Position 1'] || row['Position Niv. 1']) ? [String(row['Position 1'] || row['Position Niv. 1'])] : [];
+                    row.etape = row['Étape'] || row['Etape'] || '';
+                    
+                    const montantStr = row['Montant (CHF)'] || row['Montant CHF'] || row['Montant'] || '0';
+                    row.montant = parseFloat(String(montantStr).replace(/[^0-9.-]/g, '')) || 0;
+                    
+                    row.id = row['id'] || row['ID'] || `est-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    
+                } else if (dataType === 'Commandes' || dataType === 'commandes') {
+                    // Transformation pour commandes
+                    row.fournisseur = row['fournisseur'] || row['Fournisseur'] || '';
+                    row.numero = row['numero'] || row['Numéro'] || row['numero_commande'] || '';
+                    row.dateCommande = row['dateCommande'] || row['date_commande'] || row['Date'] || '';
+                    row.statut = row['statut'] || row['Statut'] || 'En cours';
+                    
+                    const montantStr = row['montant'] || row['Montant'] || row['Montant cmdé HT'] || '0';
+                    row.montant = parseFloat(String(montantStr).replace(/[^0-9.-]/g, '')) || 0;
+                    
+                    // Initialiser les champs optionnels vides
+                    row.lots = row['lots'] || [];
+                    row.positions0 = row['positions0'] || [];
+                    row.positions1 = row['positions1'] || [];
+                    row.source = row['source'] || 'Import CSV';
+                    row.offreId = row['offreId'] || null;
+                    
+                    row.id = row['id'] || row['ID'] || `CMD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                    
+                } else {
+                    // Pour les autres types, transformation basique
+                    row.lots = row['Lot'] ? [String(row['Lot'])] : [];
+                    row.positions0 = (row['Position 0'] || row['Position Niv. 0']) ? [String(row['Position 0'] || row['Position Niv. 0'])] : [];
+                    row.positions1 = (row['Position 1'] || row['Position Niv. 1']) ? [String(row['Position 1'] || row['Position Niv. 1'])] : [];
+                    
+                    if (row['Montant'] || row['montant']) {
+                        const montantStr = row['Montant'] || row['montant'] || '0';
+                        row.montant = parseFloat(String(montantStr).replace(/[^0-9.-]/g, '')) || 0;
+                    }
+                    
+                    row.id = row['id'] || row['ID'] || `${dataType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                }
                 
                 imported.push(row);
             }
