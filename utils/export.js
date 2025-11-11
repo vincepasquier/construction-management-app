@@ -1,4 +1,4 @@
-// Fonctions d'export et d'import de données
+// Fonctions d'export et d'import de données - VERSION FINALE
 
 window.exportToCSV = (data, filename) => {
     if (!data || data.length === 0) {
@@ -14,7 +14,6 @@ window.exportToCSV = (data, filename) => {
             if (value === null || value === undefined) return '';
             if (Array.isArray(value)) return `"${value.join(', ')}"`;
             const strValue = String(value);
-            // Mettre entre guillemets si contient séparateur, virgule ou guillemet
             if (strValue.includes(';') || strValue.includes(',') || strValue.includes('"') || strValue.includes('\n')) {
                 return `"${strValue.replace(/"/g, '""')}"`;
             }
@@ -75,7 +74,7 @@ window.importAllData = (file, callbacks) => {
     reader.readAsText(file);
 };
 
-// Fonction pour parser correctement une ligne CSV en respectant les guillemets
+// Parser CSV avec support des guillemets
 const parseCSVLine = (line, separator) => {
     const result = [];
     let current = '';
@@ -112,21 +111,17 @@ window.importCSVData = (file, dataType, callback) => {
             const lines = text.split('\n');
             
             if (lines.length < 2) {
-                alert('❌ Le fichier CSV est vide ou invalide');
+                alert('❌ Le fichier CSV est vide');
                 return;
             }
             
-            // Détecter le séparateur
-            const separator = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ',';
-            
-            // Parser les en-têtes
+            const separator = lines[0].includes(';') ? ';' : ',';
             const headers = parseCSVLine(lines[0], separator).map(h => h.replace(/^"|"$/g, '').trim());
             
-            console.log('📋 En-têtes détectés:', headers);
+            console.log('📋 En-têtes CSV:', headers);
             
             const imported = [];
             
-            // Parser chaque ligne
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue;
@@ -138,59 +133,40 @@ window.importCSVData = (file, dataType, callback) => {
                     row[h] = values[idx] || '';
                 });
                 
-                // Transformation immédiate pour le format attendu
-                const transformed = { ...row };
+                // Transformation GARANTIE en arrays
+                row.lots = row['Lot'] ? [String(row['Lot'])] : [];
+                row.positions0 = (row['Position 0'] || row['Position Niv. 0']) ? [String(row['Position 0'] || row['Position Niv. 0'])] : [];
+                row.positions1 = (row['Position 1'] || row['Position Niv. 1']) ? [String(row['Position 1'] || row['Position Niv. 1'])] : [];
+                row.etape = row['Étape'] || row['Etape'] || '';
                 
-                // Transformer Lot en array lots
-                if (row['Lot']) {
-                    transformed.lots = [row['Lot']];
-                }
+                const montantStr = row['Montant (CHF)'] || row['Montant CHF'] || row['Montant'] || '0';
+                row.montant = parseFloat(String(montantStr).replace(/[^0-9.-]/g, '')) || 0;
                 
-                // Transformer Position 0 en array positions0
-                const pos0Value = row['Position 0'] || row['Position Niv. 0'];
-                if (pos0Value) {
-                    transformed.positions0 = [pos0Value];
-                }
+                row.id = row['id'] || row['ID'] || `est-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                 
-                // Transformer Position 1 en array positions1
-                const pos1Value = row['Position 1'] || row['Position Niv. 1'];
-                if (pos1Value) {
-                    transformed.positions1 = [pos1Value];
-                }
-                
-                // Transformer Étape
-                if (row['Étape'] || row['Etape']) {
-                    transformed.etape = row['Étape'] || row['Etape'];
-                }
-                
-                // Transformer montant en nombre
-                const montantValue = row['Montant (CHF)'] || row['Montant CHF'] || row['Montant'];
-                if (montantValue) {
-                    transformed.montant = parseFloat(String(montantValue).replace(/[^0-9.-]/g, '')) || 0;
-                }
-                
-                // Ajouter un ID si manquant
-                if (!transformed.id && dataType === 'Estimations') {
-                    transformed.id = row['id'] || row['ID'] || `est-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                }
-                
-                imported.push(transformed);
+                imported.push(row);
             }
             
-            console.log('✅ Données parsées:', imported.length, 'lignes');
-            console.log('📊 Première ligne:', imported[0]);
+            console.log('✅ Parsé:', imported.length, 'lignes');
+            if (imported.length > 0) {
+                console.log('📊 Première ligne:', imported[0]);
+                console.log('🔍 Vérification types:', {
+                    lots: Array.isArray(imported[0].lots),
+                    positions0: Array.isArray(imported[0].positions0),
+                    positions1: Array.isArray(imported[0].positions1)
+                });
+            }
             
             if (imported.length === 0) {
-                alert('❌ Aucune donnée valide trouvée dans le CSV');
+                alert('❌ Aucune donnée trouvée');
                 return;
             }
             
-            if (confirm(`Importer ${imported.length} ligne(s) de ${dataType} ? Cela remplacera les données existantes.`)) {
+            if (confirm(`Importer ${imported.length} ligne(s) ? Cela remplacera les données existantes.`)) {
                 callback(imported);
-                alert(`✅ ${imported.length} ligne(s) importée(s) !`);
             }
         } catch (error) {
-            console.error('❌ Erreur import CSV:', error);
+            console.error('❌ Erreur import:', error);
             alert('❌ Erreur lors de l\'import CSV: ' + error.message);
         }
     };
