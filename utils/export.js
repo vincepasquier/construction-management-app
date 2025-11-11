@@ -166,8 +166,21 @@ window.importCSVData = (file, dataType, callback) => {
                 'Description': 'description',
                 'description': 'description',
                 'Remarques': 'remarques',
-                'remarques': 'remarques'
-            };
+                'remarques': 'remarques',
+
+                // 🆕 Ajouter ces mappings pour les exports techniques
+                'lots': 'lots',
+                'positions0': 'positions0', 
+                'positions1': 'positions1',
+                'phase': 'phase',
+                'etape': 'etape',
+                'montant': 'montant',
+                
+                // Variations existantes
+                'Lot': 'lots',
+                'lot': 'lots',
+                'Position 0': 'positions0',
+                        };
             
             // Mapper les en-têtes avec LOG pour debug
             const headers = rawHeaders.map((h, idx) => {
