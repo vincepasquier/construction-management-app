@@ -12,9 +12,9 @@ window.exportToCSV = (data, filename) => {
         ...data.map(row => headers.map(header => {
             const value = row[header];
             if (value === null || value === undefined) return '';
-            if (Array.isArray(value)) return value.join(',');
-            // Échapper les valeurs contenant des séparateurs avec des guillemets
+            if (Array.isArray(value)) return `"${value.join(', ')}"`;
             const strValue = String(value);
+            // Mettre entre guillemets si contient séparateur, virgule ou guillemet
             if (strValue.includes(';') || strValue.includes(',') || strValue.includes('"') || strValue.includes('\n')) {
                 return `"${strValue.replace(/"/g, '""')}"`;
             }
@@ -86,15 +86,13 @@ const parseCSVLine = (line, separator) => {
         const nextChar = line[i + 1];
         
         if (char === '"') {
-            // Gestion des guillemets doublés (échappement)
             if (inQuotes && nextChar === '"') {
                 current += '"';
-                i++; // Sauter le prochain guillemet
+                i++;
             } else {
                 inQuotes = !inQuotes;
             }
         } else if (char === separator && !inQuotes) {
-            // Séparateur trouvé en dehors des guillemets
             result.push(current.trim());
             current = '';
         } else {
@@ -102,86 +100,99 @@ const parseCSVLine = (line, separator) => {
         }
     }
     
-    // Ajouter la dernière valeur
     result.push(current.trim());
-    
     return result;
-};
-
-// Fonction pour transformer les données CSV en format attendu par l'application
-const transformImportedData = (data, dataType) => {
-    return data.map(row => {
-        const transformed = { ...row };
-        
-        // Transformer 'Lot' en array 'lots'
-        if (row['Lot'] && !transformed.lots) {
-            transformed.lots = [row['Lot']];
-        }
-        
-        // Transformer 'Position 0' ou 'Position Niv. 0' en array 'positions0'
-        const pos0Key = row['Position 0'] ? 'Position 0' : 
-                        row['Position Niv. 0'] ? 'Position Niv. 0' : null;
-        if (pos0Key && row[pos0Key] && !transformed.positions0) {
-            // Ne pas splitter sur les virgules car c'est déjà une valeur unique
-            transformed.positions0 = [row[pos0Key]];
-        }
-        
-        // Transformer 'Position 1' ou 'Position Niv. 1' en array 'positions1'
-        const pos1Key = row['Position 1'] ? 'Position 1' : 
-                        row['Position Niv. 1'] ? 'Position Niv. 1' : null;
-        if (pos1Key && row[pos1Key] && !transformed.positions1) {
-            // Ne pas splitter sur les virgules car c'est déjà une valeur unique
-            transformed.positions1 = [row[pos1Key]];
-        }
-        
-        // Convertir les montants en nombres
-        if (row['Montant (CHF)']) {
-            transformed.montant = parseFloat(String(row['Montant (CHF)']).replace(/[^0-9.-]/g, '')) || 0;
-        } else if (row['Montant']) {
-            transformed.montant = parseFloat(String(row['Montant']).replace(/[^0-9.-]/g, '')) || 0;
-        }
-        
-        // Pour les estimations, ajouter un ID unique si manquant
-        if (dataType === 'Estimations' && !transformed.id) {
-            transformed.id = `est-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        }
-        
-        return transformed;
-    });
 };
 
 window.importCSVData = (file, dataType, callback) => {
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
-            const lines = e.target.result.trim().split('\n');
+            const text = e.target.result.trim();
+            const lines = text.split('\n');
+            
+            if (lines.length < 2) {
+                alert('❌ Le fichier CSV est vide ou invalide');
+                return;
+            }
+            
+            // Détecter le séparateur
             const separator = lines[0].includes('\t') ? '\t' : lines[0].includes(';') ? ';' : ',';
             
-            // Utiliser parseCSVLine au lieu de split simple
+            // Parser les en-têtes
             const headers = parseCSVLine(lines[0], separator).map(h => h.replace(/^"|"$/g, '').trim());
+            
+            console.log('📋 En-têtes détectés:', headers);
+            
             const imported = [];
-
+            
+            // Parser chaque ligne
             for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
+                const line = lines[i].trim();
+                if (!line) continue;
                 
-                // Utiliser parseCSVLine pour respecter les guillemets
-                const values = parseCSVLine(lines[i], separator).map(v => v.replace(/^"|"$/g, '').trim());
+                const values = parseCSVLine(line, separator).map(v => v.replace(/^"|"$/g, '').trim());
+                
                 const row = {};
-                headers.forEach((h, idx) => row[h] = values[idx] || '');
-                imported.push(row);
+                headers.forEach((h, idx) => {
+                    row[h] = values[idx] || '';
+                });
+                
+                // Transformation immédiate pour le format attendu
+                const transformed = { ...row };
+                
+                // Transformer Lot en array lots
+                if (row['Lot']) {
+                    transformed.lots = [row['Lot']];
+                }
+                
+                // Transformer Position 0 en array positions0
+                const pos0Value = row['Position 0'] || row['Position Niv. 0'];
+                if (pos0Value) {
+                    transformed.positions0 = [pos0Value];
+                }
+                
+                // Transformer Position 1 en array positions1
+                const pos1Value = row['Position 1'] || row['Position Niv. 1'];
+                if (pos1Value) {
+                    transformed.positions1 = [pos1Value];
+                }
+                
+                // Transformer Étape
+                if (row['Étape'] || row['Etape']) {
+                    transformed.etape = row['Étape'] || row['Etape'];
+                }
+                
+                // Transformer montant en nombre
+                const montantValue = row['Montant (CHF)'] || row['Montant CHF'] || row['Montant'];
+                if (montantValue) {
+                    transformed.montant = parseFloat(String(montantValue).replace(/[^0-9.-]/g, '')) || 0;
+                }
+                
+                // Ajouter un ID si manquant
+                if (!transformed.id && dataType === 'Estimations') {
+                    transformed.id = row['id'] || row['ID'] || `est-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                }
+                
+                imported.push(transformed);
             }
-
-            // Transformer les données importées pour correspondre au format attendu
-            const transformedData = transformImportedData(imported, dataType);
-
-            if (confirm(`Importer ${transformedData.length} ligne(s) de ${dataType} ? Cela remplacera les données existantes.`)) {
-                callback(transformedData);
-                alert(`✅ ${transformedData.length} ligne(s) importée(s) !`);
+            
+            console.log('✅ Données parsées:', imported.length, 'lignes');
+            console.log('📊 Première ligne:', imported[0]);
+            
+            if (imported.length === 0) {
+                alert('❌ Aucune donnée valide trouvée dans le CSV');
+                return;
+            }
+            
+            if (confirm(`Importer ${imported.length} ligne(s) de ${dataType} ? Cela remplacera les données existantes.`)) {
+                callback(imported);
+                alert(`✅ ${imported.length} ligne(s) importée(s) !`);
             }
         } catch (error) {
+            console.error('❌ Erreur import CSV:', error);
             alert('❌ Erreur lors de l\'import CSV: ' + error.message);
-            console.error('Erreur détaillée:', error);
         }
     };
-    reader.readAsText(file);
+    reader.readAsText(file, 'UTF-8');
 };
