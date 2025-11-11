@@ -718,6 +718,7 @@ const handleSessionNameChange = (newName) => {
 )}
 
 {/* Commandes */}
+{/* Commandes */}
 {activeTab === 'commandes' && (
     <div className="bg-white rounded-lg shadow-lg p-6">
         <div className="flex justify-between mb-6">
@@ -732,9 +733,107 @@ const handleSessionNameChange = (newName) => {
                 <Plus />Nouvelle commande
             </button>
         </div>
-        <div className="text-center py-12 text-gray-500">
-            <p>Vous avez {commandes.length} commande(s) - Total: {commandes.reduce((sum, c) => sum + (c.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF</p>
-        </div>
+        
+        {commandes.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+                <p>Aucune commande</p>
+            </div>
+        ) : (
+            <>
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-4 py-3 text-left text-sm font-medium">N° Commande</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Fournisseur</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Lots</th>
+                                <th className="px-4 py-3 text-left text-sm font-medium">Positions</th>
+                                <th className="px-4 py-3 text-right text-sm font-medium">Montant (CHF)</th>
+                                <th className="px-4 py-3 text-center text-sm font-medium">Statut</th>
+                                <th className="px-4 py-3 text-center text-sm font-medium">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {commandes.map((commande) => (
+                                <tr key={commande.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium">{commande.numero}</td>
+                                    <td className="px-4 py-3">{commande.fournisseur}</td>
+                                    <td className="px-4 py-3 text-sm">
+                                        {commande.lots && commande.lots.length > 0 
+                                            ? commande.lots.join(', ') 
+                                            : <span className="text-gray-400">-</span>
+                                        }
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                        {commande.positions0 && commande.positions0.length > 0 
+                                            ? (
+                                                <>
+                                                    {commande.positions0.join(', ')}
+                                                    {commande.positions1 && commande.positions1.length > 0 && (
+                                                        <span className="text-gray-500"> / {commande.positions1.join(', ')}</span>
+                                                    )}
+                                                </>
+                                            )
+                                            : <span className="text-gray-400">-</span>
+                                        }
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-semibold">
+                                        {(commande.montant || 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})}
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className={`px-2 py-1 rounded text-xs ${
+                                            commande.statut === 'Validée' ? 'bg-green-100 text-green-800' :
+                                            commande.statut === 'En cours' ? 'bg-blue-100 text-blue-800' :
+                                            commande.statut === 'Annulée' ? 'bg-red-100 text-red-800' :
+                                            'bg-gray-100 text-gray-800'
+                                        }`}>
+                                            {commande.statut}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex justify-center gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    setEditingCommande(commande);
+                                                    setShowCommandeModal(true);
+                                                }}
+                                                className="text-blue-600 hover:text-blue-800"
+                                                title="Modifier"
+                                            >
+                                                ✏️
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    if (confirm('Supprimer cette commande ?')) {
+                                                        const updated = commandes.filter(c => c.id !== commande.id);
+                                                        setCommandes(updated);
+                                                        window.saveData('commandes', updated);
+                                                    }
+                                                }}
+                                                className="text-red-600 hover:text-red-800"
+                                                title="Supprimer"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                        <p className="font-semibold">
+                            Total commandes: {commandes.length}
+                        </p>
+                        <p className="font-semibold text-lg">
+                            {commandes.reduce((sum, c) => sum + (c.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                        </p>
+                    </div>
+                </div>
+            </>
+        )}
     </div>
 )}
 
