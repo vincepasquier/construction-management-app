@@ -11,6 +11,7 @@ const ConstructionManagement = () => {
     const [regies, setRegies] = useState([]);
     const [factures, setFactures] = useState([]);
     const [appelOffres, setAppelOffres] = useState([]);
+    const [sessionName, setSessionName] = useState('Projet_Sans_Nom');
     
     // États UI
     const [activeTab, setActiveTab] = useState('dashboard');
@@ -37,6 +38,20 @@ const ConstructionManagement = () => {
     useEffect(() => {
         loadAllData();
     }, []);
+
+    // Charger le nom de session
+useEffect(() => {
+    const savedSession = localStorage.getItem('sessionName');
+    if (savedSession) {
+        setSessionName(savedSession);
+    }
+}, []);
+
+// Sauvegarder le nom de session quand il change
+const handleSessionNameChange = (newName) => {
+    setSessionName(newName);
+    localStorage.setItem('sessionName', newName);
+};
 
     const loadAllData = async () => {
         const data = await window.loadData();
@@ -766,15 +781,17 @@ const ConstructionManagement = () => {
             </div>
 
             {/* Modals */}
-            {showImportModal && (
-                <window.ImportModal
-                    onClose={() => setShowImportModal(false)}
-                    onImport={loadAllData}
-                />
-            )}
-                     {showExportModal && (
+{showImportModal && (
+    <window.ImportModal
+        onClose={() => setShowImportModal(false)}
+        onImport={loadAllData}
+        onSessionRestore={handleSessionNameChange}
+    />
+)}
+                    {showExportModal && (
     <window.ExportModal
         onClose={() => setShowExportModal(false)}
+        sessionName={sessionName}
         data={{
             estimations,
             offres,
