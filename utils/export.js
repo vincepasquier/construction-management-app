@@ -108,6 +108,48 @@ const parseCSVLine = (line, separator) => {
     return result;
 };
 
+// Fonction pour transformer les données CSV en format attendu par l'application
+const transformImportedData = (data, dataType) => {
+    return data.map(row => {
+        const transformed = { ...row };
+        
+        // Transformer 'Lot' en array 'lots'
+        if (row['Lot'] && !transformed.lots) {
+            transformed.lots = [row['Lot']];
+        }
+        
+        // Transformer 'Position 0' ou 'Position Niv. 0' en array 'positions0'
+        const pos0Key = row['Position 0'] ? 'Position 0' : 
+                        row['Position Niv. 0'] ? 'Position Niv. 0' : null;
+        if (pos0Key && row[pos0Key] && !transformed.positions0) {
+            // Ne pas splitter sur les virgules car c'est déjà une valeur unique
+            transformed.positions0 = [row[pos0Key]];
+        }
+        
+        // Transformer 'Position 1' ou 'Position Niv. 1' en array 'positions1'
+        const pos1Key = row['Position 1'] ? 'Position 1' : 
+                        row['Position Niv. 1'] ? 'Position Niv. 1' : null;
+        if (pos1Key && row[pos1Key] && !transformed.positions1) {
+            // Ne pas splitter sur les virgules car c'est déjà une valeur unique
+            transformed.positions1 = [row[pos1Key]];
+        }
+        
+        // Convertir les montants en nombres
+        if (row['Montant (CHF)']) {
+            transformed.montant = parseFloat(String(row['Montant (CHF)']).replace(/[^0-9.-]/g, '')) || 0;
+        } else if (row['Montant']) {
+            transformed.montant = parseFloat(String(row['Montant']).replace(/[^0-9.-]/g, '')) || 0;
+        }
+        
+        // Pour les estimations, ajouter un ID unique si manquant
+        if (dataType === 'Estimations' && !transformed.id) {
+            transformed.id = `est-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        }
+        
+        return transformed;
+    });
+};
+
 window.importCSVData = (file, dataType, callback) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -129,12 +171,16 @@ window.importCSVData = (file, dataType, callback) => {
                 imported.push(row);
             }
 
-            if (confirm(`Importer ${imported.length} ligne(s) de ${dataType} ? Cela remplacera les données existantes.`)) {
-                callback(imported);
-                alert(`✅ ${imported.length} ligne(s) importée(s) !`);
+            // Transformer les données importées pour correspondre au format attendu
+            const transformedData = transformImportedData(imported, dataType);
+
+            if (confirm(`Importer ${transformedData.length} ligne(s) de ${dataType} ? Cela remplacera les données existantes.`)) {
+                callback(transformedData);
+                alert(`✅ ${transformedData.length} ligne(s) importée(s) !`);
             }
         } catch (error) {
             alert('❌ Erreur lors de l\'import CSV: ' + error.message);
+            console.error('Erreur détaillée:', error);
         }
     };
     reader.readAsText(file);
