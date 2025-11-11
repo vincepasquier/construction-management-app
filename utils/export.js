@@ -1,18 +1,47 @@
 // Fonctions d'export et d'import de données
 
+// Export CSV avec en-têtes français
 window.exportToCSV = (data, filename) => {
     if (!data || data.length === 0) {
         alert('Aucune donnée à exporter');
         return;
     }
     
-    const headers = Object.keys(data[0]);
+    // Mapping des noms de colonnes techniques vers noms affichés
+    const headerMapping = {
+        'lots': 'Lot',
+        'positions0': 'Position 0',
+        'positions1': 'Position 1',
+        'phase': 'Phase',
+        'etape': 'Etape',
+        'montant': 'Montant CHF',
+        'description': 'Description',
+        'remarques': 'Remarques',
+        'id': 'ID',
+        'numero': 'Numero',
+        'fournisseur': 'Fournisseur',
+        'dateOffre': 'Date Offre',
+        'dateCommande': 'Date Commande',
+        'statut': 'Statut',
+        'dateFacture': 'Date Facture',
+        'montantHT': 'Montant HT',
+        'montantTVA': 'Montant TVA',
+        'montantTTC': 'Montant TTC'
+    };
+    
+    // Obtenir les headers originaux
+    const originalHeaders = Object.keys(data[0]);
+    
+    // Mapper vers les noms français
+    const frenchHeaders = originalHeaders.map(h => headerMapping[h] || h);
+    
+    // Générer le CSV
     const csvContent = [
-        headers.join(';'),
-        ...data.map(row => headers.map(header => {
+        frenchHeaders.join(';'),
+        ...data.map(row => originalHeaders.map(header => {
             const value = row[header];
             if (value === null || value === undefined) return '';
-            if (Array.isArray(value)) return value.join(',');
+            if (Array.isArray(value)) return value.join(', '); // Joindre les arrays avec virgule
             return String(value).replace(/;/g, ',');
         }).join(';'))
     ].join('\n');
@@ -21,7 +50,7 @@ window.exportToCSV = (data, filename) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `${filename}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
