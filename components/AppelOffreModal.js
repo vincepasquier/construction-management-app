@@ -10,18 +10,22 @@ window.AppelOffreModal = ({ initialData, onClose, onSave, estimations = [] }) =>
         lots: [],
         positions0: [],
         positions1: [],
+        etape: '',
+        budget: '',
         description: '',
-        statut: 'En consultation', // En consultation, Attribué, Annulé
-        criteres: {
-            prix: true,
-            delai: false,
-            qualite: false
-        }
+        statut: 'En consultation',
+        fournisseursInvites: []
     });
 
-    const allLots = [...new Set(estimations.flatMap(e => e.lots || []))].sort();
-    const allPos0 = [...new Set(estimations.flatMap(e => e.positions0 || []))].sort();
-    const allPos1 = [...new Set(estimations.flatMap(e => e.positions1 || []))].sort();
+    // Handler pour le SmartSelector
+    const handleSelectionChange = ({ lots, positions0, positions1 }) => {
+        setFormData({
+            ...formData,
+            lots,
+            positions0,
+            positions1
+        });
+    };
 
     const handleSubmit = () => {
         if (!formData.numero || !formData.designation) {
@@ -29,32 +33,20 @@ window.AppelOffreModal = ({ initialData, onClose, onSave, estimations = [] }) =>
             return;
         }
 
-        if (formData.lots.length === 0) {
-            alert('⚠️ Veuillez sélectionner au moins un lot');
-            return;
-        }
-
         const appelOffre = {
             ...formData,
             id: initialData?.id || `AO-${Date.now()}`,
-            dateCreation: initialData?.dateCreation || new Date().toISOString()
+            dateCreation: initialData?.dateCreation || new Date().toISOString(),
+            budget: parseFloat(formData.budget) || 0
         };
 
         onSave(appelOffre);
         onClose();
     };
 
-    const handleMultiSelect = (field, value) => {
-        const current = formData[field] || [];
-        const updated = current.includes(value) 
-            ? current.filter(v => v !== value)
-            : [...current, value];
-        setFormData({...formData, [field]: updated});
-    };
-
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-lg p-6 w-full max-w-4xl my-8">
+            <div className="bg-white rounded-lg p-6 w-full max-w-5xl my-8">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold">
                         {initialData ? 'Modifier l\'appel d\'offres' : 'Nouvel appel d\'offres'}
@@ -64,7 +56,7 @@ window.AppelOffreModal = ({ initialData, onClose, onSave, estimations = [] }) =>
                     </button>
                 </div>
 
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
                     {/* Informations de base */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -76,7 +68,7 @@ window.AppelOffreModal = ({ initialData, onClose, onSave, estimations = [] }) =>
                                 value={formData.numero}
                                 onChange={(e) => setFormData({...formData, numero: e.target.value})}
                                 className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="Ex: AO-2025-001"
+                                placeholder="AO-2025-001"
                             />
                         </div>
 
@@ -89,12 +81,15 @@ window.AppelOffreModal = ({ initialData, onClose, onSave, estimations = [] }) =>
                                 value={formData.designation}
                                 onChange={(e) => setFormData({...formData, designation: e.target.value})}
                                 className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="Ex: Menuiserie extérieure"
+                                placeholder="Description courte de l'AO"
                             />
                         </div>
+                    </div>
 
+                    {/* Dates */}
+                    <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium mb-1">Date création</label>
+                            <label className="block text-sm font-medium mb-1">Date de création</label>
                             <input
                                 type="date"
                                 value={formData.dateCreation}
@@ -104,7 +99,7 @@ window.AppelOffreModal = ({ initialData, onClose, onSave, estimations = [] }) =>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">Date limite réponse</label>
+                            <label className="block text-sm font-medium mb-1">Date limite de réponse</label>
                             <input
                                 type="date"
                                 value={formData.dateLimite}
@@ -114,118 +109,57 @@ window.AppelOffreModal = ({ initialData, onClose, onSave, estimations = [] }) =>
                         </div>
                     </div>
 
-                    {/* Lots et Positions */}
-                    <div className="border-t pt-4">
-                        <h3 className="font-semibold mb-3">Périmètre de l'appel d'offres</h3>
-                        
-                        <div className="grid grid-cols-3 gap-4">
-                            {/* Lots */}
-                            <div>
-                                <label className="block text-sm font-medium mb-2">
-                                    Lots <span className="text-red-500">*</span>
-                                </label>
-                                <div className="border rounded-lg p-2 max-h-32 overflow-y-auto">
-                                    {allLots.map(lot => (
-                                        <label key={lot} className="flex items-center gap-2 py-1 hover:bg-gray-50">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.lots.includes(lot)}
-                                                onChange={() => handleMultiSelect('lots', lot)}
-                                                className="rounded"
-                                            />
-                                            <span className="text-sm">{lot}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {formData.lots.length} sélectionné(s)
-                                </p>
-                            </div>
-
-                            {/* Positions 0 */}
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Position niveau 0</label>
-                                <div className="border rounded-lg p-2 max-h-32 overflow-y-auto">
-                                    {allPos0.map(pos => (
-                                        <label key={pos} className="flex items-center gap-2 py-1 hover:bg-gray-50">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.positions0.includes(pos)}
-                                                onChange={() => handleMultiSelect('positions0', pos)}
-                                                className="rounded"
-                                            />
-                                            <span className="text-sm">{pos}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {formData.positions0.length} sélectionné(s)
-                                </p>
-                            </div>
-
-                            {/* Positions 1 */}
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Position niveau 1</label>
-                                <div className="border rounded-lg p-2 max-h-32 overflow-y-auto">
-                                    {allPos1.map(pos => (
-                                        <label key={pos} className="flex items-center gap-2 py-1 hover:bg-gray-50">
-                                            <input
-                                                type="checkbox"
-                                                checked={formData.positions1.includes(pos)}
-                                                onChange={() => handleMultiSelect('positions1', pos)}
-                                                className="rounded"
-                                            />
-                                            <span className="text-sm">{pos}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                                <p className="text-xs text-gray-500 mt-1">
-                                    {formData.positions1.length} sélectionné(s)
-                                </p>
-                            </div>
-                        </div>
+                    {/* Smart Selector pour Lots/Positions */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <h3 className="font-medium mb-3">📦 Classification</h3>
+                        <window.SmartSelector
+                            estimations={estimations}
+                            selectedLots={formData.lots}
+                            selectedPos0={formData.positions0}
+                            selectedPos1={formData.positions1}
+                            onChange={handleSelectionChange}
+                        />
                     </div>
 
-                    {/* Critères de sélection */}
-                    <div className="border-t pt-4">
-                        <h3 className="font-semibold mb-3">Critères de sélection</h3>
-                        <div className="space-y-2">
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.criteres.prix}
-                                    onChange={(e) => setFormData({
-                                        ...formData, 
-                                        criteres: {...formData.criteres, prix: e.target.checked}
-                                    })}
-                                    className="rounded"
-                                />
-                                <span className="text-sm">Prix (sélection automatique de l'offre la moins chère)</span>
-                            </label>
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.criteres.delai}
-                                    onChange={(e) => setFormData({
-                                        ...formData, 
-                                        criteres: {...formData.criteres, delai: e.target.checked}
-                                    })}
-                                    className="rounded"
-                                />
-                                <span className="text-sm">Délai de réalisation</span>
-                            </label>
-                            <label className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.criteres.qualite}
-                                    onChange={(e) => setFormData({
-                                        ...formData, 
-                                        criteres: {...formData.criteres, qualite: e.target.checked}
-                                    })}
-                                    className="rounded"
-                                />
-                                <span className="text-sm">Qualité / Références</span>
-                            </label>
+                    {/* Étape */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Étape</label>
+                        <select
+                            value={formData.etape}
+                            onChange={(e) => setFormData({...formData, etape: e.target.value})}
+                            className="w-full px-3 py-2 border rounded-lg"
+                        >
+                            <option value="">-- Sélectionner --</option>
+                            <option value="1">Étape 1</option>
+                            <option value="2">Étape 2</option>
+                        </select>
+                    </div>
+
+                    {/* Budget et Statut */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Budget estimé (CHF)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={formData.budget}
+                                onChange={(e) => setFormData({...formData, budget: e.target.value})}
+                                className="w-full px-3 py-2 border rounded-lg"
+                                placeholder="0.00"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Statut</label>
+                            <select
+                                value={formData.statut}
+                                onChange={(e) => setFormData({...formData, statut: e.target.value})}
+                                className="w-full px-3 py-2 border rounded-lg"
+                            >
+                                <option value="En consultation">En consultation</option>
+                                <option value="Attribué">Attribué</option>
+                                <option value="Annulé">Annulé</option>
+                            </select>
                         </div>
                     </div>
 
@@ -237,36 +171,22 @@ window.AppelOffreModal = ({ initialData, onClose, onSave, estimations = [] }) =>
                             onChange={(e) => setFormData({...formData, description: e.target.value})}
                             className="w-full px-3 py-2 border rounded-lg"
                             rows="4"
-                            placeholder="Décrivez les travaux attendus..."
+                            placeholder="Description détaillée de l'appel d'offres, exigences, conditions..."
                         />
-                    </div>
-
-                    {/* Statut */}
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Statut</label>
-                        <select
-                            value={formData.statut}
-                            onChange={(e) => setFormData({...formData, statut: e.target.value})}
-                            className="w-full px-3 py-2 border rounded-lg"
-                        >
-                            <option value="En consultation">En consultation</option>
-                            <option value="Attribué">Attribué</option>
-                            <option value="Annulé">Annulé</option>
-                        </select>
                     </div>
                 </div>
 
                 {/* Boutons */}
                 <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-                    <button 
+                    <button
                         onClick={onClose}
-                        className="px-6 py-2 border rounded-lg hover:bg-gray-50"
+                        className="px-4 py-2 border rounded-lg hover:bg-gray-50"
                     >
                         Annuler
                     </button>
-                    <button 
+                    <button
                         onClick={handleSubmit}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
                         {initialData ? 'Modifier' : 'Créer'}
                     </button>
