@@ -14,7 +14,7 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
         positions1: [],
         etape: '',
         montantHT: '',
-        tauxTVA: '7.7',
+        tauxTVA: '8.1',
         montantTVA: '',
         montantTTC: '',
         statut: 'En attente',
@@ -267,9 +267,7 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
                                 className="w-full px-3 py-2 border rounded-lg"
                             >
                                 <option value="0">0% (Exonéré)</option>
-                                <option value="2.5">2.5% (Réduit)</option>
-                                <option value="7.7">7.7% (Normal)</option>
-                                <option value="3.7">3.7% (Hébergement)</option>
+                                <option value="8.1">8.1% (Normal)</option>
                             </select>
                         </div>
 
