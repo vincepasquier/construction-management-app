@@ -9,6 +9,10 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
         fournisseur: '',
         dateFacture: new Date().toISOString().split('T')[0],
         dateEcheance: '',
+        lots: [],
+        positions0: [],
+        positions1: [],
+        etape: '',
         montantHT: '',
         tauxTVA: '7.7',
         montantTVA: '',
@@ -17,6 +21,10 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
         dateReglement: '',
         description: ''
     });
+
+    const allLots = [...new Set(estimations.flatMap(e => e.lots || []))].sort();
+    const allPos0 = [...new Set(estimations.flatMap(e => e.positions0 || []))].sort();
+    const allPos1 = [...new Set(estimations.flatMap(e => e.positions1 || []))].sort();
 
     // Pré-remplir depuis une commande
     const handleCommandeChange = (commandeId) => {
@@ -27,6 +35,10 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
                 commandeId: commandeId,
                 regieId: '',
                 fournisseur: commande.fournisseur,
+                lots: commande.lots || [],
+                positions0: commande.positions0 || [],
+                positions1: commande.positions1 || [],
+                etape: commande.etape || '',
                 montantHT: commande.montant || commande.calculatedMontant || ''
             });
         } else {
@@ -47,6 +59,10 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
                 regieId: regieId,
                 commandeId: '',
                 fournisseur: regie.fournisseur,
+                lots: regie.lots || [],
+                positions0: regie.positions0 || [],
+                positions1: regie.positions1 || [],
+                etape: regie.etape || '',
                 montantHT: regie.montantTotal || ''
             });
         } else {
@@ -193,6 +209,75 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
                                 className="w-full px-3 py-2 border rounded-lg"
                             />
                         </div>
+                    </div>
+
+                    {/* Lots et Positions */}
+                    <div className="grid grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Lots</label>
+                            <select
+                                multiple
+                                value={formData.lots}
+                                onChange={(e) => setFormData({
+                                    ...formData,
+                                    lots: Array.from(e.target.selectedOptions, option => option.value)
+                                })}
+                                className="w-full px-3 py-2 border rounded-lg h-24"
+                            >
+                                {allLots.map(lot => (
+                                    <option key={lot} value={lot}>{lot}</option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">Maintenez Ctrl pour sélection multiple</p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Positions Niveau 0</label>
+                            <select
+                                multiple
+                                value={formData.positions0}
+                                onChange={(e) => setFormData({
+                                    ...formData,
+                                    positions0: Array.from(e.target.selectedOptions, option => option.value)
+                                })}
+                                className="w-full px-3 py-2 border rounded-lg h-24"
+                            >
+                                {allPos0.map(pos => (
+                                    <option key={pos} value={pos}>{pos}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Positions Niveau 1</label>
+                            <select
+                                multiple
+                                value={formData.positions1}
+                                onChange={(e) => setFormData({
+                                    ...formData,
+                                    positions1: Array.from(e.target.selectedOptions, option => option.value)
+                                })}
+                                className="w-full px-3 py-2 border rounded-lg h-24"
+                            >
+                                {allPos1.map(pos => (
+                                    <option key={pos} value={pos}>{pos}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Étape */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Étape</label>
+                        <select
+                            value={formData.etape}
+                            onChange={(e) => setFormData({...formData, etape: e.target.value})}
+                            className="w-full px-3 py-2 border rounded-lg"
+                        >
+                            <option value="">-- Sélectionner --</option>
+                            <option value="1">Étape 1</option>
+                            <option value="2">Étape 2</option>
+                        </select>
                     </div>
 
                     {/* Montants */}
