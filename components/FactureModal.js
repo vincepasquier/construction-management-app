@@ -1,7 +1,7 @@
 // Modal de gestion des factures
 const { useState } = React;
 
-window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = [] }) => {
+window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = [], estimations = [] }) => {
     const [formData, setFormData] = useState(initialData || {
         numero: '',
         commandeId: '',
