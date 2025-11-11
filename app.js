@@ -825,18 +825,19 @@ const ConstructionManagement = () => {
                 />
             )}
 
-            {showFactureModal && (
-                <window.FactureModal
-                    initialData={editingFacture}
-                    onClose={() => {
-                        setShowFactureModal(false);
-                        setEditingFacture(null);
-                    }}
-                    onSave={handleSaveFacture}
-                    commandes={commandes}
-                    regies={regies}
-                />
-            )}
+{showFactureModal && (
+    <window.FactureModal
+        initialData={editingFacture}
+        onClose={() => {
+            setShowFactureModal(false);
+            setEditingFacture(null);
+        }}
+        onSave={handleSaveFacture}
+        commandes={commandes}
+        regies={regies}
+        estimations={estimations}
+    />
+)}
 
             {showAppelOffreModal && (
                 <window.AppelOffreModal
