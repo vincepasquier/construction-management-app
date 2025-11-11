@@ -26,7 +26,8 @@ window.exportToCSV = (data, filename) => {
         'dateFacture': 'Date Facture',
         'montantHT': 'Montant HT',
         'montantTVA': 'Montant TVA',
-        'montantTTC': 'Montant TTC'
+        'montantTTC': 'Montant TTC',
+        'source': 'Source'
     };
     
     // Obtenir les headers originaux
@@ -124,44 +125,110 @@ window.importCSVData = (file, dataType, callback) => {
             
             console.log('🔍 Headers bruts:', rawHeaders);
             
-            // Mapping des noms de colonnes
+            // Mapping COMPLET des noms de colonnes
             const headerMapping = {
+                // ===== ESTIMATIONS =====
                 'Lot': 'lots',
                 'lot': 'lots',
                 'lots': 'lots',
                 'LOT': 'lots',
+                
                 'Position 0': 'positions0',
                 'position 0': 'positions0',
                 'Position0': 'positions0',
                 'position0': 'positions0',
                 'positions0': 'positions0',
                 'POSITION 0': 'positions0',
+                
                 'Position 1': 'positions1',
                 'position 1': 'positions1',
                 'Position1': 'positions1',
                 'position1': 'positions1',
                 'positions1': 'positions1',
                 'POSITION 1': 'positions1',
+                
                 'Montant CHF': 'montant',
                 'montant chf': 'montant',
                 'Montant': 'montant',
                 'montant': 'montant',
                 'MONTANT CHF': 'montant',
                 'MONTANT': 'montant',
+                
                 'Etape': 'etape',
                 'etape': 'etape',
                 'Étape': 'etape',
                 'étape': 'etape',
                 'ETAPE': 'etape',
+                
                 'Phase': 'phase',
                 'phase': 'phase',
+                
                 'Description': 'description',
                 'description': 'description',
+                
                 'Remarques': 'remarques',
                 'remarques': 'remarques',
                 'remarques.': 'remarques',
+                'Remarque': 'remarques',
+                'remarque': 'remarques',
+                
                 'ID': 'id',
-                'id': 'id'
+                'id': 'id',
+                'Id': 'id',
+                
+                // ===== COMMANDES =====
+                'Numero': 'numero',
+                'numero': 'numero',
+                'Numéro': 'numero',
+                'numéro': 'numero',
+                'N°': 'numero',
+                'n°': 'numero',
+                'N° Commande': 'numero',
+                'Commande': 'numero',
+                'commande': 'numero',
+                
+                'Fournisseur': 'fournisseur',
+                'fournisseur': 'fournisseur',
+                'FOURNISSEUR': 'fournisseur',
+                
+                'Date Commande': 'dateCommande',
+                'date commande': 'dateCommande',
+                'Date commande': 'dateCommande',
+                'dateCommande': 'dateCommande',
+                'datecommande': 'dateCommande',
+                'Date': 'dateCommande',
+                'date': 'dateCommande',
+                
+                'Statut': 'statut',
+                'statut': 'statut',
+                'STATUT': 'statut',
+                'Status': 'statut',
+                'status': 'statut',
+                
+                'Source': 'source',
+                'source': 'source',
+                
+                // ===== OFFRES =====
+                'Date Offre': 'dateOffre',
+                'date offre': 'dateOffre',
+                'dateOffre': 'dateOffre',
+                
+                // ===== FACTURES =====
+                'Date Facture': 'dateFacture',
+                'date facture': 'dateFacture',
+                'dateFacture': 'dateFacture',
+                
+                'Montant HT': 'montantHT',
+                'montant ht': 'montantHT',
+                'montantHT': 'montantHT',
+                
+                'Montant TVA': 'montantTVA',
+                'montant tva': 'montantTVA',
+                'montantTVA': 'montantTVA',
+                
+                'Montant TTC': 'montantTTC',
+                'montant ttc': 'montantTTC',
+                'montantTTC': 'montantTTC'
             };
             
             // Mapper les en-têtes
@@ -188,13 +255,13 @@ window.importCSVData = (file, dataType, callback) => {
                     
                     let value = values[idx] ? values[idx].trim() : '';
                     
-                    // Traiter le montant
+                    // Traiter le montant (pour estimations et commandes)
                     if (header === 'montant') {
                         value = value.replace(/[\s']/g, '').replace(',', '.');
                         const number = parseFloat(value);
                         row[header] = isNaN(number) ? 0 : number;
                     }
-                    // Convertir les lots et positions en arrays
+                    // Convertir les lots et positions en arrays (pour estimations)
                     else if (header === 'lots' || header === 'positions0' || header === 'positions1') {
                         if (value && value !== '-' && value !== '') {
                             if (value.includes(',')) {
@@ -210,6 +277,11 @@ window.importCSVData = (file, dataType, callback) => {
                     else if (header === 'etape') {
                         row[header] = value;
                     }
+                    // Dates
+                    else if (header === 'dateCommande' || header === 'dateOffre' || header === 'dateFacture') {
+                        // Garder la date telle quelle si elle existe
+                        row[header] = value || new Date().toISOString().split('T')[0];
+                    }
                     else {
                         row[header] = value;
                     }
@@ -217,7 +289,11 @@ window.importCSVData = (file, dataType, callback) => {
                 
                 // Ajouter un ID unique si manquant
                 if (!row.id) {
-                    row.id = `EST-${Date.now()}-${i}`;
+                    const prefix = dataType === 'estimations' ? 'EST' : 
+                                 dataType === 'commandes' ? 'CMD' :
+                                 dataType === 'offres' ? 'OFF' :
+                                 dataType === 'factures' ? 'FACT' : 'DATA';
+                    row.id = `${prefix}-${Date.now()}-${i}`;
                 }
                 
                 // Log première ligne pour debug
