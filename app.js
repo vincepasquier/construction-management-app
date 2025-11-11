@@ -254,52 +254,63 @@ const handleSessionNameChange = (newName) => {
         <div className="min-h-screen bg-gray-100 p-6">
             <div className="max-w-7xl mx-auto">
                 {/* En-tête */}
-                <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h1 className="text-3xl font-bold">🏗️ Gestion du Projet de Construction</h1>
-                            <p className="text-gray-600 mt-2">Suivi complet des estimations, offres, commandes et factures</p>
-                        </div>
-                        <div className="flex gap-2">
-    <button
-        onClick={() => setShowExportModal(true)}
-        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-        title="Exporter les données"
-    >
-        📤 Exporter
-    </button>
-    <button
-        onClick={() => setShowImportModal(true)}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-        title="Importer des données"
-    >
-        📥 Importer
-    </button>
-                            <button
-                                onClick={() => {
-                                    if (confirm('⚠️ ATTENTION !\n\nCette action va SUPPRIMER TOUTES LES DONNÉES de manière IRRÉVERSIBLE.\n\nÊtes-vous absolument sûr de vouloir continuer ?')) {
-                                        if (confirm('Dernière confirmation : Toutes les estimations, offres, commandes, régies, factures et appels d\'offres seront supprimés.\n\nConfirmer la suppression ?')) {
-                                            localStorage.clear();
-                                            setEstimations([]);
-                                            setOffres([]);
-                                            setCommandes([]);
-                                            setOffresComplementaires([]);
-                                            setRegies([]);
-                                            setFactures([]);
-                                            setAppelOffres([]);
-                                            alert('✅ Toutes les données ont été supprimées !');
-                                            window.location.reload();
-                                        }
-                                    }
-                                }}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
-                                title="Supprimer toutes les données"
-                            >
-                                🗑️ Reset
-                            </button>
-                        </div>
-                    </div>
-                </div>
+{/* En-tête */}
+<div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+    <div className="flex justify-between items-center">
+        <div>
+            <h1 className="text-3xl font-bold">🏗️ Gestion du Projet de Construction</h1>
+            <p className="text-gray-600 mt-2">Suivi complet des estimations, offres, commandes et factures</p>
+        </div>
+        <div className="flex flex-col gap-3">
+            {/* 🆕 SESSION MANAGER - NOUVEAU */}
+            <window.SessionManager
+                sessionName={sessionName}
+                onSessionNameChange={handleSessionNameChange}
+            />
+            
+            {/* Boutons d'action */}
+            <div className="flex gap-2">
+                <button
+                    onClick={() => setShowExportModal(true)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                    title="Exporter les données"
+                >
+                    📤 Exporter
+                </button>
+                <button
+                    onClick={() => setShowImportModal(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                    title="Importer des données"
+                >
+                    📥 Importer
+                </button>
+                <button
+                    onClick={() => {
+                        if (confirm('⚠️ ATTENTION !\n\nCette action va SUPPRIMER TOUTES LES DONNÉES de manière IRRÉVERSIBLE.\n\nÊtes-vous absolument sûr de vouloir continuer ?')) {
+                            if (confirm('Dernière confirmation : Toutes les estimations, offres, commandes, régies, factures et appels d\'offres seront supprimés.\n\nConfirmer la suppression ?')) {
+                                localStorage.clear();
+                                setEstimations([]);
+                                setOffres([]);
+                                setCommandes([]);
+                                setOffresComplementaires([]);
+                                setRegies([]);
+                                setFactures([]);
+                                setAppelOffres([]);
+                                setSessionName('Projet_Sans_Nom');
+                                alert('✅ Toutes les données ont été supprimées !');
+                                window.location.reload();
+                            }
+                        }
+                    }}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
+                    title="Supprimer toutes les données"
+                >
+                    🗑️ Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
                 {/* Onglets de navigation */}
                 <div className="bg-white rounded-lg shadow-lg mb-6">
