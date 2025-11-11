@@ -22,10 +22,6 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
         description: ''
     });
 
-    const allLots = [...new Set(estimations.flatMap(e => e.lots || []))].sort();
-    const allPos0 = [...new Set(estimations.flatMap(e => e.positions0 || []))].sort();
-    const allPos1 = [...new Set(estimations.flatMap(e => e.positions1 || []))].sort();
-
     // Pré-remplir depuis une commande
     const handleCommandeChange = (commandeId) => {
         const commande = commandes.find(c => c.id === commandeId);
@@ -74,6 +70,16 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
         }
     };
 
+    // Handler pour le SmartSelector
+    const handleSelectionChange = ({ lots, positions0, positions1 }) => {
+        setFormData({
+            ...formData,
+            lots,
+            positions0,
+            positions1
+        });
+    };
+
     // Calculer TVA et TTC automatiquement
     const calculerMontants = () => {
         const ht = parseFloat(formData.montantHT) || 0;
@@ -107,7 +113,7 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-lg p-6 w-full max-w-4xl my-8">
+            <div className="bg-white rounded-lg p-6 w-full max-w-5xl my-8">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold">
                         {initialData ? 'Modifier la facture' : 'Nouvelle facture'}
@@ -117,7 +123,7 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
                     </button>
                 </div>
 
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
                     {/* Informations de base */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -211,59 +217,16 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
                         </div>
                     </div>
 
-                    {/* Lots et Positions */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Lots</label>
-                            <select
-                                multiple
-                                value={formData.lots}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    lots: Array.from(e.target.selectedOptions, option => option.value)
-                                })}
-                                className="w-full px-3 py-2 border rounded-lg h-24"
-                            >
-                                {allLots.map(lot => (
-                                    <option key={lot} value={lot}>{lot}</option>
-                                ))}
-                            </select>
-                            <p className="text-xs text-gray-500 mt-1">Maintenez Ctrl pour sélection multiple</p>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Positions Niveau 0</label>
-                            <select
-                                multiple
-                                value={formData.positions0}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    positions0: Array.from(e.target.selectedOptions, option => option.value)
-                                })}
-                                className="w-full px-3 py-2 border rounded-lg h-24"
-                            >
-                                {allPos0.map(pos => (
-                                    <option key={pos} value={pos}>{pos}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Positions Niveau 1</label>
-                            <select
-                                multiple
-                                value={formData.positions1}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    positions1: Array.from(e.target.selectedOptions, option => option.value)
-                                })}
-                                className="w-full px-3 py-2 border rounded-lg h-24"
-                            >
-                                {allPos1.map(pos => (
-                                    <option key={pos} value={pos}>{pos}</option>
-                                ))}
-                            </select>
-                        </div>
+                    {/* Smart Selector pour Lots/Positions */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <h3 className="font-medium mb-3">📦 Classification</h3>
+                        <window.SmartSelector
+                            estimations={estimations}
+                            selectedLots={formData.lots}
+                            selectedPos0={formData.positions0}
+                            selectedPos1={formData.positions1}
+                            onChange={handleSelectionChange}
+                        />
                     </div>
 
                     {/* Étape */}
