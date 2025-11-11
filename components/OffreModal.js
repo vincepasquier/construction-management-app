@@ -10,7 +10,7 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffr
         lots: [],
         positions0: [],
         positions1: [],
-        etape: '', // 🆕 NOUVEAU
+        etape: '',
         montant: '',
         description: '',
         statut: 'En attente',
@@ -22,9 +22,15 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffr
 
     const [showVersions, setShowVersions] = useState(false);
 
-    const allLots = [...new Set(estimations.flatMap(e => e.lots || []))].sort();
-    const allPos0 = [...new Set(estimations.flatMap(e => e.positions0 || []))].sort();
-    const allPos1 = [...new Set(estimations.flatMap(e => e.positions1 || []))].sort();
+    // Handler pour le SmartSelector
+    const handleSelectionChange = ({ lots, positions0, positions1 }) => {
+        setFormData({
+            ...formData,
+            lots,
+            positions0,
+            positions1
+        });
+    };
 
     const handleSubmit = () => {
         if (!formData.numero || !formData.fournisseur || !formData.montant) {
@@ -74,7 +80,6 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffr
         setFormData({...formData, appelOffreId: aoId});
         
         if (aoId && formData.montant) {
-            // Vérifier si cette offre serait la moins chère
             const offresLiees = offres.filter(o => o.appelOffreId === aoId && o.id !== formData.id);
             const montantActuel = parseFloat(formData.montant);
             const estLaMoinsChère = offresLiees.every(o => montantActuel < (o.montant || Infinity));
@@ -87,7 +92,7 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffr
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-lg p-6 w-full max-w-4xl my-8">
+            <div className="bg-white rounded-lg p-6 w-full max-w-5xl my-8">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold">
                         {initialData ? 'Modifier l\'offre' : 'Nouvelle offre'}
@@ -134,7 +139,7 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffr
                 )}
 
                 {/* Formulaire */}
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-[65vh] overflow-y-auto">
                     {/* Informations de base */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -187,7 +192,7 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffr
                         </div>
                     </div>
 
-                    {/* 🆕 Appel d'Offres */}
+                    {/* Appel d'Offres */}
                     {appelOffres.length > 0 && (
                         <div>
                             <label className="block text-sm font-medium mb-1">
@@ -216,65 +221,19 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffr
                         </div>
                     )}
 
-                    {/* Lots et Positions */}
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Lots</label>
-                        <select
-                            multiple
-                            value={formData.lots}
-                            onChange={(e) => setFormData({
-                                ...formData,
-                                lots: Array.from(e.target.selectedOptions, option => option.value)
-                            })}
-                            className="w-full px-3 py-2 border rounded-lg"
-                            size="3"
-                        >
-                            {allLots.map(lot => (
-                                <option key={lot} value={lot}>{lot}</option>
-                            ))}
-                        </select>
-                        <p className="text-xs text-gray-500 mt-1">Maintenez Ctrl (Cmd sur Mac) pour sélectionner plusieurs lots</p>
+                    {/* Smart Selector pour Lots/Positions */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <h3 className="font-medium mb-3">📦 Classification</h3>
+                        <window.SmartSelector
+                            estimations={estimations}
+                            selectedLots={formData.lots}
+                            selectedPos0={formData.positions0}
+                            selectedPos1={formData.positions1}
+                            onChange={handleSelectionChange}
+                        />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Positions Niveau 0</label>
-                            <select
-                                multiple
-                                value={formData.positions0}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    positions0: Array.from(e.target.selectedOptions, option => option.value)
-                                })}
-                                className="w-full px-3 py-2 border rounded-lg"
-                                size="3"
-                            >
-                                {allPos0.map(pos => (
-                                    <option key={pos} value={pos}>{pos}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Positions Niveau 1</label>
-                            <select
-                                multiple
-                                value={formData.positions1}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    positions1: Array.from(e.target.selectedOptions, option => option.value)
-                                })}
-                                className="w-full px-3 py-2 border rounded-lg"
-                                size="3"
-                            >
-                                {allPos1.map(pos => (
-                                    <option key={pos} value={pos}>{pos}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    {/* 🆕 ÉTAPE */}
+                    {/* Étape */}
                     <div>
                         <label className="block text-sm font-medium mb-1">
                             Étape
