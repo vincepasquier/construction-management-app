@@ -731,11 +731,25 @@ const handleSessionNameChange = (newName) => {
                                     <Plus />Nouvelle commande
                                 </button>
                             </div>
-                            <div className="text-center py-12 text-gray-500">
-                                <p>Fonctionnalité disponible - Créez une commande</p>
-                            </div>
-                        </div>
-                    )}
+                    
+                            {commandes.length === 0 ? (
+                                <div className="text-center py-12 text-gray-500">
+                                    <p>Aucune commande. Créez-en une ou importez des données.</p>
+                                </div>
+                            ) : (
+            <>
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-4 py-3 text-left text-sm">N° Commande</th>
+                                <th className="px-4 py-3 text-left text-sm">Fournisseur</th>
+                                <th className="px-4 py-3 text-left text-sm">Date</th>
+                                <th className="px-4 py-3 text-left text-sm">Lots</th>
+                                <th className="px-4 py-3 text-center text-sm">Étape</th>
+                                <th className="px-4 py-3 text-right text-sm">Montant (CHF)</th>
+                                <th className="px-4 py-3 text-left text-sm">Statut</th>
+                                <th className="px-4 py-3 text-center text
 
                     {activeTab === 'regies' && (
                         <div className="bg-white rounded-lg shadow-lg p-6">
