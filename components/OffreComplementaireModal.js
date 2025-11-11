@@ -10,15 +10,12 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
         lots: [],
         positions0: [],
         positions1: [],
+        etape: '',
         montant: '',
         description: '',
         statut: 'En attente',
         motif: ''
     });
-
-    const allLots = [...new Set(estimations.flatMap(e => e.lots || []))].sort();
-    const allPos0 = [...new Set(estimations.flatMap(e => e.positions0 || []))].sort();
-    const allPos1 = [...new Set(estimations.flatMap(e => e.positions1 || []))].sort();
 
     // Pré-remplir les informations depuis l'offre originale
     const handleOffreOriginaleChange = (offreId) => {
@@ -30,7 +27,8 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                 fournisseur: offre.fournisseur,
                 lots: offre.lots || [],
                 positions0: offre.positions0 || [],
-                positions1: offre.positions1 || []
+                positions1: offre.positions1 || [],
+                etape: offre.etape || ''
             });
         } else {
             setFormData({
@@ -38,6 +36,16 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                 offreOriginaleId: offreId
             });
         }
+    };
+
+    // Handler pour le SmartSelector
+    const handleSelectionChange = ({ lots, positions0, positions1 }) => {
+        setFormData({
+            ...formData,
+            lots,
+            positions0,
+            positions1
+        });
     };
 
     const handleSubmit = () => {
@@ -59,7 +67,7 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-            <div className="bg-white rounded-lg p-6 w-full max-w-4xl my-8">
+            <div className="bg-white rounded-lg p-6 w-full max-w-5xl my-8">
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold">
                         {initialData ? 'Modifier l\'offre complémentaire' : 'Nouvelle offre complémentaire'}
@@ -69,7 +77,7 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                     </button>
                 </div>
 
-                <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
                     {/* Informations de base */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -150,59 +158,30 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                         </select>
                     </div>
 
-                    {/* Lots et Positions */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Lots</label>
-                            <select
-                                multiple
-                                value={formData.lots}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    lots: Array.from(e.target.selectedOptions, option => option.value)
-                                })}
-                                className="w-full px-3 py-2 border rounded-lg h-24"
-                            >
-                                {allLots.map(lot => (
-                                    <option key={lot} value={lot}>{lot}</option>
-                                ))}
-                            </select>
-                            <p className="text-xs text-gray-500 mt-1">Maintenez Ctrl pour sélection multiple</p>
-                        </div>
+                    {/* Smart Selector pour Lots/Positions */}
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                        <h3 className="font-medium mb-3">📦 Classification</h3>
+                        <window.SmartSelector
+                            estimations={estimations}
+                            selectedLots={formData.lots}
+                            selectedPos0={formData.positions0}
+                            selectedPos1={formData.positions1}
+                            onChange={handleSelectionChange}
+                        />
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Positions Niveau 0</label>
-                            <select
-                                multiple
-                                value={formData.positions0}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    positions0: Array.from(e.target.selectedOptions, option => option.value)
-                                })}
-                                className="w-full px-3 py-2 border rounded-lg h-24"
-                            >
-                                {allPos0.map(pos => (
-                                    <option key={pos} value={pos}>{pos}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Positions Niveau 1</label>
-                            <select
-                                multiple
-                                value={formData.positions1}
-                                onChange={(e) => setFormData({
-                                    ...formData,
-                                    positions1: Array.from(e.target.selectedOptions, option => option.value)
-                                })}
-                                className="w-full px-3 py-2 border rounded-lg h-24"
-                            >
-                                {allPos1.map(pos => (
-                                    <option key={pos} value={pos}>{pos}</option>
-                                ))}
-                            </select>
-                        </div>
+                    {/* Étape */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Étape</label>
+                        <select
+                            value={formData.etape}
+                            onChange={(e) => setFormData({...formData, etape: e.target.value})}
+                            className="w-full px-3 py-2 border rounded-lg"
+                        >
+                            <option value="">-- Sélectionner --</option>
+                            <option value="1">Étape 1</option>
+                            <option value="2">Étape 2</option>
+                        </select>
                     </div>
 
                     {/* Montant et Statut */}
