@@ -717,109 +717,109 @@ const handleSessionNameChange = (newName) => {
                         </div>
                     )}
 
-                                    {activeTab === 'commandes' && (
-                    <div className="bg-white rounded-lg shadow-lg p-6">
-                        <div className="flex justify-between mb-6">
-                            <h2 className="text-xl font-bold">Commandes</h2>
-                            <button
-                                onClick={() => {
-                                    setEditingCommande(null);
-                                    setShowCommandeModal(true);
-                                }}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                            >
-                                <Plus />Nouvelle commande
-                            </button>
-                        </div>
-                
-                        {commandes.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500">
-                                <p>Aucune commande. Créez-en une ou importez des données.</p>
-                            </div>
-                        ) : (
-                            <>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead className="bg-gray-50">
-                                            <tr>
-                                                <th className="px-4 py-3 text-left text-sm">N° Commande</th>
-                                                <th className="px-4 py-3 text-left text-sm">Fournisseur</th>
-                                                <th className="px-4 py-3 text-left text-sm">Date</th>
-                                                <th className="px-4 py-3 text-left text-sm">Lots</th>
-                                                <th className="px-4 py-3 text-center text-sm">Étape</th>
-                                                <th className="px-4 py-3 text-right text-sm">Montant (CHF)</th>
-                                                <th className="px-4 py-3 text-left text-sm">Statut</th>
-                                                <th className="px-4 py-3 text-center text-sm">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {commandes.map(cmd => (
-                                                <tr key={cmd.id} className="border-t hover:bg-gray-50">
-                                                    <td className="px-4 py-3">
-                                                        <button
-                                                            onClick={() => {
-                                                                setEditingCommande(cmd);
-                                                                setShowCommandeModal(true);
-                                                            }}
-                                                            className="text-blue-600 hover:underline font-medium"
-                                                        >
-                                                            {cmd.numero}
-                                                        </button>
-                                                    </td>
-                                                    <td className="px-4 py-3">{cmd.fournisseur}</td>
-                                                    <td className="px-4 py-3 text-sm">
-                                                        {new Date(cmd.dateCommande).toLocaleDateString('fr-CH')}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-xs">{cmd.lots?.join(', ') || '-'}</td>
-                                                    <td className="px-4 py-3 text-center">
-                                                        {cmd.etape ? (
-                                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                                cmd.etape === '1' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
-                                                            }`}>
-                                                                Ét. {cmd.etape}
-                                                            </span>
-                                                        ) : '-'}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-right font-medium">
-                                                        {cmd.montant?.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                                                    </td>
-                                                    <td className="px-4 py-3">
-                                                        <span className={`px-2 py-1 rounded text-xs ${
-                                                            cmd.statut === 'Terminée' ? 'bg-green-100 text-green-800' :
-                                                            cmd.statut === 'Annulée' ? 'bg-red-100 text-red-800' :
-                                                            'bg-yellow-100 text-yellow-800'
-                                                        }`}>
-                                                            {cmd.statut}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-3 text-center">
-                                                        <button
-                                                            onClick={() => {
-                                                                if (confirm('Supprimer cette commande ?')) {
-                                                                    const updated = commandes.filter(c => c.id !== cmd.id);
-                                                                    setCommandes(updated);
-                                                                    window.saveData('commandes', updated);
-                                                                }
-                                                            }}
-                                                            className="text-red-600 hover:text-red-800"
-                                                        >
-                                                            <Trash2 size={18} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                                    <p className="font-semibold">
-                                        Total commandes: {commandes.reduce((sum, c) => sum + (c.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                                    </p>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
+{activeTab === 'commandes' && (
+    <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex justify-between mb-6">
+            <h2 className="text-xl font-bold">Commandes</h2>
+            <button
+                onClick={() => {
+                    setEditingCommande(null);
+                    setShowCommandeModal(true);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+            >
+                <Plus />Nouvelle commande
+            </button>
+        </div>
+
+        {commandes.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+                <p>Aucune commande. Créez-en une ou importez des données.</p>
+            </div>
+        ) : (
+            <>
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-4 py-3 text-left text-sm">N° Commande</th>
+                                <th className="px-4 py-3 text-left text-sm">Fournisseur</th>
+                                <th className="px-4 py-3 text-left text-sm">Date</th>
+                                <th className="px-4 py-3 text-left text-sm">Lots</th>
+                                <th className="px-4 py-3 text-center text-sm">Étape</th>
+                                <th className="px-4 py-3 text-right text-sm">Montant (CHF)</th>
+                                <th className="px-4 py-3 text-left text-sm">Statut</th>
+                                <th className="px-4 py-3 text-center text-sm">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {commandes.map(cmd => (
+                                <tr key={cmd.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3">
+                                        <button
+                                            onClick={() => {
+                                                setEditingCommande(cmd);
+                                                setShowCommandeModal(true);
+                                            }}
+                                            className="text-blue-600 hover:underline font-medium"
+                                        >
+                                            {cmd.numero}
+                                        </button>
+                                    </td>
+                                    <td className="px-4 py-3">{cmd.fournisseur}</td>
+                                    <td className="px-4 py-3 text-sm">
+                                        {new Date(cmd.dateCommande).toLocaleDateString('fr-CH')}
+                                    </td>
+                                    <td className="px-4 py-3 text-xs">{cmd.lots?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-center">
+                                        {cmd.etape ? (
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                                cmd.etape === '1' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
+                                            }`}>
+                                                Ét. {cmd.etape}
+                                            </span>
+                                        ) : '-'}
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {cmd.montant?.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <span className={`px-2 py-1 rounded text-xs ${
+                                            cmd.statut === 'Terminée' ? 'bg-green-100 text-green-800' :
+                                            cmd.statut === 'Annulée' ? 'bg-red-100 text-red-800' :
+                                            'bg-yellow-100 text-yellow-800'
+                                        }`}>
+                                            {cmd.statut}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <button
+                                            onClick={() => {
+                                                if (confirm('Supprimer cette commande ?')) {
+                                                    const updated = commandes.filter(c => c.id !== cmd.id);
+                                                    setCommandes(updated);
+                                                    window.saveData('commandes', updated);
+                                                }
+                                            }}
+                                            className="text-red-600 hover:text-red-800"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <p className="font-semibold">
+                        Total commandes: {commandes.reduce((sum, c) => sum + (c.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                    </p>
+                </div>
+            </>
+        )}
+    </div>
+)}
             <>
                 <div className="overflow-x-auto">
                     <table className="w-full">
