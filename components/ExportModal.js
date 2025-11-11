@@ -1,7 +1,7 @@
-// Modal d'export avancé avec multiples formats
+// Modal d'export avancé avec sessions nommées
 const { useState } = React;
 
-window.ExportModal = ({ onClose, data }) => {
+window.ExportModal = ({ onClose, data, sessionName }) => {
     const [exportFormat, setExportFormat] = useState('csv');
     const [exportType, setExportType] = useState('all');
     const [selectedModules, setSelectedModules] = useState({
@@ -45,13 +45,31 @@ window.ExportModal = ({ onClose, data }) => {
         setSelectedModules(noneSelected);
     };
 
+    // Générer le nom de fichier intelligent
+    const generateFileName = (baseType = '') => {
+        const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const cleanSessionName = sessionName.replace(/[^a-z0-9]/gi, '_');
+        
+        if (exportType === 'all') {
+            return `${cleanSessionName}_complet_${date}`;
+        } else {
+            const selectedKeys = Object.keys(selectedModules).filter(k => selectedModules[k]);
+            if (selectedKeys.length === 1) {
+                return `${cleanSessionName}_${selectedKeys[0]}_${date}`;
+            } else {
+                return `${cleanSessionName}_${selectedKeys.length}modules_${date}`;
+            }
+        }
+    };
+
     const handleExport = async () => {
         setIsExporting(true);
 
         try {
             if (exportType === 'all') {
-                // Export complet JSON
+                // Export complet JSON avec session
                 const exportData = {
+                    sessionName: sessionName,
                     exportDate: new Date().toISOString(),
                     version: '1.0',
                     ...data
@@ -66,7 +84,8 @@ window.ExportModal = ({ onClose, data }) => {
                     };
                 }
 
-                window.exportToJSON(exportData, 'projet_construction_complet');
+                const fileName = generateFileName();
+                window.exportToJSON(exportData, fileName);
                 alert('✅ Export JSON complet réussi !');
             } else {
                 // Export sélectif
@@ -85,24 +104,27 @@ window.ExportModal = ({ onClose, data }) => {
 
                 if (exportFormat === 'json') {
                     const exportData = {
+                        sessionName: sessionName,
                         exportDate: new Date().toISOString(),
                         ...selectedData
                     };
-                    window.exportToJSON(exportData, 'export_selectif');
+                    const fileName = generateFileName();
+                    window.exportToJSON(exportData, fileName);
                     alert('✅ Export JSON réussi !');
                 } else if (exportFormat === 'csv') {
                     // Export CSV pour chaque module sélectionné
                     let exportCount = 0;
+                    const date = new Date().toISOString().split('T')[0];
+                    const cleanSessionName = sessionName.replace(/[^a-z0-9]/gi, '_');
+                    
                     Object.keys(selectedData).forEach(key => {
                         if (selectedData[key] && selectedData[key].length > 0) {
-                            window.exportToCSV(selectedData[key], key);
+                            const fileName = `${cleanSessionName}_${key}_${date}`;
+                            window.exportToCSV(selectedData[key], fileName);
                             exportCount++;
                         }
                     });
                     alert(`✅ ${exportCount} fichier(s) CSV exporté(s) !`);
-                } else if (exportFormat === 'excel') {
-                    alert('📊 Export Excel multi-onglets en cours de développement...');
-                    // TODO: Implémenter export Excel
                 }
             }
 
@@ -124,6 +146,7 @@ window.ExportModal = ({ onClose, data }) => {
     const saveExportHistory = () => {
         const history = JSON.parse(localStorage.getItem('exportHistory') || '[]');
         history.unshift({
+            sessionName: sessionName,
             date: new Date().toISOString(),
             format: exportFormat,
             type: exportType,
@@ -142,10 +165,26 @@ window.ExportModal = ({ onClose, data }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold">📤 Exporter les données</h2>
+                    <div>
+                        <h2 className="text-2xl font-bold">📤 Exporter les données</h2>
+                        <p className="text-sm text-gray-600 mt-1">Session : <span className="font-semibold text-purple-600">{sessionName}</span></p>
+                    </div>
                     <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
                         <window.Icons.X />
                     </button>
+                </div>
+
+                {/* Aperçu du nom de fichier */}
+                <div className="mb-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-purple-600 font-semibold">📄 Nom du fichier :</span>
+                    </div>
+                    <code className="text-sm font-mono bg-white px-3 py-2 rounded border block">
+                        {generateFileName()}.{exportFormat === 'csv' ? 'csv' : 'json'}
+                    </code>
+                    <p className="text-xs text-gray-600 mt-2">
+                        Format : [Projet]_[Modules]_[Date].{exportFormat}
+                    </p>
                 </div>
 
                 {/* Type d'export */}
@@ -163,7 +202,7 @@ window.ExportModal = ({ onClose, data }) => {
                             <div className="text-2xl mb-2">📦</div>
                             <div className="font-semibold">Export complet</div>
                             <div className="text-sm text-gray-600">
-                                Toutes les données en un seul fichier JSON
+                                Toutes les données + nom de session
                             </div>
                         </button>
 
@@ -188,7 +227,7 @@ window.ExportModal = ({ onClose, data }) => {
                 {exportType === 'selective' && (
                     <div className="mb-6">
                         <label className="block text-sm font-medium mb-3">Format d'export</label>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => setExportFormat('csv')}
                                 className={`p-3 border-2 rounded-lg transition-all ${
@@ -200,19 +239,6 @@ window.ExportModal = ({ onClose, data }) => {
                                 <div className="text-2xl mb-1">📄</div>
                                 <div className="font-semibold text-sm">CSV</div>
                                 <div className="text-xs text-gray-600">Un fichier par module</div>
-                            </button>
-
-                            <button
-                                onClick={() => setExportFormat('excel')}
-                                className={`p-3 border-2 rounded-lg transition-all ${
-                                    exportFormat === 'excel'
-                                        ? 'border-blue-500 bg-blue-50'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                }`}
-                            >
-                                <div className="text-2xl mb-1">📊</div>
-                                <div className="font-semibold text-sm">Excel</div>
-                                <div className="text-xs text-gray-600">Multi-onglets</div>
                             </button>
 
                             <button
@@ -308,30 +334,6 @@ window.ExportModal = ({ onClose, data }) => {
                         </label>
                     </div>
                 )}
-
-                {/* Informations */}
-                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex gap-2">
-                        <span className="text-yellow-600">💡</span>
-                        <div className="text-sm text-yellow-800">
-                            {exportType === 'all' ? (
-                                <>
-                                    <p className="font-semibold mb-1">Export complet JSON</p>
-                                    <p>Idéal pour la sauvegarde complète et la restauration. Tous les modules seront exportés dans un seul fichier.</p>
-                                </>
-                            ) : (
-                                <>
-                                    <p className="font-semibold mb-1">Export sélectif</p>
-                                    <p>
-                                        {exportFormat === 'csv' && 'Chaque module sélectionné sera exporté dans un fichier CSV séparé.'}
-                                        {exportFormat === 'excel' && 'Tous les modules sélectionnés seront exportés dans un fichier Excel avec un onglet par module.'}
-                                        {exportFormat === 'json' && 'Les modules sélectionnés seront exportés dans un seul fichier JSON.'}
-                                    </p>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
 
                 {/* Boutons */}
                 <div className="flex justify-end gap-3 pt-4 border-t">
