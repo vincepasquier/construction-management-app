@@ -245,20 +245,20 @@ const ConstructionManagement = () => {
                             <p className="text-gray-600 mt-2">Suivi complet des estimations, offres, commandes et factures</p>
                         </div>
                         <div className="flex gap-2">
-                            <button
-                                onClick={handleExportAllData}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-                                title="Exporter toutes les données (JSON)"
-                            >
-                                💾 Exporter tout
-                            </button>
-                            <button
-                                onClick={() => setShowImportModal(true)}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                                title="Importer des données"
-                            >
-                                📥 Importer
-                            </button>
+    <button
+        onClick={() => setShowExportModal(true)}
+        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+        title="Exporter les données"
+    >
+        📤 Exporter
+    </button>
+    <button
+        onClick={() => setShowImportModal(true)}
+        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        title="Importer des données"
+    >
+        📥 Importer
+    </button>
                             <button
                                 onClick={() => {
                                     if (confirm('⚠️ ATTENTION !\n\nCette action va SUPPRIMER TOUTES LES DONNÉES de manière IRRÉVERSIBLE.\n\nÊtes-vous absolument sûr de vouloir continuer ?')) {
