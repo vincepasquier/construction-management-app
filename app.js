@@ -696,7 +696,89 @@ const handleSessionNameChange = (newName) => {
                         </div>
                     )}
 
-                    {/* Autres onglets (OC, Commandes, Régies, Factures) */}
+                   {/* Offres Complémentaires */}
+{activeTab === 'offresComplementaires' && (
+    <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex justify-between mb-6">
+            <h2 className="text-xl font-bold">Offres Complémentaires</h2>
+            <button
+                onClick={() => {
+                    setEditingOffreComp(null);
+                    setShowOffreCompModal(true);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+            >
+                <Plus />Nouvelle OC
+            </button>
+        </div>
+        <div className="text-center py-12 text-gray-500">
+            <p>Aucune offre complémentaire</p>
+        </div>
+    </div>
+)}
+
+{/* Commandes */}
+{activeTab === 'commandes' && (
+    <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex justify-between mb-6">
+            <h2 className="text-xl font-bold">Commandes</h2>
+            <button
+                onClick={() => {
+                    setEditingCommande(null);
+                    setShowCommandeModal(true);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+            >
+                <Plus />Nouvelle commande
+            </button>
+        </div>
+        <div className="text-center py-12 text-gray-500">
+            <p>Vous avez {commandes.length} commande(s) - Total: {commandes.reduce((sum, c) => sum + (c.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF</p>
+        </div>
+    </div>
+)}
+
+{/* Régies */}
+{activeTab === 'regies' && (
+    <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex justify-between mb-6">
+            <h2 className="text-xl font-bold">Régies</h2>
+            <button
+                onClick={() => {
+                    setEditingRegie(null);
+                    setShowRegieModal(true);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+            >
+                <Plus />Nouvelle régie
+            </button>
+        </div>
+        <div className="text-center py-12 text-gray-500">
+            <p>Aucune régie</p>
+        </div>
+    </div>
+)}
+
+{/* Factures */}
+{activeTab === 'factures' && (
+    <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="flex justify-between mb-6">
+            <h2 className="text-xl font-bold">Factures</h2>
+            <button
+                onClick={() => {
+                    setEditingFacture(null);
+                    setShowFactureModal(true);
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+            >
+                <Plus />Nouvelle facture
+            </button>
+        </div>
+        <div className="text-center py-12 text-gray-500">
+            <p>Aucune facture</p>
+        </div>
+    </div>
+)}
 
                     {/* Alignement Budgétaire */}
                     {activeTab === 'alignement' && (
