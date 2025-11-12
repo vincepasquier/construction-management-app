@@ -500,61 +500,76 @@ const ConstructionManagement = () => {
                                 { key: 'montant', label: 'Montant (CHF)', align: 'right' },
                                 { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
                             ]}
-                            renderRow={(offre) => (
-                                <tr key={offre.id} className="border-t hover:bg-gray-50">
-                                    <td className="px-4 py-3">
-                                        <span className="font-medium text-blue-600">
-                                            {offre.numero}
-                                        </span>
-                                        {offre.isFavorite && (
-                                            <span className="ml-2 text-yellow-500" title="Offre favorite">⭐</span>
-                                        )}
-                                    </td>
-                                    <td className="px-4 py-3">{offre.fournisseur}</td>
-                                    <td className="px-4 py-3 text-xs">{offre.lots?.join(', ') || '-'}</td>
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-1 rounded text-xs ${
-                                            offre.statut === 'Acceptée' ? 'bg-green-100 text-green-800' :
-                                            offre.statut === 'Refusée' ? 'bg-red-100 text-red-800' :
-                                            'bg-gray-100 text-gray-800'
-                                        }`}>
-                                            {offre.statut || 'En attente'}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-right font-medium">
-                                        {offre.montant?.toLocaleString('fr-CH')} CHF
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <button 
-                                            onClick={() => {
-                                                setEditingOffre(offre);
-                                                setShowOffreModal(true);
-                                            }}
-                                            className="text-blue-600 hover:text-blue-800"
-                                        >
-                                            <Edit2 />
-                                        </button>
-                                    </td>
-                                </tr>
-                            )}
-                            emptyMessage="Aucune offre"
-                            actions={
-                                <>
-                                    <h2 className="text-xl font-bold">💼 Offres</h2>
-                                    <button
-                                        onClick={() => {
-                                            setEditingOffre(null);
-                                            setShowOffreModal(true);
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                    >
-                                        <Plus size={20} />
-                                        Nouvelle offre
-                                    </button>
-                                </>
-                            }
-                        />
-                    )}
+                          renderRow={(offre) => (
+    <tr key={offre.id} className="border-t hover:bg-gray-50">
+        <td className="px-4 py-3">
+            <span className="font-medium text-blue-600">
+                {offre.numero}
+            </span>
+            {offre.isFavorite && (
+                <span className="ml-2 text-yellow-500" title="Offre favorite">⭐</span>
+            )}
+        </td>
+        <td className="px-4 py-3">{offre.fournisseur}</td>
+        <td className="px-4 py-3 text-xs">{offre.lots?.join(', ') || '-'}</td>
+        <td className="px-4 py-3 text-center">
+            <span className={`px-2 py-1 rounded text-xs ${
+                offre.statut === 'Acceptée' ? 'bg-green-100 text-green-800' :
+                offre.statut === 'Refusée' ? 'bg-red-100 text-red-800' :
+                'bg-gray-100 text-gray-800'
+            }`}>
+                {offre.statut || 'En attente'}
+            </span>
+        </td>
+        <td className="px-4 py-3 text-right font-medium">
+            {offre.montant?.toLocaleString('fr-CH')} CHF
+        </td>
+        <td className="px-4 py-3 text-center">
+            <div className="flex items-center justify-center gap-2">
+                <button 
+                    onClick={() => {
+                        setEditingOffre(offre);
+                        setShowOffreModal(true);
+                    }}
+                    className="text-blue-600 hover:text-blue-800"
+                    title="Modifier"
+                >
+                    <Edit2 size={16} />
+                </button>
+                <button 
+                    onClick={() => {
+                        if (confirm(`Supprimer l'offre ${offre.numero} ?`)) {
+                            const updated = offres.filter(o => o.id !== offre.id);
+                            setOffres(updated);
+                            window.saveData('offres', updated);
+                            alert('✅ Offre supprimée');
+                        }
+                    }}
+                    className="text-red-600 hover:text-red-800"
+                    title="Supprimer"
+                >
+                    <Trash2 size={16} />
+                </button>
+            </div>
+        </td>
+    </tr>
+)}
+emptyMessage="Aucune offre"
+actions={
+    <>
+        <h2 className="text-xl font-bold">💼 Offres</h2>
+        <button
+            onClick={() => {
+                setEditingOffre(null);
+                setShowOffreModal(true);
+            }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+        >
+            <Plus size={20} />
+            Nouvelle offre
+        </button>
+    </>
+}
 {/* Offres Complémentaires avec SmartTable */}
                     {activeTab === 'offresComplementaires' && (
                         <window.SmartTable
