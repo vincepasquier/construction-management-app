@@ -1016,34 +1016,36 @@ const handleSessionNameChange = (newName) => {
     />
 )}
 
-            {showAppelOffreModal && (
-                <window.AppelOffreModal
-                    initialData={editingAppelOffre}
-                    onClose={() => {
-                        setShowAppelOffreModal(false);
-                        setEditingAppelOffre(null);
-                    }}
-                    onSave={handleSaveAppelOffre}
-                    estimations={estimations}
-                />
-            )}
+{/* MODALS AO DÉSACTIVÉS
+{showAppelOffreModal && (
+    <window.AppelOffreModal
+        initialData={editingAppelOffre}
+        onClose={() => {
+            setShowAppelOffreModal(false);
+            setEditingAppelOffre(null);
+        }}
+        onSave={handleSaveAppelOffre}
+        estimations={estimations}
+    />
+)}
 
-            {/*showAppelOffreDetail && selectedAppelOffre && (
-                <window.AppelOffreDetailView
-                    appelOffre={selectedAppelOffre}
-                    offres={offres}
-                    onClose={() => {
-                        setShowAppelOffreDetail(false);
-                        setSelectedAppelOffre(null);
-                    }}
-                    onUpdateOffres={handleUpdateFavorites}
-                    onChangeFavorite={handleChangeFavoriteFromDetail}  // ← AJOUTEZ CETTE LIGNE
-                    onCreateCommande={handleCreateCommandeFromAO}
-                />
-            )}
+{showAppelOffreDetail && selectedAppelOffre && (
+    <window.AppelOffreDetailView
+        appelOffre={selectedAppelOffre}
+        offres={offres}
+        onClose={() => {
+            setShowAppelOffreDetail(false);
+            setSelectedAppelOffre(null);
+        }}
+        onUpdateOffres={handleUpdateFavorites}
+        onChangeFavorite={handleChangeFavoriteFromDetail}
+        onCreateCommande={handleCreateCommandeFromAO}
+    />
+)}
+*/}
         </div>
     );
-};*/}
+};
 
 // Montage de l'application
 const root = ReactDOM.createRoot(document.getElementById('root'));
