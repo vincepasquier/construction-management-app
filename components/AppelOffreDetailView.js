@@ -258,8 +258,8 @@ const handleChangeFavorite = (offreId) => {
                                 onClick={handleCreateCommandeFromFavorite}
                                 className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
                             >
-                                <window.Icons.Check />
-                                Créer commande depuis favorite
+                            <window.Icons.Plus />
+                            Créer commande depuis favorite
                             </button>
                         )}
                         <button 
