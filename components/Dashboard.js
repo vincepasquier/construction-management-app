@@ -1,358 +1,488 @@
-// Alignement Budgétaire - Vue hiérarchique avec ventilation au prorata
+// Dashboard Avancé - Vue d'ensemble avec graphiques temporels et projections
 const { useState, useMemo } = React;
 
-window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, commandes, regies, factures }) => {
-    const [expandedLots, setExpandedLots] = useState({});
-    const [expandedPos0, setExpandedPos0] = useState({});
-    const [searchTerm, setSearchTerm] = useState('');
+window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, regies, factures }) => {
+    const [filters, setFilters] = useState({
+        lot: '',
+        position0: '',
+        position1: '',
+        fournisseur: ''
+    });
 
-    // Construction de la hiérarchie avec ventilation au prorata
-    const hierarchyData = useMemo(() => {
-        const hierarchy = {};
+    const [timeView, setTimeView] = useState('cumulative'); // 'cumulative' ou 'monthly'
 
-        // 1. D'ABORD créer la structure depuis les estimations
-        estimations.forEach(est => {
-            (est.lots || []).forEach(lot => {
-                if (!hierarchy[lot]) {
-                    hierarchy[lot] = { 
-                        estimation: 0, offres: 0, offresComp: 0,
-                        commandes: 0, regies: 0, factures: 0,
-                        positions0: {} 
-                    };
-                }
-                hierarchy[lot].estimation += est.montant || 0;
+    // Listes pour les filtres
+    const allLots = useMemo(() => {
+        return [...new Set(estimations.flatMap(e => e.lots || []))].sort();
+    }, [estimations]);
 
-                (est.positions0 || []).forEach(pos0 => {
-                    if (!hierarchy[lot].positions0[pos0]) {
-                        hierarchy[lot].positions0[pos0] = { 
-                            estimation: 0, offres: 0, offresComp: 0,
-                            commandes: 0, regies: 0, factures: 0,
-                            positions1: {} 
-                        };
-                    }
-                    hierarchy[lot].positions0[pos0].estimation += est.montant || 0;
+    const allPos0 = useMemo(() => {
+        return [...new Set(estimations.flatMap(e => e.positions0 || []))].sort();
+    }, [estimations]);
 
-                    (est.positions1 || []).forEach(pos1 => {
-                        if (!hierarchy[lot].positions0[pos0].positions1[pos1]) {
-                            hierarchy[lot].positions0[pos0].positions1[pos1] = { 
-                                estimation: 0, offres: 0, offresComp: 0,
-                                commandes: 0, regies: 0, factures: 0
-                            };
-                        }
-                        hierarchy[lot].positions0[pos0].positions1[pos1].estimation += est.montant || 0;
-                    });
-                });
-            });
+    const allPos1 = useMemo(() => {
+        return [...new Set(estimations.flatMap(e => e.positions1 || []))].sort();
+    }, [estimations]);
+
+    const allFournisseurs = useMemo(() => {
+        const fournisseurs = new Set();
+        [...offres, ...commandes, ...factures].forEach(item => {
+            if (item.fournisseur) fournisseurs.add(item.fournisseur);
         });
+        return [...fournisseurs].sort();
+    }, [offres, commandes, factures]);
 
-        // 2. Fonction pour ventiler au prorata
-        const addToHierarchyProrata = (lots, pos0s, pos1s, montant, type) => {
-            if (!lots || lots.length === 0 || !montant) return;
-            
-            // Construire la liste des combinaisons valides
-            const combinations = [];
-            
-            lots.forEach(lot => {
-                if (!hierarchy[lot]) return; // Lot n'existe pas dans estimations
-                
-                if (!pos0s || pos0s.length === 0) {
-                    // Pas de positions spécifiées
-                    combinations.push({ lot, pos0: null, pos1: null, estimation: hierarchy[lot].estimation });
-                } else {
-                    pos0s.forEach(pos0 => {
-                        if (!hierarchy[lot].positions0[pos0]) return; // pos0 n'existe pas
-                        
-                        if (!pos1s || pos1s.length === 0) {
-                            // Pas de pos1 spécifiées
-                            combinations.push({ 
-                                lot, pos0, pos1: null, 
-                                estimation: hierarchy[lot].positions0[pos0].estimation 
-                            });
-                        } else {
-                            pos1s.forEach(pos1 => {
-                                if (!hierarchy[lot].positions0[pos0].positions1[pos1]) return; // pos1 n'existe pas
-                                
-                                combinations.push({ 
-                                    lot, pos0, pos1, 
-                                    estimation: hierarchy[lot].positions0[pos0].positions1[pos1].estimation 
-                                });
-                            });
-                        }
-                    });
-                }
-            });
-            
-            // Si aucune combinaison valide, ne rien faire
-            if (combinations.length === 0) {
-                console.warn(`Aucune position valide trouvée pour lots=${lots}, pos0=${pos0s}, pos1=${pos1s}`);
-                return;
-            }
-            
-            // Calculer le total des estimations
-            const totalEstimation = combinations.reduce((sum, c) => sum + c.estimation, 0);
-            
-            // Si pas d'estimations, répartir équitablement
-            if (totalEstimation === 0) {
-                const montantParCombinaison = montant / combinations.length;
-                
-                combinations.forEach(({ lot, pos0, pos1 }) => {
-                    if (pos1) {
-                        // Ajouter aux 3 niveaux
-                        hierarchy[lot].positions0[pos0].positions1[pos1][type] += montantParCombinaison;
-                        hierarchy[lot].positions0[pos0][type] += montantParCombinaison;
-                        hierarchy[lot][type] += montantParCombinaison;
-                    } else if (pos0) {
-                        // Ajouter aux 2 niveaux
-                        hierarchy[lot].positions0[pos0][type] += montantParCombinaison;
-                        hierarchy[lot][type] += montantParCombinaison;
-                    } else {
-                        // Ajouter au lot seulement
-                        hierarchy[lot][type] += montantParCombinaison;
-                    }
-                });
-            } else {
-                // Ventiler au prorata
-                combinations.forEach(({ lot, pos0, pos1, estimation }) => {
-                    const ratio = estimation / totalEstimation;
-                    const montantVentile = montant * ratio;
-                    
-                    if (pos1) {
-                        // Ajouter aux 3 niveaux
-                        hierarchy[lot].positions0[pos0].positions1[pos1][type] += montantVentile;
-                        hierarchy[lot].positions0[pos0][type] += montantVentile;
-                        hierarchy[lot][type] += montantVentile;
-                    } else if (pos0) {
-                        // Ajouter aux 2 niveaux
-                        hierarchy[lot].positions0[pos0][type] += montantVentile;
-                        hierarchy[lot][type] += montantVentile;
-                    } else {
-                        // Ajouter au lot seulement
-                        hierarchy[lot][type] += montantVentile;
-                    }
-                });
-            }
+    // Fonction de filtrage
+    const applyFilters = (item) => {
+        if (filters.lot && !item.lots?.includes(filters.lot)) return false;
+        if (filters.position0 && !item.positions0?.includes(filters.position0)) return false;
+        if (filters.position1 && !item.positions1?.includes(filters.position1)) return false;
+        if (filters.fournisseur && item.fournisseur !== filters.fournisseur) return false;
+        return true;
+    };
+
+    // Données filtrées
+    const filteredData = useMemo(() => {
+        return {
+            estimations: estimations.filter(applyFilters),
+            offres: offres.filter(applyFilters),
+            offresComplementaires: offresComplementaires.filter(applyFilters),
+            commandes: commandes.filter(applyFilters),
+            regies: regies.filter(applyFilters),
+            factures: factures.filter(applyFilters)
         };
+    }, [estimations, offres, offresComplementaires, commandes, regies, factures, filters]);
 
-        // 3. Ajouter les offres (favorites seulement)
-        offres.forEach(off => {
-            if (off.isFavorite === true || !off.appelOffreId) {
-                addToHierarchyProrata(off.lots, off.positions0, off.positions1, off.montant || 0, 'offres');
-            }
-        });
+    // Statistiques globales
+    const stats = useMemo(() => {
+        const totalEstimation = filteredData.estimations.reduce((sum, e) => sum + (e.montant || 0), 0);
+        
+        const totalOffres = filteredData.offres
+            .filter(o => o.isFavorite === true || !o.appelOffreId)
+            .reduce((sum, o) => sum + (o.montant || 0), 0);
+            
+        const totalOffresComp = filteredData.offresComplementaires.reduce((sum, oc) => sum + (oc.montant || 0), 0);
+        const totalCommandes = filteredData.commandes.reduce((sum, c) => sum + (c.montant || 0), 0);
+        const totalRegies = filteredData.regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
+        const totalFactures = filteredData.factures.reduce((sum, f) => sum + (f.montantHT || 0), 0);
+        const totalFacturesPayees = filteredData.factures
+            .filter(f => f.statut === 'Payée')
+            .reduce((sum, f) => sum + (f.montantHT || 0), 0);
 
-        // 4. Ajouter les offres complémentaires
-        offresComplementaires.forEach(oc => {
-            addToHierarchyProrata(oc.lots, oc.positions0, oc.positions1, oc.montant || 0, 'offresComp');
-        });
+        const totalDepenses = totalCommandes + totalRegies;
+        const ecart = totalEstimation - totalDepenses;
+        const tauxEngagement = totalEstimation > 0 ? (totalDepenses / totalEstimation * 100) : 0;
 
-        // 5. Ajouter les commandes
-        commandes.forEach(cmd => {
-            addToHierarchyProrata(cmd.lots, cmd.positions0, cmd.positions1, cmd.montant || 0, 'commandes');
-        });
+        return {
+            totalEstimation,
+            totalOffres,
+            totalOffresComp,
+            totalCommandes,
+            totalRegies,
+            totalFactures,
+            totalFacturesPayees,
+            totalDepenses,
+            ecart,
+            tauxEngagement
+        };
+    }, [filteredData]);
 
-        // 6. Ajouter les régies
-        regies.forEach(regie => {
-            addToHierarchyProrata(regie.lots, regie.positions0, regie.positions1, regie.montantTotal || 0, 'regies');
-        });
+    // Données temporelles pour le graphique
+    const timelineData = useMemo(() => {
+        const events = [];
 
-        // 7. Ajouter les factures
-        factures.forEach(fact => {
-            const cmd = commandes.find(c => c.id === fact.commandeId);
-            if (cmd) {
-                addToHierarchyProrata(cmd.lots, cmd.positions0, cmd.positions1, fact.montantHT || 0, 'factures');
-            }
-        });
-
-        return hierarchy;
-    }, [estimations, offres, offresComplementaires, commandes, regies, factures]);
-
-    // Filtrer par recherche
-    const filteredHierarchy = useMemo(() => {
-        if (!searchTerm) return hierarchyData;
-
-        const filtered = {};
-        const term = searchTerm.toLowerCase();
-
-        Object.keys(hierarchyData).forEach(lot => {
-            if (lot.toLowerCase().includes(term)) {
-                filtered[lot] = hierarchyData[lot];
-            } else {
-                const filteredPos0 = {};
-                Object.keys(hierarchyData[lot].positions0).forEach(pos0 => {
-                    if (pos0.toLowerCase().includes(term)) {
-                        filteredPos0[pos0] = hierarchyData[lot].positions0[pos0];
-                    } else {
-                        const filteredPos1 = {};
-                        Object.keys(hierarchyData[lot].positions0[pos0].positions1).forEach(pos1 => {
-                            if (pos1.toLowerCase().includes(term)) {
-                                filteredPos1[pos1] = hierarchyData[lot].positions0[pos0].positions1[pos1];
-                            }
-                        });
-                        if (Object.keys(filteredPos1).length > 0) {
-                            filteredPos0[pos0] = {
-                                ...hierarchyData[lot].positions0[pos0],
-                                positions1: filteredPos1
-                            };
-                        }
-                    }
+        // Ajouter les commandes
+        filteredData.commandes.forEach(cmd => {
+            if (cmd.dateCommande) {
+                events.push({
+                    date: new Date(cmd.dateCommande),
+                    type: 'commande',
+                    montant: cmd.montant || 0,
+                    description: `Commande ${cmd.numero} - ${cmd.fournisseur}`
                 });
-                if (Object.keys(filteredPos0).length > 0) {
-                    filtered[lot] = {
-                        ...hierarchyData[lot],
-                        positions0: filteredPos0
-                    };
-                }
             }
         });
 
-        return filtered;
-    }, [hierarchyData, searchTerm]);
+        // Ajouter les factures
+        filteredData.factures.forEach(fact => {
+            if (fact.dateFacture) {
+                events.push({
+                    date: new Date(fact.dateFacture),
+                    type: 'facture',
+                    montant: fact.montantHT || 0,
+                    description: `Facture ${fact.numero}`
+                });
+            }
+        });
 
-    const toggleLot = (lot) => {
-        setExpandedLots(prev => ({...prev, [lot]: !prev[lot]}));
-    };
+        // Trier par date
+        events.sort((a, b) => a.date - b.date);
 
-    const togglePos0 = (lot, pos0) => {
-        const key = `${lot}-${pos0}`;
-        setExpandedPos0(prev => ({...prev, [key]: !prev[key]}));
-    };
+        // Calculer les cumuls
+        let cumulCommandes = 0;
+        let cumulFactures = 0;
 
-    const renderMontantCell = (data, type) => {
-        const montant = data[type] || 0;
+        const timeline = events.map(event => {
+            if (event.type === 'commande') {
+                cumulCommandes += event.montant;
+            } else if (event.type === 'facture') {
+                cumulFactures += event.montant;
+            }
+
+            return {
+                date: event.date.toLocaleDateString('fr-CH'),
+                dateObj: event.date,
+                type: event.type,
+                montant: event.montant,
+                cumulCommandes,
+                cumulFactures,
+                description: event.description
+            };
+        });
+
+        return timeline;
+    }, [filteredData]);
+
+    // Graphique cumulatif simple (style barre ASCII)
+    const renderSimpleChart = () => {
+        if (timelineData.length === 0) {
+            return <p className="text-gray-500 text-center py-8">Aucune donnée temporelle disponible</p>;
+        }
+
+        const maxCumul = Math.max(
+            ...timelineData.map(d => Math.max(d.cumulCommandes, d.cumulFactures))
+        );
+
+        // Prendre des points échantillonnés (max 10 pour la lisibilité)
+        const sampledData = timelineData.filter((_, idx) => 
+            idx === 0 || 
+            idx === timelineData.length - 1 || 
+            idx % Math.ceil(timelineData.length / 8) === 0
+        );
+
         return (
-            <td className="px-4 py-2 text-right text-sm">
-                {montant > 0 ? montant.toLocaleString('fr-CH', {minimumFractionDigits: 2}) : '-'}
-            </td>
+            <div className="space-y-2">
+                {sampledData.map((point, idx) => {
+                    const barWidthCommandes = (point.cumulCommandes / maxCumul) * 100;
+                    const barWidthFactures = (point.cumulFactures / maxCumul) * 100;
+
+                    return (
+                        <div key={idx} className="space-y-1">
+                            <div className="flex items-center gap-2 text-xs text-gray-600">
+                                <span className="w-24">{point.date}</span>
+                                <span className="text-gray-400">|</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="w-24 text-xs text-blue-600">Commandes</span>
+                                <div className="flex-1 bg-gray-100 rounded h-6 relative overflow-hidden">
+                                    <div 
+                                        className="bg-blue-500 h-full transition-all duration-300 flex items-center justify-end pr-2"
+                                        style={{ width: `${barWidthCommandes}%` }}
+                                    >
+                                        <span className="text-xs text-white font-semibold">
+                                            {point.cumulCommandes.toLocaleString('fr-CH', {maximumFractionDigits: 0})}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="w-24 text-xs text-purple-600">Factures</span>
+                                <div className="flex-1 bg-gray-100 rounded h-6 relative overflow-hidden">
+                                    <div 
+                                        className="bg-purple-500 h-full transition-all duration-300 flex items-center justify-end pr-2"
+                                        style={{ width: `${barWidthFactures}%` }}
+                                    >
+                                        <span className="text-xs text-white font-semibold">
+                                            {point.cumulFactures.toLocaleString('fr-CH', {maximumFractionDigits: 0})}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
         );
     };
 
-    const calculateEcart = (data) => {
-        const depenses = (data.commandes || 0) + (data.regies || 0);
-        const ecart = (data.estimation || 0) - depenses;
-        return ecart;
+    // Projection future
+    const projection = useMemo(() => {
+        const commandesRestantes = filteredData.commandes
+            .filter(c => c.statut !== 'Validée' && c.statut !== 'Annulée')
+            .reduce((sum, c) => sum + (c.montant || 0), 0);
+
+        const facturesEnAttente = filteredData.factures
+            .filter(f => f.statut !== 'Payée')
+            .reduce((sum, f) => sum + (f.montantHT || 0), 0);
+
+        const projeteFinal = stats.totalDepenses + commandesRestantes;
+        const ecartProjete = stats.totalEstimation - projeteFinal;
+
+        return {
+            commandesRestantes,
+            facturesEnAttente,
+            projeteFinal,
+            ecartProjete
+        };
+    }, [filteredData, stats]);
+
+    const resetFilters = () => {
+        setFilters({ lot: '', position0: '', position1: '', fournisseur: '' });
     };
 
-    const renderEcartCell = (data) => {
-        const ecart = calculateEcart(data);
-        const textColor = ecart >= 0 ? 'text-green-600' : 'text-red-600';
-        return (
-            <td className={`px-4 py-2 text-right text-sm font-medium ${textColor}`}>
-                {ecart.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-            </td>
-        );
-    };
+    const hasActiveFilters = Object.values(filters).some(v => v !== '');
 
     return (
         <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">🎯 Alignement Budgétaire</h2>
-                <input
-                    type="text"
-                    placeholder="🔍 Rechercher..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="px-4 py-2 border rounded-lg w-64"
-                />
+            <h2 className="text-2xl font-bold mb-6">📊 Tableau de Bord</h2>
+
+            {/* Filtres */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div className="flex justify-between items-center mb-3">
+                    <h3 className="font-semibold">🔍 Filtres</h3>
+                    {hasActiveFilters && (
+                        <button
+                            onClick={resetFilters}
+                            className="text-sm text-blue-600 hover:underline"
+                        >
+                            ✖ Réinitialiser
+                        </button>
+                    )}
+                </div>
+                <div className="grid grid-cols-4 gap-3">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Lot</label>
+                        <select
+                            value={filters.lot}
+                            onChange={(e) => setFilters({...filters, lot: e.target.value})}
+                            className="w-full px-3 py-2 border rounded-lg text-sm"
+                        >
+                            <option value="">Tous</option>
+                            {allLots.map(lot => (
+                                <option key={lot} value={lot}>{lot}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Position Niv. 0</label>
+                        <select
+                            value={filters.position0}
+                            onChange={(e) => setFilters({...filters, position0: e.target.value})}
+                            className="w-full px-3 py-2 border rounded-lg text-sm"
+                        >
+                            <option value="">Toutes</option>
+                            {allPos0.map(pos => (
+                                <option key={pos} value={pos}>{pos}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Position Niv. 1</label>
+                        <select
+                            value={filters.position1}
+                            onChange={(e) => setFilters({...filters, position1: e.target.value})}
+                            className="w-full px-3 py-2 border rounded-lg text-sm"
+                        >
+                            <option value="">Toutes</option>
+                            {allPos1.map(pos => (
+                                <option key={pos} value={pos}>{pos}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Fournisseur</label>
+                        <select
+                            value={filters.fournisseur}
+                            onChange={(e) => setFilters({...filters, fournisseur: e.target.value})}
+                            className="w-full px-3 py-2 border rounded-lg text-sm"
+                        >
+                            <option value="">Tous</option>
+                            {allFournisseurs.map(f => (
+                                <option key={f} value={f}>{f}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
             </div>
 
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
-                <p className="font-medium text-blue-800">💡 Ventilation au prorata des estimations</p>
-                <p className="text-blue-700">
-                    Les montants sont ventilés proportionnellement aux estimations de chaque position. 
-                    Si pas d'estimations, répartition équitable.
-                </p>
+            {/* Statistiques principales */}
+            <div className="grid grid-cols-4 gap-4 mb-6">
+                <div className="p-4 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-gray-600">Budget Initial</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                        {stats.totalEstimation.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
+                    </p>
+                    <p className="text-xs text-gray-500">CHF</p>
+                </div>
+
+                <div className="p-4 bg-green-50 rounded-lg">
+                    <p className="text-sm text-gray-600">Engagé</p>
+                    <p className="text-2xl font-bold text-green-600">
+                        {stats.totalDepenses.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                        {stats.tauxEngagement.toFixed(1)}% du budget
+                    </p>
+                </div>
+
+                <div className={`p-4 rounded-lg ${stats.ecart >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                    <p className="text-sm text-gray-600">Écart Budget</p>
+                    <p className={`text-2xl font-bold ${stats.ecart >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {stats.ecart.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
+                    </p>
+                    <p className="text-xs text-gray-500">CHF</p>
+                </div>
+
+                <div className="p-4 bg-purple-50 rounded-lg">
+                    <p className="text-sm text-gray-600">Factures Payées</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                        {stats.totalFacturesPayees.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                        {stats.totalFactures > 0 
+                            ? `${(stats.totalFacturesPayees / stats.totalFactures * 100).toFixed(0)}%`
+                            : '0%'
+                        } du total
+                    </p>
+                </div>
             </div>
 
-            <div className="overflow-x-auto">
-                <table className="w-full">
-                    <thead className="bg-gray-50 sticky top-0">
-                        <tr>
-                            <th className="px-4 py-3 text-left text-sm font-semibold">Hiérarchie</th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold">Estimation</th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold">Offres</th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold">OC</th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold">Commandes</th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold">Régies</th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold">Factures</th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold">Écart</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {Object.keys(filteredHierarchy).length === 0 ? (
-                            <tr>
-                                <td colSpan="8" className="text-center py-12 text-gray-500">
-                                    {searchTerm ? 'Aucun résultat trouvé' : 'Aucune donnée à afficher'}
-                                </td>
-                            </tr>
-                        ) : (
-                            Object.keys(filteredHierarchy).sort().map(lot => (
-                                <React.Fragment key={lot}>
-                                    {/* Ligne Lot */}
-                                    <tr className="bg-blue-50 font-semibold hover:bg-blue-100 cursor-pointer"
-                                        onClick={() => toggleLot(lot)}>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-2">
-                                                {expandedLots[lot] ? 
-                                                    <window.Icons.ChevronDown size={18} /> : 
-                                                    <window.Icons.ChevronRight size={18} />
-                                                }
-                                                <span className="text-blue-800">📦 {lot}</span>
-                                            </div>
-                                        </td>
-                                        {renderMontantCell(filteredHierarchy[lot], 'estimation')}
-                                        {renderMontantCell(filteredHierarchy[lot], 'offres')}
-                                        {renderMontantCell(filteredHierarchy[lot], 'offresComp')}
-                                        {renderMontantCell(filteredHierarchy[lot], 'commandes')}
-                                        {renderMontantCell(filteredHierarchy[lot], 'regies')}
-                                        {renderMontantCell(filteredHierarchy[lot], 'factures')}
-                                        {renderEcartCell(filteredHierarchy[lot])}
-                                    </tr>
+            {/* Graphique temporel */}
+            <div className="mb-6 p-4 border rounded-lg">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-semibold text-lg">📈 Évolution Temporelle (Cumulée)</h3>
+                    <div className="flex gap-2 text-xs">
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                            <span>Commandes</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 bg-purple-500 rounded"></div>
+                            <span>Factures</span>
+                        </div>
+                    </div>
+                </div>
+                {renderSimpleChart()}
+            </div>
 
-                                    {/* Positions 0 */}
-                                    {expandedLots[lot] && Object.keys(filteredHierarchy[lot].positions0).sort().map(pos0 => (
-                                        <React.Fragment key={`${lot}-${pos0}`}>
-                                            <tr className="bg-green-50 hover:bg-green-100 cursor-pointer"
-                                                onClick={() => togglePos0(lot, pos0)}>
-                                                <td className="px-4 py-3 pl-12">
-                                                    <div className="flex items-center gap-2">
-                                                        {expandedPos0[`${lot}-${pos0}`] ? 
-                                                            <window.Icons.ChevronDown size={16} /> : 
-                                                            <window.Icons.ChevronRight size={16} />
-                                                        }
-                                                        <span className="text-green-800">📁 {pos0}</span>
-                                                    </div>
-                                                </td>
-                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'estimation')}
-                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'offres')}
-                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'offresComp')}
-                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'commandes')}
-                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'regies')}
-                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'factures')}
-                                                {renderEcartCell(filteredHierarchy[lot].positions0[pos0])}
-                                            </tr>
+            {/* Projection */}
+            <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <h3 className="font-semibold text-lg mb-3">🔮 Projection Future</h3>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <p className="text-sm text-gray-600">Commandes en cours</p>
+                        <p className="text-xl font-bold text-orange-600">
+                            {projection.commandesRestantes.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-600">Factures en attente</p>
+                        <p className="text-xl font-bold text-orange-600">
+                            {projection.facturesEnAttente.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-600">Coût final projeté</p>
+                        <p className="text-xl font-bold text-orange-600">
+                            {projection.projeteFinal.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                        </p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-600">Écart projeté</p>
+                        <p className={`text-xl font-bold ${projection.ecartProjete >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {projection.ecartProjete.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                        </p>
+                    </div>
+                </div>
+            </div>
 
-                                            {/* Positions 1 */}
-                                            {expandedPos0[`${lot}-${pos0}`] && Object.keys(filteredHierarchy[lot].positions0[pos0].positions1).sort().map(pos1 => (
-                                                <tr key={`${lot}-${pos0}-${pos1}`} className="hover:bg-gray-50">
-                                                    <td className="px-4 py-2 pl-20 text-sm text-gray-700">
-                                                        📄 {pos1}
-                                                    </td>
-                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'estimation')}
-                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'offres')}
-                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'offresComp')}
-                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'commandes')}
-                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'regies')}
-                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'factures')}
-                                                    {renderEcartCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1])}
-                                                </tr>
-                                            ))}
-                                        </React.Fragment>
-                                    ))}
-                                </React.Fragment>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+            {/* Répartition détaillée */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="p-4 border rounded-lg">
+                    <h3 className="font-semibold mb-3">💰 Répartition Budget</h3>
+                    <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                            <span>Offres:</span>
+                            <span className="font-medium">{stats.totalOffres.toLocaleString('fr-CH')} CHF</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Offres Complémentaires:</span>
+                            <span className="font-medium">{stats.totalOffresComp.toLocaleString('fr-CH')} CHF</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Commandes:</span>
+                            <span className="font-medium">{stats.totalCommandes.toLocaleString('fr-CH')} CHF</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Régies:</span>
+                            <span className="font-medium">{stats.totalRegies.toLocaleString('fr-CH')} CHF</span>
+                        </div>
+                        <div className="flex justify-between border-t pt-2 font-semibold">
+                            <span>Total Factures:</span>
+                            <span className="text-purple-600">{stats.totalFactures.toLocaleString('fr-CH')} CHF</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-4 border rounded-lg">
+                    <h3 className="font-semibold mb-3">📋 Compteurs</h3>
+                    <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                            <span>Estimations:</span>
+                            <span className="font-medium">{filteredData.estimations.length} / {estimations.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Offres:</span>
+                            <span className="font-medium">{filteredData.offres.length} / {offres.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Offres Complémentaires:</span>
+                            <span className="font-medium">{filteredData.offresComplementaires.length} / {offresComplementaires.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Commandes:</span>
+                            <span className="font-medium">{filteredData.commandes.length} / {commandes.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Régies:</span>
+                            <span className="font-medium">{filteredData.regies.length} / {regies.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>Factures:</span>
+                            <span className="font-medium">{filteredData.factures.length} / {factures.length}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Alertes */}
+            <div className="space-y-3">
+                {stats.ecart < 0 && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-red-800 font-semibold">⚠️ Dépassement de budget</p>
+                        <p className="text-sm text-red-700">
+                            Le budget est dépassé de {Math.abs(stats.ecart).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                        </p>
+                    </div>
+                )}
+
+                {projection.ecartProjete < 0 && stats.ecart >= 0 && (
+                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                        <p className="text-orange-800 font-semibold">⚠️ Dépassement projeté</p>
+                        <p className="text-sm text-orange-700">
+                            Le budget sera dépassé de {Math.abs(projection.ecartProjete).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF si toutes les commandes sont validées
+                        </p>
+                    </div>
+                )}
+
+                {stats.tauxEngagement > 90 && stats.ecart >= 0 && (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <p className="text-yellow-800 font-semibold">⚠️ Budget presque épuisé</p>
+                        <p className="text-sm text-yellow-700">
+                            {stats.tauxEngagement.toFixed(1)}% du budget est engagé
+                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );
