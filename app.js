@@ -336,9 +336,9 @@ const handleSessionNameChange = (newName) => {
                     <div className="flex overflow-x-auto">
                         {[
                             { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
-                            { id: 'alignement', label: '📌 Alignement', icon: '📌' },
+                            //{ id: 'alignement', label: '📌 Alignement', icon: '📌' },//
                             { id: 'estimations', label: '📋 Estimations', icon: '📋' },
-                           // { id: 'appelOffres', label: '🎯 Appels d\'Offres', icon: '🎯' },//
+                            { id: 'appelOffres', label: '🎯 Appels d\'Offres', icon: '🎯' },
                             { id: 'offres', label: '💼 Offres', icon: '💼' },
                             { id: 'offresComplementaires', label: '➕ OC', icon: '➕' },
                             { id: 'commandes', label: '📦 Commandes', icon: '📦' },
@@ -475,7 +475,7 @@ const handleSessionNameChange = (newName) => {
                     )}
 
                     {/* Onglet Appels d'Offres */}
-                    {/*activeTab === 'appelOffres' && (
+                    {activeTab === 'appelOffres' && (
                         <div className="bg-white rounded-lg shadow-lg p-6">
                             <div className="flex justify-between mb-6">
                                 <h2 className="text-xl font-bold">Appels d'Offres</h2>
@@ -599,7 +599,7 @@ const handleSessionNameChange = (newName) => {
                                 </>
                             )}
                         </div>
-                    )}*/}
+                    )}
 
                     {/* Offres */}
                     {activeTab === 'offres' && (
@@ -912,7 +912,8 @@ const handleSessionNameChange = (newName) => {
 )}
 
                     {/* Alignement Budgétaire */}
-                    {activeTab === 'alignement' && (
+{/* DESAC
+                        {activeTab === 'alignement' && (
                         <window.AlignementBudgetaire
                             estimations={estimations}
                             offres={offres}
@@ -922,6 +923,7 @@ const handleSessionNameChange = (newName) => {
                             factures={factures}
                         />
                     )}
+                                */}
                 </div>
             </div>
 
@@ -1016,7 +1018,7 @@ const handleSessionNameChange = (newName) => {
     />
 )}
 
-{/* MODALS AO DÉSACTIVÉS
+
 {showAppelOffreModal && (
     <window.AppelOffreModal
         initialData={editingAppelOffre}
@@ -1042,7 +1044,6 @@ const handleSessionNameChange = (newName) => {
         onCreateCommande={handleCreateCommandeFromAO}
     />
 )}
-*/}
         </div>
     );
 };
