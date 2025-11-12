@@ -30,6 +30,8 @@ const ConstructionManagement = () => {
     const [showFactureModal, setShowFactureModal] = useState(false);
     const [showAppelOffreModal, setShowAppelOffreModal] = useState(false);
     const [showAppelOffreDetail, setShowAppelOffreDetail] = useState(false);
+    const [showEstimationBuilder, setShowEstimationBuilder] = useState(false);
+    const [editingEstimation, setEditingEstimation] = useState(null);
     
     // ========================================
     // ÉTATS D'ÉDITION
@@ -183,6 +185,18 @@ const ConstructionManagement = () => {
         setEditingFacture(null);
         alert(editingFacture ? '✅ Facture modifiée' : '✅ Facture créée');
     };
+    // Handler Estimations
+const handleSaveEstimation = (estimation) => {
+    const updated = editingEstimation ? 
+        estimations.map(e => e.id === editingEstimation.id ? estimation : e) : 
+        [...estimations, estimation];
+    
+    setEstimations(updated);
+    window.saveData('estimations', updated);
+    setShowEstimationBuilder(false);
+    setEditingEstimation(null);
+    alert(editingEstimation ? '✅ Estimation modifiée' : '✅ Estimation créée');
+};
 
     // Handler Appels d'Offres
     const handleSaveAppelOffre = (appelOffre) => {
@@ -347,58 +361,91 @@ const ConstructionManagement = () => {
                         />
                     )}
 
-                    {/* Estimations avec SmartTable */}
-                    {activeTab === 'estimations' && (
-                        <window.SmartTable
-                            data={estimations}
-                            columns={[
-                                { key: 'designation', label: 'Désignation', align: 'left' },
-                                { key: 'lots', label: 'Lots', align: 'left' },
-                                { key: 'positions0', label: 'Pos. Niv. 0', align: 'left' },
-                                { key: 'positions1', label: 'Pos. Niv. 1', align: 'left' },
-                                { key: 'etape', label: 'Étape', align: 'left' },
-                                { key: 'montant', label: 'Montant (CHF)', align: 'right' },
-                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
-                            ]}
-                            renderRow={(est) => (
-                                <tr key={est.id} className="border-t hover:bg-gray-50">
-                                    <td className="px-4 py-3 font-medium">{est.designation}</td>
-                                    <td className="px-4 py-3 text-xs">{est.lots?.join(', ') || '-'}</td>
-                                    <td className="px-4 py-3 text-xs">{est.positions0?.join(', ') || '-'}</td>
-                                    <td className="px-4 py-3 text-xs">{est.positions1?.join(', ') || '-'}</td>
-                                    <td className="px-4 py-3 text-xs">{est.etape || '-'}</td>
-                                    <td className="px-4 py-3 text-right font-medium">
-                                        {(est.montant || 0).toLocaleString('fr-CH')} CHF
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <button 
-                                            onClick={() => {
-                                                alert('Édition des estimations - Fonctionnalité à implémenter');
-                                            }}
-                                            className="text-blue-600 hover:text-blue-800"
-                                        >
-                                            <Edit2 />
-                                        </button>
-                                    </td>
-                                </tr>
-                            )}
-                            emptyMessage="Aucune estimation - Importez un fichier pour commencer"
-                            actions={
-                                <>
-                                    <h2 className="text-xl font-bold">📋 Estimations</h2>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setShowImportModal(true)}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
-                                        >
-                                            <window.Icons.Upload size={20} />
-                                            Importer
-                                        </button>
-                                    </div>
-                                </>
-                            }
-                        />
-                    )}
+{/* Estimations avec SmartTable */}
+{activeTab === 'estimations' && (
+    <window.SmartTable
+        data={estimations}
+        columns={[
+            { key: 'designation', label: 'Désignation', align: 'left' },
+            { key: 'dateCreation', label: 'Date création', align: 'center' },
+            { key: 'nombreLots', label: 'Lots', align: 'center' },
+            { key: 'montantTotal', label: 'Montant Total (CHF)', align: 'right' },
+            { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
+        ]}
+        renderRow={(est) => {
+            const nombreLots = est.lots?.length || 0;
+            return (
+                <tr key={est.id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{est.designation}</td>
+                    <td className="px-4 py-3 text-center text-sm">
+                        {est.dateCreation ? new Date(est.dateCreation).toLocaleDateString('fr-CH') : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                            {nombreLots} lot{nombreLots > 1 ? 's' : ''}
+                        </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-blue-600">
+                        {(est.montantTotal || 0).toLocaleString('fr-CH')} CHF
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <button 
+                                onClick={() => {
+                                    setEditingEstimation(est);
+                                    setShowEstimationBuilder(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="Modifier"
+                            >
+                                <Edit2 size={16} />
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    if (confirm(`Supprimer l'estimation "${est.designation}" ?`)) {
+                                        const updated = estimations.filter(e => e.id !== est.id);
+                                        setEstimations(updated);
+                                        window.saveData('estimations', updated);
+                                        alert('✅ Estimation supprimée');
+                                    }
+                                }}
+                                className="text-red-600 hover:text-red-800"
+                                title="Supprimer"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            );
+        }}
+        emptyMessage="Aucune estimation - Créez votre première estimation !"
+        actions={
+            <>
+                <h2 className="text-xl font-bold">📋 Estimations</h2>
+                <div className="flex gap-2">
+                    <button
+                        onClick={() => setShowImportModal(true)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
+                    >
+                        <window.Icons.Upload size={20} />
+                        Importer
+                    </button>
+                    <button
+                        onClick={() => {
+                            setEditingEstimation(null);
+                            setShowEstimationBuilder(true);
+                        }}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                    >
+                        <Plus size={20} />
+                        Nouvelle estimation
+                    </button>
+                </div>
+            </>
+        }
+    />
+)}
 
                     {/* Appels d'Offres avec SmartTable */}
                     {activeTab === 'appelOffres' && (
@@ -1047,6 +1094,18 @@ const ConstructionManagement = () => {
                     estimations={estimations}
                 />
             )}
+
+{/* Modal Estimation Builder */}
+{showEstimationBuilder && (
+    <window.EstimationBuilder
+        initialData={editingEstimation}
+        onClose={() => {
+            setShowEstimationBuilder(false);
+            setEditingEstimation(null);
+        }}
+        onSave={handleSaveEstimation}
+    />
+)}
 
             {/* Vue détaillée Appel d'Offres */}
             {showAppelOffreDetail && selectedAppelOffre && (
