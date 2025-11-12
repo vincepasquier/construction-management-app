@@ -1,4 +1,4 @@
-// Alignement Budgétaire - Vue hiérarchique avec ventilation au prorata
+// Alignement Budgétaire - Vue hiérarchique Lot > Position0 > Position1
 const { useState, useMemo } = React;
 
 window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, commandes, regies, factures }) => {
@@ -6,134 +6,111 @@ window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, com
     const [expandedPos0, setExpandedPos0] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Construction de la hiérarchie avec ventilation
+    // Construction de la hiérarchie des données
     const hierarchyData = useMemo(() => {
         const hierarchy = {};
 
-        // Fonction pour ventiler le montant au prorata des estimations
+        // Fonction pour ajouter des montants à la hiérarchie (SANS duplication)
         const addToHierarchy = (lots, pos0s, pos1s, montant, type) => {
             if (!lots || lots.length === 0) return;
             
-            // Calculer les estimations totales pour cette combinaison
-            const estimationsMap = {};
-            let totalEstimation = 0;
+            // Calculer le nombre total de combinaisons
+            const nbLots = lots.length;
+            const nbPos0 = (pos0s && pos0s.length > 0) ? pos0s.length : 1;
+            const nbPos1 = (pos1s && pos1s.length > 0) ? pos1s.length : 1;
+            const nbCombinations = nbLots * nbPos0 * nbPos1;
             
-            lots.forEach(lot => {
-                (pos0s || []).forEach(pos0 => {
-                    (pos1s || []).forEach(pos1 => {
-                        const key = `${lot}|${pos0}|${pos1}`;
-                        
-                        // Trouver l'estimation correspondante
-                        const est = estimations.find(e => 
-                            e.lots?.includes(lot) && 
-                            e.positions0?.includes(pos0) && 
-                            e.positions1?.includes(pos1)
-                        );
-                        
-                        const estMontant = est ? (est.montant || 0) : 0;
-                        estimationsMap[key] = estMontant;
-                        totalEstimation += estMontant;
-                    });
-                });
-            });
-            
-            // Si pas d'estimations pour cette combinaison, ne rien ajouter
-            if (totalEstimation === 0) {
-                console.warn(`Aucune estimation trouvée pour lots=${lots}, pos0=${pos0s}, pos1=${pos1s}. Montant de ${montant} CHF non ventilé.`);
-                return;
-            }
-            
-            // Ventiler au prorata des estimations
-            lots.forEach(lot => {
-                // Vérifier que le lot existe dans hierarchy
-                if (!hierarchy[lot]) return;
-                
-                (pos0s || []).forEach(pos0 => {
-                    // Vérifier que pos0 existe dans ce lot
-                    if (!hierarchy[lot].positions0[pos0]) return;
-                    
-                    (pos1s || []).forEach(pos1 => {
-                        // Vérifier que pos1 existe dans ce pos0
-                        if (!hierarchy[lot].positions0[pos0].positions1[pos1]) return;
-                        
-                        const key = `${lot}|${pos0}|${pos1}`;
-                        const estMontant = estimationsMap[key];
-                        
-                        // Si pas d'estimation pour cette combinaison précise, passer
-                        if (estMontant === 0) return;
-                        
-                        // Calculer le montant ventilé
-                        const montantVentile = montant * (estMontant / totalEstimation);
-                        
-                        // Ajouter le montant ventilé aux 3 niveaux
-                        hierarchy[lot].positions0[pos0].positions1[pos1][type] += montantVentile;
-                        hierarchy[lot].positions0[pos0][type] += montantVentile;
-                        hierarchy[lot][type] += montantVentile;
-                    });
-                });
-            });
-        };
+            // Répartir équitablement le montant
+            const montantParCombinaison = montant / nbCombinations;
 
-        // Ajouter les estimations (pas de ventilation, montant direct)
-        estimations.forEach(est => {
-            (est.lots || []).forEach(lot => {
+            lots.forEach(lot => {
                 if (!hierarchy[lot]) {
                     hierarchy[lot] = { 
-                        estimation: 0, offres: 0, offresComp: 0,
-                        commandes: 0, regies: 0, factures: 0,
+                        estimation: 0, 
+                        offres: 0, 
+                        offresComp: 0,
+                        commandes: 0, 
+                        regies: 0, 
+                        factures: 0,
                         positions0: {} 
                     };
                 }
-                hierarchy[lot].estimation += est.montant || 0;
 
-                (est.positions0 || []).forEach(pos0 => {
-                    if (!hierarchy[lot].positions0[pos0]) {
-                        hierarchy[lot].positions0[pos0] = { 
-                            estimation: 0, offres: 0, offresComp: 0,
-                            commandes: 0, regies: 0, factures: 0,
-                            positions1: {} 
-                        };
-                    }
-                    hierarchy[lot].positions0[pos0].estimation += est.montant || 0;
-
-                    (est.positions1 || []).forEach(pos1 => {
-                        if (!hierarchy[lot].positions0[pos0].positions1[pos1]) {
-                            hierarchy[lot].positions0[pos0].positions1[pos1] = { 
-                                estimation: 0, offres: 0, offresComp: 0,
-                                commandes: 0, regies: 0, factures: 0
+                if (!pos0s || pos0s.length === 0) {
+                    // Pas de positions, ajouter au lot
+                    hierarchy[lot][type] += montantParCombinaison;
+                } else {
+                    pos0s.forEach(pos0 => {
+                        if (!hierarchy[lot].positions0[pos0]) {
+                            hierarchy[lot].positions0[pos0] = { 
+                                estimation: 0, 
+                                offres: 0, 
+                                offresComp: 0,
+                                commandes: 0, 
+                                regies: 0, 
+                                factures: 0,
+                                positions1: {} 
                             };
                         }
-                        hierarchy[lot].positions0[pos0].positions1[pos1].estimation += est.montant || 0;
+
+                        if (!pos1s || pos1s.length === 0) {
+                            // Pas de pos1, ajouter à pos0 et lot
+                            const montantPos0 = montantParCombinaison * nbPos1;
+                            hierarchy[lot].positions0[pos0][type] += montantPos0;
+                            hierarchy[lot][type] += montantPos0;
+                        } else {
+                            pos1s.forEach(pos1 => {
+                                if (!hierarchy[lot].positions0[pos0].positions1[pos1]) {
+                                    hierarchy[lot].positions0[pos0].positions1[pos1] = { 
+                                        estimation: 0, 
+                                        offres: 0, 
+                                        offresComp: 0,
+                                        commandes: 0, 
+                                        regies: 0, 
+                                        factures: 0
+                                    };
+                                }
+                                
+                                // Ajouter aux 3 niveaux
+                                hierarchy[lot].positions0[pos0].positions1[pos1][type] += montantParCombinaison;
+                                hierarchy[lot].positions0[pos0][type] += montantParCombinaison;
+                                hierarchy[lot][type] += montantParCombinaison;
+                            });
+                        }
                     });
-                });
+                }
             });
+        };
+
+        // Ajouter les estimations
+        estimations.forEach(est => {
+            addToHierarchy(est.lots, est.positions0, est.positions1, est.montant || 0, 'estimation');
         });
 
-        // Ajouter les offres (avec ventilation)
+        // Ajouter les offres (favorites seulement)
         offres.forEach(off => {
-            // Ne compter que les favorites ou sans AO
             if (off.isFavorite === true || !off.appelOffreId) {
                 addToHierarchy(off.lots, off.positions0, off.positions1, off.montant || 0, 'offres');
             }
         });
 
-        // Ajouter les offres complémentaires (avec ventilation)
+        // Ajouter les offres complémentaires
         offresComplementaires.forEach(oc => {
             addToHierarchy(oc.lots, oc.positions0, oc.positions1, oc.montant || 0, 'offresComp');
         });
 
-        // Ajouter les commandes (avec ventilation)
+        // Ajouter les commandes
         commandes.forEach(cmd => {
             const montant = cmd.montant || 0;
             addToHierarchy(cmd.lots, cmd.positions0, cmd.positions1, montant, 'commandes');
         });
 
-        // Ajouter les régies (avec ventilation)
+        // Ajouter les régies
         regies.forEach(regie => {
             addToHierarchy(regie.lots, regie.positions0, regie.positions1, regie.montantTotal || 0, 'regies');
         });
 
-        // Ajouter les factures (avec ventilation basée sur la commande)
+        // Ajouter les factures
         factures.forEach(fact => {
             const cmd = commandes.find(c => c.id === fact.commandeId);
             if (cmd) {
@@ -234,10 +211,9 @@ window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, com
             </div>
 
             <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
-                <p className="font-medium text-blue-800">💡 Ventilation au prorata des estimations</p>
+                <p className="font-medium text-blue-800">💡 Répartition équitable</p>
                 <p className="text-blue-700">
-                    Lorsqu'une offre/commande/régie couvre plusieurs lots ou positions, 
-                    son montant est ventilé proportionnellement aux estimations de chaque position.
+                    Les montants sont répartis équitablement sur toutes les positions sélectionnées.
                 </p>
             </div>
 
