@@ -573,265 +573,331 @@ const ConstructionManagement = () => {
     />
 )}
 {/* Offres Complémentaires avec SmartTable */}
-                    {activeTab === 'offresComplementaires' && (
-                        <window.SmartTable
-                            data={offresComplementaires}
-                            columns={[
-                                { key: 'numero', label: 'N° OC', align: 'left' },
-                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
-                                { key: 'designation', label: 'Désignation', align: 'left' },
-                                { key: 'lots', label: 'Lots', align: 'left' },
-                                { key: 'statut', label: 'Statut', align: 'center' },
-                                { key: 'montant', label: 'Montant (CHF)', align: 'right' },
-                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
-                            ]}
-                            renderRow={(oc) => (
-                                <tr key={oc.id} className="border-t hover:bg-gray-50">
-                                    <td className="px-4 py-3 font-medium text-blue-600">{oc.numero}</td>
-                                    <td className="px-4 py-3">{oc.fournisseur}</td>
-                                    <td className="px-4 py-3">{oc.designation}</td>
-                                    <td className="px-4 py-3 text-xs">{oc.lots?.join(', ') || '-'}</td>
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-1 rounded text-xs ${
-                                            oc.statut === 'Acceptée' ? 'bg-green-100 text-green-800' :
-                                            oc.statut === 'Refusée' ? 'bg-red-100 text-red-800' :
-                                            'bg-gray-100 text-gray-800'
-                                        }`}>
-                                            {oc.statut || 'En attente'}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-right font-medium">
-                                        {oc.montant?.toLocaleString('fr-CH')} CHF
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <button 
-                                            onClick={() => {
-                                                setEditingOffreComp(oc);
-                                                setShowOffreCompModal(true);
-                                            }}
-                                            className="text-blue-600 hover:text-blue-800"
-                                        >
-                                            <Edit2 />
-                                        </button>
-                                    </td>
-                                </tr>
-                            )}
-                            emptyMessage="Aucune offre complémentaire"
-                            actions={
-                                <>
-                                    <h2 className="text-xl font-bold">➕ Offres Complémentaires</h2>
-                                    <button
-                                        onClick={() => {
-                                            setEditingOffreComp(null);
-                                            setShowOffreCompModal(true);
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                    >
-                                        <Plus size={20} />
-                                        Nouvelle OC
-                                    </button>
-                                </>
-                            }
-                        />
-                    )}
+{activeTab === 'offresComplementaires' && (
+    <window.SmartTable
+        data={offresComplementaires}
+        columns={[
+            { key: 'numero', label: 'N° OC', align: 'left' },
+            { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+            { key: 'designation', label: 'Désignation', align: 'left' },
+            { key: 'lots', label: 'Lots', align: 'left' },
+            { key: 'statut', label: 'Statut', align: 'center' },
+            { key: 'montant', label: 'Montant (CHF)', align: 'right' },
+            { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
+        ]}
+        renderRow={(oc) => (
+            <tr key={oc.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-blue-600">{oc.numero}</td>
+                <td className="px-4 py-3">{oc.fournisseur}</td>
+                <td className="px-4 py-3">{oc.designation}</td>
+                <td className="px-4 py-3 text-xs">{oc.lots?.join(', ') || '-'}</td>
+                <td className="px-4 py-3 text-center">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                        oc.statut === 'Acceptée' ? 'bg-green-100 text-green-800' :
+                        oc.statut === 'Refusée' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                    }`}>
+                        {oc.statut || 'En attente'}
+                    </span>
+                </td>
+                <td className="px-4 py-3 text-right font-medium">
+                    {oc.montant?.toLocaleString('fr-CH')} CHF
+                </td>
+                <td className="px-4 py-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                        <button 
+                            onClick={() => {
+                                setEditingOffreComp(oc);
+                                setShowOffreCompModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Modifier"
+                        >
+                            <Edit2 size={16} />
+                        </button>
+                        <button 
+                            onClick={() => {
+                                if (confirm(`Supprimer l'offre complémentaire ${oc.numero} ?`)) {
+                                    const updated = offresComplementaires.filter(o => o.id !== oc.id);
+                                    setOffresComplementaires(updated);
+                                    window.saveData('offresComplementaires', updated);
+                                    alert('✅ Offre complémentaire supprimée');
+                                }
+                            }}
+                            className="text-red-600 hover:text-red-800"
+                            title="Supprimer"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        )}
+        emptyMessage="Aucune offre complémentaire"
+        actions={
+            <>
+                <h2 className="text-xl font-bold">➕ Offres Complémentaires</h2>
+                <button
+                    onClick={() => {
+                        setEditingOffreComp(null);
+                        setShowOffreCompModal(true);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                >
+                    <Plus size={20} />
+                    Nouvelle OC
+                </button>
+            </>
+        }
+    />
+)}
 
-                    {/* Commandes avec SmartTable */}
-                    {activeTab === 'commandes' && (
-                        <window.SmartTable
-                            data={commandes}
-                            columns={[
-                                { key: 'numero', label: 'N° Commande', align: 'left' },
-                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
-                                { key: 'lots', label: 'Lots', align: 'left' },
-                                { key: 'dateCommande', label: 'Date', align: 'center' },
-                                { key: 'statut', label: 'Statut', align: 'center' },
-                                { key: 'montant', label: 'Montant (CHF)', align: 'right' },
-                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
-                            ]}
-                            renderRow={(cmd) => (
-                                <tr key={cmd.id} className="border-t hover:bg-gray-50">
-                                    <td className="px-4 py-3 font-medium text-blue-600">{cmd.numero}</td>
-                                    <td className="px-4 py-3">{cmd.fournisseur}</td>
-                                    <td className="px-4 py-3 text-xs">{cmd.lots?.join(', ') || '-'}</td>
-                                    <td className="px-4 py-3 text-center text-sm">
-                                        {new Date(cmd.dateCommande).toLocaleDateString('fr-CH')}
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-1 rounded text-xs ${
-                                            cmd.statut === 'Terminée' ? 'bg-green-100 text-green-800' :
-                                            cmd.statut === 'Annulée' ? 'bg-red-100 text-red-800' :
-                                            'bg-yellow-100 text-yellow-800'
-                                        }`}>
-                                            {cmd.statut || 'En cours'}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-right font-medium">
-                                        {(cmd.calculatedMontant || cmd.montant || 0).toLocaleString('fr-CH')} CHF
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <button 
-                                            onClick={() => {
-                                                setEditingCommande(cmd);
-                                                setShowCommandeModal(true);
-                                            }}
-                                            className="text-blue-600 hover:text-blue-800"
-                                        >
-                                            <Edit2 />
-                                        </button>
-                                    </td>
-                                </tr>
-                            )}
-                            emptyMessage="Aucune commande"
-                            actions={
-                                <>
-                                    <h2 className="text-xl font-bold">📦 Commandes</h2>
-                                    <button
-                                        onClick={() => {
-                                            setEditingCommande(null);
-                                            setShowCommandeModal(true);
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                    >
-                                        <Plus size={20} />
-                                        Nouvelle commande
-                                    </button>
-                                </>
-                            }
-                        />
-                    )}
-
-                    {/* Régies avec SmartTable */}
-                    {activeTab === 'regies' && (
-                        <window.SmartTable
-                            data={regies}
-                            columns={[
-                                { key: 'numero', label: 'N° Régie', align: 'left' },
-                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
-                                { key: 'designation', label: 'Désignation', align: 'left' },
-                                { key: 'lots', label: 'Lots', align: 'left' },
-                                { key: 'dateDebut', label: 'Date début', align: 'center' },
-                                { key: 'dateFin', label: 'Date fin', align: 'center' },
-                                { key: 'montantTotal', label: 'Montant Total (CHF)', align: 'right' },
-                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
-                            ]}
-                            renderRow={(regie) => (
-                                <tr key={regie.id} className="border-t hover:bg-gray-50">
-                                    <td className="px-4 py-3 font-medium text-blue-600">{regie.numero}</td>
-                                    <td className="px-4 py-3">{regie.fournisseur}</td>
-                                    <td className="px-4 py-3">{regie.designation}</td>
-                                    <td className="px-4 py-3 text-xs">{regie.lots?.join(', ') || '-'}</td>
-                                    <td className="px-4 py-3 text-center text-sm">
-                                        {regie.dateDebut ? new Date(regie.dateDebut).toLocaleDateString('fr-CH') : '-'}
-                                    </td>
-                                    <td className="px-4 py-3 text-center text-sm">
-                                        {regie.dateFin ? new Date(regie.dateFin).toLocaleDateString('fr-CH') : '-'}
-                                    </td>
-                                    <td className="px-4 py-3 text-right font-medium">
-                                        {(regie.montantTotal || 0).toLocaleString('fr-CH')} CHF
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <button 
-                                            onClick={() => {
-                                                setEditingRegie(regie);
-                                                setShowRegieModal(true);
-                                            }}
-                                            className="text-blue-600 hover:text-blue-800"
-                                        >
-                                            <Edit2 />
-                                        </button>
-                                    </td>
-                                </tr>
-                            )}
-                            emptyMessage="Aucune régie"
-                            actions={
-                                <>
-                                    <h2 className="text-xl font-bold">⏱️ Régies</h2>
-                                    <button
-                                        onClick={() => {
-                                            setEditingRegie(null);
-                                            setShowRegieModal(true);
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                    >
-                                        <Plus size={20} />
-                                        Nouvelle régie
-                                    </button>
-                                </>
-                            }
-                        />
-                    )}
-
-                    {/* Factures avec SmartTable */}
-                    {activeTab === 'factures' && (
-                        <window.SmartTable
-                            data={factures}
-                            columns={[
-                                { key: 'numero', label: 'N° Facture', align: 'left' },
-                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
-                                { key: 'dateFacture', label: 'Date', align: 'center' },
-                                { key: 'dateEcheance', label: 'Échéance', align: 'center' },
-                                { key: 'montantHT', label: 'Montant HT', align: 'right' },
-                                { key: 'montantTTC', label: 'Montant TTC', align: 'right' },
-                                { key: 'statut', label: 'Statut', align: 'center' },
-                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
-                            ]}
-                            renderRow={(facture) => (
-                                <tr key={facture.id} className="border-t hover:bg-gray-50">
-                                    <td className="px-4 py-3 font-medium text-blue-600">{facture.numero}</td>
-                                    <td className="px-4 py-3">{facture.fournisseur}</td>
-                                    <td className="px-4 py-3 text-center text-sm">
-                                        {new Date(facture.dateFacture).toLocaleDateString('fr-CH')}
-                                    </td>
-                                    <td className="px-4 py-3 text-center text-sm">
-                                        {facture.dateEcheance ? new Date(facture.dateEcheance).toLocaleDateString('fr-CH') : '-'}
-                                    </td>
-                                    <td className="px-4 py-3 text-right font-medium">
-                                        {(facture.montantHT || 0).toLocaleString('fr-CH')} CHF
-                                    </td>
-                                    <td className="px-4 py-3 text-right font-medium">
-                                        {(facture.montantTTC || 0).toLocaleString('fr-CH')} CHF
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-1 rounded text-xs ${
-                                            facture.statut === 'Payée' ? 'bg-green-100 text-green-800' :
-                                            facture.statut === 'En attente' ? 'bg-yellow-100 text-yellow-800' :
-                                            facture.statut === 'En retard' ? 'bg-red-100 text-red-800' :
-                                            'bg-gray-100 text-gray-800'
-                                        }`}>
-                                            {facture.statut}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <button 
-                                            onClick={() => {
-                                                setEditingFacture(facture);
-                                                setShowFactureModal(true);
-                                            }}
-                                            className="text-blue-600 hover:text-blue-800"
-                                        >
-                                            <Edit2 />
-                                        </button>
-                                    </td>
-                                </tr>
-                            )}
-                            emptyMessage="Aucune facture"
-                            actions={
-                                <>
-                                    <h2 className="text-xl font-bold">💰 Factures</h2>
-                                    <button
-                                        onClick={() => {
-                                            setEditingFacture(null);
-                                            setShowFactureModal(true);
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                    >
-                                        <Plus size={20} />
-                                        Nouvelle facture
-                                    </button>
-                                </>
-                            }
-                        />
-                    )}
+ {/* Commandes avec SmartTable */}
+{activeTab === 'commandes' && (
+    <window.SmartTable
+        data={commandes}
+        columns={[
+            { key: 'numero', label: 'N° Commande', align: 'left' },
+            { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+            { key: 'lots', label: 'Lots', align: 'left' },
+            { key: 'dateCommande', label: 'Date', align: 'center' },
+            { key: 'statut', label: 'Statut', align: 'center' },
+            { key: 'montant', label: 'Montant (CHF)', align: 'right' },
+            { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
+        ]}
+        renderRow={(cmd) => (
+            <tr key={cmd.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-blue-600">{cmd.numero}</td>
+                <td className="px-4 py-3">{cmd.fournisseur}</td>
+                <td className="px-4 py-3 text-xs">{cmd.lots?.join(', ') || '-'}</td>
+                <td className="px-4 py-3 text-center text-sm">
+                    {new Date(cmd.dateCommande).toLocaleDateString('fr-CH')}
+                </td>
+                <td className="px-4 py-3 text-center">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                        cmd.statut === 'Terminée' ? 'bg-green-100 text-green-800' :
+                        cmd.statut === 'Annulée' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                    }`}>
+                        {cmd.statut || 'En cours'}
+                    </span>
+                </td>
+                <td className="px-4 py-3 text-right font-medium">
+                    {(cmd.calculatedMontant || cmd.montant || 0).toLocaleString('fr-CH')} CHF
+                </td>
+                <td className="px-4 py-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                        <button 
+                            onClick={() => {
+                                setEditingCommande(cmd);
+                                setShowCommandeModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Modifier"
+                        >
+                            <Edit2 size={16} />
+                        </button>
+                        <button 
+                            onClick={() => {
+                                if (confirm(`Supprimer la commande ${cmd.numero} ?\n\nAttention : Les factures liées resteront présentes.`)) {
+                                    const updated = commandes.filter(c => c.id !== cmd.id);
+                                    setCommandes(updated);
+                                    window.saveData('commandes', updated);
+                                    alert('✅ Commande supprimée');
+                                }
+                            }}
+                            className="text-red-600 hover:text-red-800"
+                            title="Supprimer"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        )}
+        emptyMessage="Aucune commande"
+        actions={
+            <>
+                <h2 className="text-xl font-bold">📦 Commandes</h2>
+                <button
+                    onClick={() => {
+                        setEditingCommande(null);
+                        setShowCommandeModal(true);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                >
+                    <Plus size={20} />
+                    Nouvelle commande
+                </button>
+            </>
+        }
+    />
+)}
+{/* Régies avec SmartTable */}
+{activeTab === 'regies' && (
+    <window.SmartTable
+        data={regies}
+        columns={[
+            { key: 'numero', label: 'N° Régie', align: 'left' },
+            { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+            { key: 'designation', label: 'Désignation', align: 'left' },
+            { key: 'lots', label: 'Lots', align: 'left' },
+            { key: 'dateDebut', label: 'Date début', align: 'center' },
+            { key: 'dateFin', label: 'Date fin', align: 'center' },
+            { key: 'montantTotal', label: 'Montant Total (CHF)', align: 'right' },
+            { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
+        ]}
+        renderRow={(regie) => (
+            <tr key={regie.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-blue-600">{regie.numero}</td>
+                <td className="px-4 py-3">{regie.fournisseur}</td>
+                <td className="px-4 py-3">{regie.designation}</td>
+                <td className="px-4 py-3 text-xs">{regie.lots?.join(', ') || '-'}</td>
+                <td className="px-4 py-3 text-center text-sm">
+                    {regie.dateDebut ? new Date(regie.dateDebut).toLocaleDateString('fr-CH') : '-'}
+                </td>
+                <td className="px-4 py-3 text-center text-sm">
+                    {regie.dateFin ? new Date(regie.dateFin).toLocaleDateString('fr-CH') : '-'}
+                </td>
+                <td className="px-4 py-3 text-right font-medium">
+                    {(regie.montantTotal || 0).toLocaleString('fr-CH')} CHF
+                </td>
+                <td className="px-4 py-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                        <button 
+                            onClick={() => {
+                                setEditingRegie(regie);
+                                setShowRegieModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Modifier"
+                        >
+                            <Edit2 size={16} />
+                        </button>
+                        <button 
+                            onClick={() => {
+                                if (confirm(`Supprimer la régie ${regie.numero} ?`)) {
+                                    const updated = regies.filter(r => r.id !== regie.id);
+                                    setRegies(updated);
+                                    window.saveData('regies', updated);
+                                    alert('✅ Régie supprimée');
+                                }
+                            }}
+                            className="text-red-600 hover:text-red-800"
+                            title="Supprimer"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        )}
+        emptyMessage="Aucune régie"
+        actions={
+            <>
+                <h2 className="text-xl font-bold">⏱️ Régies</h2>
+                <button
+                    onClick={() => {
+                        setEditingRegie(null);
+                        setShowRegieModal(true);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                >
+                    <Plus size={20} />
+                    Nouvelle régie
+                </button>
+            </>
+        }
+    />
+)}
+{/* Factures avec SmartTable */}
+{activeTab === 'factures' && (
+    <window.SmartTable
+        data={factures}
+        columns={[
+            { key: 'numero', label: 'N° Facture', align: 'left' },
+            { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+            { key: 'dateFacture', label: 'Date', align: 'center' },
+            { key: 'dateEcheance', label: 'Échéance', align: 'center' },
+            { key: 'montantHT', label: 'Montant HT', align: 'right' },
+            { key: 'montantTTC', label: 'Montant TTC', align: 'right' },
+            { key: 'statut', label: 'Statut', align: 'center' },
+            { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
+        ]}
+        renderRow={(facture) => (
+            <tr key={facture.id} className="border-t hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-blue-600">{facture.numero}</td>
+                <td className="px-4 py-3">{facture.fournisseur}</td>
+                <td className="px-4 py-3 text-center text-sm">
+                    {new Date(facture.dateFacture).toLocaleDateString('fr-CH')}
+                </td>
+                <td className="px-4 py-3 text-center text-sm">
+                    {facture.dateEcheance ? new Date(facture.dateEcheance).toLocaleDateString('fr-CH') : '-'}
+                </td>
+                <td className="px-4 py-3 text-right font-medium">
+                    {(facture.montantHT || 0).toLocaleString('fr-CH')} CHF
+                </td>
+                <td className="px-4 py-3 text-right font-medium">
+                    {(facture.montantTTC || 0).toLocaleString('fr-CH')} CHF
+                </td>
+                <td className="px-4 py-3 text-center">
+                    <span className={`px-2 py-1 rounded text-xs ${
+                        facture.statut === 'Payée' ? 'bg-green-100 text-green-800' :
+                        facture.statut === 'En attente' ? 'bg-yellow-100 text-yellow-800' :
+                        facture.statut === 'En retard' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                    }`}>
+                        {facture.statut}
+                    </span>
+                </td>
+                <td className="px-4 py-3 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                        <button 
+                            onClick={() => {
+                                setEditingFacture(facture);
+                                setShowFactureModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="Modifier"
+                        >
+                            <Edit2 size={16} />
+                        </button>
+                        <button 
+                            onClick={() => {
+                                if (confirm(`Supprimer la facture ${facture.numero} ?`)) {
+                                    const updated = factures.filter(f => f.id !== facture.id);
+                                    setFactures(updated);
+                                    window.saveData('factures', updated);
+                                    alert('✅ Facture supprimée');
+                                }
+                            }}
+                            className="text-red-600 hover:text-red-800"
+                            title="Supprimer"
+                        >
+                            <Trash2 size={16} />
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        )}
+        emptyMessage="Aucune facture"
+        actions={
+            <>
+                <h2 className="text-xl font-bold">💰 Factures</h2>
+                <button
+                    onClick={() => {
+                        setEditingFacture(null);
+                        setShowFactureModal(true);
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                >
+                    <Plus size={20} />
+                    Nouvelle facture
+                </button>
+            </>
+        }
+    />
+)}
 
                     {/* Alignement Budgétaire */}
                     {activeTab === 'alignement' && (
