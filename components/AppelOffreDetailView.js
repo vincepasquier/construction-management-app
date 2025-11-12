@@ -129,7 +129,7 @@ const handleChangeFavorite = (offreId) => {
                     <div className="bg-white border rounded-lg p-4">
                         <div className="text-sm text-gray-600">Écart min/max</div>
                         <div className="text-2xl font-bold text-orange-600">
-                            {offresLiees.length > 1 ? 
+                            {offresLiees.length > 1 && offresLiees.every(o => o.montant) ? 
                                 `${(Math.max(...offresLiees.map(o => o.montant)) - Math.min(...offresLiees.map(o => o.montant))).toLocaleString('fr-CH')} CHF` 
                                 : '-'}
                         </div>
