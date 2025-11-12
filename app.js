@@ -367,57 +367,103 @@ const handleSaveEstimation = (estimation) => {
         data={estimations}
         columns={[
             { key: 'designation', label: 'Désignation', align: 'left' },
-            { key: 'dateCreation', label: 'Date création', align: 'center' },
-            { key: 'nombreLots', label: 'Lots', align: 'center' },
-            { key: 'montantTotal', label: 'Montant Total (CHF)', align: 'right' },
+            { key: 'lots', label: 'Lots', align: 'left' },
+            { key: 'positions0', label: 'Pos. 0', align: 'left' },
+            { key: 'positions1', label: 'Pos. 1', align: 'left' },
+            { key: 'etape', label: 'Étape', align: 'center' },
+            { key: 'montant', label: 'Montant (CHF)', align: 'right' },
             { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
         ]}
         renderRow={(est) => {
-            const nombreLots = est.lots?.length || 0;
-            return (
-                <tr key={est.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">{est.designation}</td>
-                    <td className="px-4 py-3 text-center text-sm">
-                        {est.dateCreation ? new Date(est.dateCreation).toLocaleDateString('fr-CH') : '-'}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                            {nombreLots} lot{nombreLots > 1 ? 's' : ''}
-                        </span>
-                    </td>
-                    <td className="px-4 py-3 text-right font-bold text-blue-600">
-                        {(est.montantTotal || 0).toLocaleString('fr-CH')} CHF
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                            <button 
-                                onClick={() => {
-                                    setEditingEstimation(est);
-                                    setShowEstimationBuilder(true);
-                                }}
-                                className="text-blue-600 hover:text-blue-800"
-                                title="Modifier"
-                            >
-                                <Edit2 size={16} />
-                            </button>
-                            <button 
-                                onClick={() => {
-                                    if (confirm(`Supprimer l'estimation "${est.designation}" ?`)) {
-                                        const updated = estimations.filter(e => e.id !== est.id);
-                                        setEstimations(updated);
-                                        window.saveData('estimations', updated);
-                                        alert('✅ Estimation supprimée');
-                                    }
-                                }}
-                                className="text-red-600 hover:text-red-800"
-                                title="Supprimer"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            );
+            // Détecter le format (hiérarchique ou plat)
+            const isHierarchique = est.lots && Array.isArray(est.lots) && est.lots.length > 0 && typeof est.lots[0] === 'object';
+            
+            if (isHierarchique) {
+                // Format hiérarchique (nouveau)
+                const nombreLots = est.lots?.length || 0;
+                return (
+                    <tr key={est.id} className="border-t hover:bg-gray-50 bg-blue-50">
+                        <td className="px-4 py-3 font-medium">{est.designation}</td>
+                        <td className="px-4 py-3 text-center" colSpan="4">
+                            <span className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
+                                📊 Structure hiérarchique - {nombreLots} lot{nombreLots > 1 ? 's' : ''}
+                            </span>
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-blue-600">
+                            {(est.montantTotal || 0).toLocaleString('fr-CH')} CHF
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                                <button 
+                                    onClick={() => {
+                                        setEditingEstimation(est);
+                                        setShowEstimationBuilder(true);
+                                    }}
+                                    className="text-blue-600 hover:text-blue-800"
+                                    title="Modifier"
+                                >
+                                    <Edit2 size={16} />
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        if (confirm(`Supprimer l'estimation "${est.designation}" ?`)) {
+                                            const updated = estimations.filter(e => e.id !== est.id);
+                                            setEstimations(updated);
+                                            window.saveData('estimations', updated);
+                                            alert('✅ Estimation supprimée');
+                                        }
+                                    }}
+                                    className="text-red-600 hover:text-red-800"
+                                    title="Supprimer"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                );
+            } else {
+                // Format plat (ancien/import CSV)
+                return (
+                    <tr key={est.id} className="border-t hover:bg-gray-50">
+                        <td className="px-4 py-3">{est.designation || '-'}</td>
+                        <td className="px-4 py-3 text-xs">{est.lots?.join(', ') || '-'}</td>
+                        <td className="px-4 py-3 text-xs">{est.positions0?.join(', ') || '-'}</td>
+                        <td className="px-4 py-3 text-xs">{est.positions1?.join(', ') || '-'}</td>
+                        <td className="px-4 py-3 text-center text-xs">{est.etape || '-'}</td>
+                        <td className="px-4 py-3 text-right font-medium">
+                            {(est.montant || 0).toLocaleString('fr-CH')} CHF
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                            <div className="flex items-center justify-center gap-2">
+                                <button 
+                                    onClick={() => {
+                                        alert('⚠️ Cette estimation au format CSV ne peut pas être éditée.\nVeuillez créer une nouvelle estimation hiérarchique.');
+                                    }}
+                                    className="text-gray-400 cursor-not-allowed"
+                                    title="Non éditable (format CSV)"
+                                >
+                                    <Edit2 size={16} />
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        if (confirm(`Supprimer cette ligne d'estimation ?`)) {
+                                            const updated = estimations.filter(e => e.id !== est.id);
+                                            setEstimations(updated);
+                                            window.saveData('estimations', updated);
+                                            alert('✅ Ligne supprimée');
+                                        }
+                                    }}
+                                    className="text-red-600 hover:text-red-800"
+                                    title="Supprimer"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                );
+            }
         }}
         emptyMessage="Aucune estimation - Créez votre première estimation !"
         actions={
@@ -429,7 +475,7 @@ const handleSaveEstimation = (estimation) => {
                         className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
                     >
                         <window.Icons.Upload size={20} />
-                        Importer
+                        Importer CSV
                     </button>
                     <button
                         onClick={() => {
