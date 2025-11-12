@@ -77,7 +77,18 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffr
 
     // Gestion automatique de la favorite si liée à un AO
     const handleAppelOffreChange = (aoId) => {
-        setFormData({...formData, appelOffreId: aoId});
+            const appelOffre = appelOffres.find(ao => ao.id === aoId);
+    
+            const newFormData = {...formData, appelOffreId: aoId};
+    
+    // ✅ COPIE automatique des lots/positions
+    if (appelOffre) {
+        newFormData.lots = appelOffre.lots || [];
+        newFormData.positions0 = appelOffre.positions0 || [];
+        newFormData.positions1 = appelOffre.positions1 || [];
+    }
+    
+    setFormData(newFormData);
         
         if (aoId && formData.montant) {
             const offresLiees = offres.filter(o => o.appelOffreId === aoId && o.id !== formData.id);
