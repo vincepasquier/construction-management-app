@@ -347,16 +347,57 @@ const ConstructionManagement = () => {
                         />
                     )}
 
-                    {/* Estimations */}
+                    {/* Estimations avec SmartTable */}
                     {activeTab === 'estimations' && (
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <div className="flex justify-between mb-6">
-                                <h2 className="text-xl font-bold">📋 Estimations</h2>
-                            </div>
-                            <div className="text-center py-12 text-gray-500">
-                                <p>Aucune estimation - Fonctionnalité à venir</p>
-                            </div>
-                        </div>
+                        <window.SmartTable
+                            data={estimations}
+                            columns={[
+                                { key: 'designation', label: 'Désignation', align: 'left' },
+                                { key: 'lots', label: 'Lots', align: 'left' },
+                                { key: 'positions0', label: 'Pos. Niv. 0', align: 'left' },
+                                { key: 'positions1', label: 'Pos. Niv. 1', align: 'left' },
+                                { key: 'etape', label: 'Étape', align: 'left' },
+                                { key: 'montant', label: 'Montant (CHF)', align: 'right' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
+                            ]}
+                            renderRow={(est) => (
+                                <tr key={est.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium">{est.designation}</td>
+                                    <td className="px-4 py-3 text-xs">{est.lots?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-xs">{est.positions0?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-xs">{est.positions1?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-xs">{est.etape || '-'}</td>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {(est.montant || 0).toLocaleString('fr-CH')} CHF
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <button 
+                                            onClick={() => {
+                                                alert('Édition des estimations - Fonctionnalité à implémenter');
+                                            }}
+                                            className="text-blue-600 hover:text-blue-800"
+                                        >
+                                            <Edit2 />
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
+                            emptyMessage="Aucune estimation - Importez un fichier pour commencer"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">📋 Estimations</h2>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setShowImportModal(true)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
+                                        >
+                                            <window.Icons.Upload size={20} />
+                                            Importer
+                                        </button>
+                                    </div>
+                                </>
+                            }
+                        />
                     )}
 
                     {/* Appels d'Offres avec SmartTable */}
@@ -801,6 +842,21 @@ const ConstructionManagement = () => {
                     onSessionRestore={handleSessionNameChange}
                 />
             )}
+
+                     {/* Modal Import */}
+            {showImportModal && (
+                <window.ImportModal
+                    onClose={() => setShowImportModal(false)}
+                    onImport={loadAllData}
+                    onSessionRestore={handleSessionNameChange}
+                />
+            )}
+
+            {/* 🆕 AJOUTEZ CE MODAL SESSION MANAGER */}
+            <window.SessionManager
+                sessionName={sessionName}
+                onSessionNameChange={handleSessionNameChange}
+            />
 
             {/* Modal Offre */}
             {showOffreModal && (
