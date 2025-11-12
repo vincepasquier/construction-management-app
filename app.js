@@ -910,69 +910,103 @@ const handleSaveEstimation = (estimation) => {
         columns={[
             { key: 'numero', label: 'N° Facture', align: 'left' },
             { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+            { key: 'commandeNumero', label: 'Commande', align: 'left' },  // 🆕 NOUVEAU
+            { key: 'numeroSituation', label: 'Situation', align: 'center' },  // 🆕 NOUVEAU
             { key: 'dateFacture', label: 'Date', align: 'center' },
             { key: 'dateEcheance', label: 'Échéance', align: 'center' },
             { key: 'montantHT', label: 'Montant HT', align: 'right' },
+            { key: 'pourcentageCommande', label: '% Cmd', align: 'center' },  // 🆕 NOUVEAU
             { key: 'montantTTC', label: 'Montant TTC', align: 'right' },
             { key: 'statut', label: 'Statut', align: 'center' },
             { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
         ]}
-        renderRow={(facture) => (
-            <tr key={facture.id} className="border-t hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-blue-600">{facture.numero}</td>
-                <td className="px-4 py-3">{facture.fournisseur}</td>
-                <td className="px-4 py-3 text-center text-sm">
-                    {new Date(facture.dateFacture).toLocaleDateString('fr-CH')}
-                </td>
-                <td className="px-4 py-3 text-center text-sm">
-                    {facture.dateEcheance ? new Date(facture.dateEcheance).toLocaleDateString('fr-CH') : '-'}
-                </td>
-                <td className="px-4 py-3 text-right font-medium">
-                    {(facture.montantHT || 0).toLocaleString('fr-CH')} CHF
-                </td>
-                <td className="px-4 py-3 text-right font-medium">
-                    {(facture.montantTTC || 0).toLocaleString('fr-CH')} CHF
-                </td>
-                <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-1 rounded text-xs ${
-                        facture.statut === 'Payée' ? 'bg-green-100 text-green-800' :
-                        facture.statut === 'En attente' ? 'bg-yellow-100 text-yellow-800' :
-                        facture.statut === 'En retard' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                    }`}>
-                        {facture.statut}
-                    </span>
-                </td>
-                <td className="px-4 py-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                        <button 
-                            onClick={() => {
-                                setEditingFacture(facture);
-                                setShowFactureModal(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="Modifier"
-                        >
-                            <Edit2 size={16} />
-                        </button>
-                        <button 
-                            onClick={() => {
-                                if (confirm(`Supprimer la facture ${facture.numero} ?`)) {
-                                    const updated = factures.filter(f => f.id !== facture.id);
-                                    setFactures(updated);
-                                    window.saveData('factures', updated);
-                                    alert('✅ Facture supprimée');
-                                }
-                            }}
-                            className="text-red-600 hover:text-red-800"
-                            title="Supprimer"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        )}
+        renderRow={(facture) => {
+            // Calculer les infos de commande
+            const commande = facture.commandeId ? commandes.find(c => c.id === facture.commandeId) : null;
+            const pourcentage = commande 
+                ? ((facture.montantHT / (commande.montant || commande.calculatedMontant || 1)) * 100).toFixed(1) 
+                : null;
+
+            return (
+                <tr key={facture.id} className="border-t hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-blue-600">{facture.numero}</td>
+                    <td className="px-4 py-3">{facture.fournisseur}</td>
+                    <td className="px-4 py-3 text-sm">
+                        {commande ? (
+                            <span className="text-blue-600">{commande.numero}</span>
+                        ) : (
+                            <span className="text-gray-400">-</span>
+                        )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                        {facture.numeroSituation ? (
+                            <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded font-semibold text-sm">
+                                {facture.numeroSituation}
+                            </span>
+                        ) : (
+                            <span className="text-gray-400">-</span>
+                        )}
+                    </td>
+                    <td className="px-4 py-3 text-center text-sm">
+                        {new Date(facture.dateFacture).toLocaleDateString('fr-CH')}
+                    </td>
+                    <td className="px-4 py-3 text-center text-sm">
+                        {facture.dateEcheance ? new Date(facture.dateEcheance).toLocaleDateString('fr-CH') : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium">
+                        {(facture.montantHT || 0).toLocaleString('fr-CH')} CHF
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                        {pourcentage ? (
+                            <span className="text-xs text-blue-600 font-semibold">{pourcentage}%</span>
+                        ) : (
+                            <span className="text-gray-400">-</span>
+                        )}
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium">
+                        {(facture.montantTTC || 0).toLocaleString('fr-CH')} CHF
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                        <span className={`px-2 py-1 rounded text-xs ${
+                            facture.statut === 'Payée' ? 'bg-green-100 text-green-800' :
+                            facture.statut === 'En attente' ? 'bg-yellow-100 text-yellow-800' :
+                            facture.statut === 'En retard' ? 'bg-red-100 text-red-800' :
+                            'bg-gray-100 text-gray-800'
+                        }`}>
+                            {facture.statut}
+                        </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                            <button 
+                                onClick={() => {
+                                    setEditingFacture(facture);
+                                    setShowFactureModal(true);
+                                }}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="Modifier"
+                            >
+                                <Edit2 size={16} />
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    if (confirm(`Supprimer la facture ${facture.numero} ?`)) {
+                                        const updated = factures.filter(f => f.id !== facture.id);
+                                        setFactures(updated);
+                                        window.saveData('factures', updated);
+                                        alert('✅ Facture supprimée');
+                                    }
+                                }}
+                                className="text-red-600 hover:text-red-800"
+                                title="Supprimer"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            );
+        }}
         emptyMessage="Aucune facture"
         actions={
             <>
@@ -1125,7 +1159,9 @@ const handleSaveEstimation = (estimation) => {
                     }}
                     onSave={handleSaveFacture}
                     commandes={commandes}
-                    estimations={estimations}  
+                    regies={regies}
+                    estimations={estimations}
+                    factures={factures}  // 🆕 AJOUTER CETTE LIGNE
                 />
             )}
 
