@@ -52,6 +52,12 @@ const Edit = () => (
     </svg>
 );
 
+const Edit2 = () => (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+    </svg>
+);
+
 const Download = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -81,37 +87,30 @@ const Filter = () => (
     </svg>
 );
 
-const AlertCircle = () => (
+const FilterX = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="12" y1="8" x2="12" y2="12"></line>
-        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        <path d="M13.013 3H2l8 9.46V19l4 2v-8.54l.9-1.055"></path>
+        <path d="m22 3-5 5"></path>
+        <path d="m17 3 5 5"></path>
     </svg>
 );
 
-const FileText = () => (
+const ArrowUp = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-        <polyline points="14 2 14 8 20 8"></polyline>
-        <line x1="16" y1="13" x2="8" y2="13"></line>
-        <line x1="16" y1="17" x2="8" y2="17"></line>
-        <polyline points="10 9 9 9 8 9"></polyline>
+        <path d="m5 12 7-7 7 7"></path>
+        <path d="M12 19V5"></path>
     </svg>
 );
 
-// Exporter les icônes dans window.Icons
-window.Icons = {
-    Plus,
-    Trash2,
-    Save,
-    X,
-    ChevronDown,
-    ChevronRight,
-    Edit,
-    Download,
-    Upload,
-    Search,
-    Filter,
-    AlertCircle,
-    FileText
-};
+const ArrowDown = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 5v14"></path>
+        <path d="m19 12-7 7-7-7"></path>
+    </svg>
+);
+
+const ArrowUpDown = () => (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m21 16-4 4-4-4"></path>
+        <path d="M17 20V4"></path>
+        <path d="m3 8 4-4 4 4">
