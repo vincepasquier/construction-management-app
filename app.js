@@ -191,6 +191,25 @@ const handleSessionNameChange = (newName) => {
         window.saveData('offres', updatedOffres);
     };
 
+    // Changer la favorite depuis la vue détaillée (évite les erreurs React)
+    const handleChangeFavoriteFromDetail = (aoId, newFavoriteId) => {
+    const updatedOffres = offres.map(o => {
+        if (o.appelOffreId === aoId) {
+            return { ...o, isFavorite: o.id === newFavoriteId };
+        }
+        return o;
+    });
+    
+    setOffres(updatedOffres);
+    window.saveData('offres', updatedOffres);
+    
+    // Fermer le modal
+    setShowAppelOffreDetail(false);
+    setSelectedAppelOffre(null);
+    
+    alert('✅ Offre favorite mise à jour');
+};
+
     // Créer une commande depuis un AO
     const handleCreateCommandeFromAO = (offreFavorite, appelOffre) => {
         const commande = {
@@ -1018,6 +1037,7 @@ const handleSessionNameChange = (newName) => {
                         setSelectedAppelOffre(null);
                     }}
                     onUpdateOffres={handleUpdateFavorites}
+                    onChangeFavorite={handleChangeFavoriteFromDetail}  // ← AJOUTEZ CETTE LIGNE
                     onCreateCommande={handleCreateCommandeFromAO}
                 />
             )}
