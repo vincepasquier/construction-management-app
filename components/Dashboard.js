@@ -1,299 +1,336 @@
-// Dashboard - Vue d'ensemble avec filtres et statistiques
+// Alignement Budgétaire - Vue hiérarchique avec ventilation au prorata
 const { useState, useMemo } = React;
 
-window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, regies, factures }) => {
-    const [filters, setFilters] = useState({
-        lot: '',
-        position0: '',
-        position1: '',
-        fournisseur: ''
-    });
+window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, commandes, regies, factures }) => {
+    const [expandedLots, setExpandedLots] = useState({});
+    const [expandedPos0, setExpandedPos0] = useState({});
+    const [searchTerm, setSearchTerm] = useState('');
 
-    // Listes pour les filtres
-    const allLots = useMemo(() => {
-        return [...new Set(estimations.flatMap(e => e.lots || []))].sort();
-    }, [estimations]);
+    // Construction de la hiérarchie avec ventilation
+    const hierarchyData = useMemo(() => {
+        const hierarchy = {};
 
-    const allPos0 = useMemo(() => {
-        return [...new Set(estimations.flatMap(e => e.positions0 || []))].sort();
-    }, [estimations]);
-
-    const allPos1 = useMemo(() => {
-        return [...new Set(estimations.flatMap(e => e.positions1 || []))].sort();
-    }, [estimations]);
-
-    const allFournisseurs = useMemo(() => {
-        const fournisseurs = new Set();
-        [...offres, ...commandes, ...factures].forEach(item => {
-            if (item.fournisseur) fournisseurs.add(item.fournisseur);
-        });
-        return [...fournisseurs].sort();
-    }, [offres, commandes, factures]);
-
-    // Fonction de filtrage
-    const applyFilters = (item) => {
-        if (filters.lot && !item.lots?.includes(filters.lot)) return false;
-        if (filters.position0 && !item.positions0?.includes(filters.position0)) return false;
-        if (filters.position1 && !item.positions1?.includes(filters.position1)) return false;
-        if (filters.fournisseur && item.fournisseur !== filters.fournisseur) return false;
-        return true;
-    };
-
-    // Données filtrées
-    const filteredData = useMemo(() => {
-        return {
-            estimations: estimations.filter(applyFilters),
-            offres: offres.filter(applyFilters),
-            offresComplementaires: offresComplementaires.filter(applyFilters),
-            commandes: commandes.filter(applyFilters),
-            regies: regies.filter(applyFilters),
-            factures: factures.filter(applyFilters)
-        };
-    }, [estimations, offres, offresComplementaires, commandes, regies, factures, filters]);
-
-    // Calcul des statistiques sur les données filtrées
-    const stats = useMemo(() => {
-        const totalEstimation = filteredData.estimations.reduce((sum, e) => sum + (e.montant || 0), 0);
-        
-        // Ne compter que les offres favorites ou sans AO
-        const totalOffres = filteredData.offres
-            .filter(o => o.isFavorite === true || !o.appelOffreId)
-            .reduce((sum, o) => sum + (o.montant || 0), 0);
+        // Fonction pour ventiler le montant au prorata des estimations
+        const addToHierarchy = (lots, pos0s, pos1s, montant, type) => {
+            if (!lots || lots.length === 0) return;
             
-        const totalOffresComp = filteredData.offresComplementaires.reduce((sum, oc) => sum + (oc.montant || 0), 0);
-        const totalCommandes = filteredData.commandes.reduce((sum, c) => sum + (c.montant || 0), 0);
-        const totalRegies = filteredData.regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
-        const totalFactures = filteredData.factures.reduce((sum, f) => sum + (f.montantHT || 0), 0);
-        const totalFacturesPayees = filteredData.factures
-            .filter(f => f.statut === 'Payée')
-            .reduce((sum, f) => sum + (f.montantHT || 0), 0);
-
-        const totalDepenses = totalCommandes + totalRegies;
-        const ecart = totalEstimation - totalDepenses;
-        const tauxEngagement = totalEstimation > 0 ? (totalDepenses / totalEstimation * 100) : 0;
-
-        return {
-            totalEstimation,
-            totalOffres,
-            totalOffresComp,
-            totalCommandes,
-            totalRegies,
-            totalFactures,
-            totalFacturesPayees,
-            totalDepenses,
-            ecart,
-            tauxEngagement
+            // Calculer les estimations totales pour cette combinaison
+            const estimationsMap = {};
+            let totalEstimation = 0;
+            
+            lots.forEach(lot => {
+                (pos0s || []).forEach(pos0 => {
+                    (pos1s || []).forEach(pos1 => {
+                        const key = `${lot}|${pos0}|${pos1}`;
+                        
+                        // Trouver l'estimation correspondante
+                        const est = estimations.find(e => 
+                            e.lots?.includes(lot) && 
+                            e.positions0?.includes(pos0) && 
+                            e.positions1?.includes(pos1)
+                        );
+                        
+                        const estMontant = est ? (est.montant || 0) : 0;
+                        estimationsMap[key] = estMontant;
+                        totalEstimation += estMontant;
+                    });
+                });
+            });
+            
+            // Si pas d'estimations pour cette combinaison, ne rien ajouter
+            if (totalEstimation === 0) {
+                console.warn(`Aucune estimation trouvée pour lots=${lots}, pos0=${pos0s}, pos1=${pos1s}. Montant de ${montant} CHF non ventilé.`);
+                return;
+            }
+            
+            // Ventiler au prorata des estimations
+            lots.forEach(lot => {
+                // Vérifier que le lot existe dans hierarchy
+                if (!hierarchy[lot]) return;
+                
+                (pos0s || []).forEach(pos0 => {
+                    // Vérifier que pos0 existe dans ce lot
+                    if (!hierarchy[lot].positions0[pos0]) return;
+                    
+                    (pos1s || []).forEach(pos1 => {
+                        // Vérifier que pos1 existe dans ce pos0
+                        if (!hierarchy[lot].positions0[pos0].positions1[pos1]) return;
+                        
+                        const key = `${lot}|${pos0}|${pos1}`;
+                        const estMontant = estimationsMap[key];
+                        
+                        // Si pas d'estimation pour cette combinaison précise, passer
+                        if (estMontant === 0) return;
+                        
+                        // Calculer le montant ventilé
+                        const montantVentile = montant * (estMontant / totalEstimation);
+                        
+                        // Ajouter le montant ventilé aux 3 niveaux
+                        hierarchy[lot].positions0[pos0].positions1[pos1][type] += montantVentile;
+                        hierarchy[lot].positions0[pos0][type] += montantVentile;
+                        hierarchy[lot][type] += montantVentile;
+                    });
+                });
+            });
         };
-    }, [filteredData]);
 
-    const resetFilters = () => {
-        setFilters({ lot: '', position0: '', position1: '', fournisseur: '' });
+        // Ajouter les estimations (pas de ventilation, montant direct)
+        estimations.forEach(est => {
+            (est.lots || []).forEach(lot => {
+                if (!hierarchy[lot]) {
+                    hierarchy[lot] = { 
+                        estimation: 0, offres: 0, offresComp: 0,
+                        commandes: 0, regies: 0, factures: 0,
+                        positions0: {} 
+                    };
+                }
+                hierarchy[lot].estimation += est.montant || 0;
+
+                (est.positions0 || []).forEach(pos0 => {
+                    if (!hierarchy[lot].positions0[pos0]) {
+                        hierarchy[lot].positions0[pos0] = { 
+                            estimation: 0, offres: 0, offresComp: 0,
+                            commandes: 0, regies: 0, factures: 0,
+                            positions1: {} 
+                        };
+                    }
+                    hierarchy[lot].positions0[pos0].estimation += est.montant || 0;
+
+                    (est.positions1 || []).forEach(pos1 => {
+                        if (!hierarchy[lot].positions0[pos0].positions1[pos1]) {
+                            hierarchy[lot].positions0[pos0].positions1[pos1] = { 
+                                estimation: 0, offres: 0, offresComp: 0,
+                                commandes: 0, regies: 0, factures: 0
+                            };
+                        }
+                        hierarchy[lot].positions0[pos0].positions1[pos1].estimation += est.montant || 0;
+                    });
+                });
+            });
+        });
+
+        // Ajouter les offres (avec ventilation)
+        offres.forEach(off => {
+            // Ne compter que les favorites ou sans AO
+            if (off.isFavorite === true || !off.appelOffreId) {
+                addToHierarchy(off.lots, off.positions0, off.positions1, off.montant || 0, 'offres');
+            }
+        });
+
+        // Ajouter les offres complémentaires (avec ventilation)
+        offresComplementaires.forEach(oc => {
+            addToHierarchy(oc.lots, oc.positions0, oc.positions1, oc.montant || 0, 'offresComp');
+        });
+
+        // Ajouter les commandes (avec ventilation)
+        commandes.forEach(cmd => {
+            const montant = cmd.montant || 0;
+            addToHierarchy(cmd.lots, cmd.positions0, cmd.positions1, montant, 'commandes');
+        });
+
+        // Ajouter les régies (avec ventilation)
+        regies.forEach(regie => {
+            addToHierarchy(regie.lots, regie.positions0, regie.positions1, regie.montantTotal || 0, 'regies');
+        });
+
+        // Ajouter les factures (avec ventilation basée sur la commande)
+        factures.forEach(fact => {
+            const cmd = commandes.find(c => c.id === fact.commandeId);
+            if (cmd) {
+                addToHierarchy(cmd.lots, cmd.positions0, cmd.positions1, fact.montantHT || 0, 'factures');
+            }
+        });
+
+        return hierarchy;
+    }, [estimations, offres, offresComplementaires, commandes, regies, factures]);
+
+    // Filtrer par recherche
+    const filteredHierarchy = useMemo(() => {
+        if (!searchTerm) return hierarchyData;
+
+        const filtered = {};
+        const term = searchTerm.toLowerCase();
+
+        Object.keys(hierarchyData).forEach(lot => {
+            if (lot.toLowerCase().includes(term)) {
+                filtered[lot] = hierarchyData[lot];
+            } else {
+                const filteredPos0 = {};
+                Object.keys(hierarchyData[lot].positions0).forEach(pos0 => {
+                    if (pos0.toLowerCase().includes(term)) {
+                        filteredPos0[pos0] = hierarchyData[lot].positions0[pos0];
+                    } else {
+                        const filteredPos1 = {};
+                        Object.keys(hierarchyData[lot].positions0[pos0].positions1).forEach(pos1 => {
+                            if (pos1.toLowerCase().includes(term)) {
+                                filteredPos1[pos1] = hierarchyData[lot].positions0[pos0].positions1[pos1];
+                            }
+                        });
+                        if (Object.keys(filteredPos1).length > 0) {
+                            filteredPos0[pos0] = {
+                                ...hierarchyData[lot].positions0[pos0],
+                                positions1: filteredPos1
+                            };
+                        }
+                    }
+                });
+                if (Object.keys(filteredPos0).length > 0) {
+                    filtered[lot] = {
+                        ...hierarchyData[lot],
+                        positions0: filteredPos0
+                    };
+                }
+            }
+        });
+
+        return filtered;
+    }, [hierarchyData, searchTerm]);
+
+    const toggleLot = (lot) => {
+        setExpandedLots(prev => ({...prev, [lot]: !prev[lot]}));
     };
 
-    const hasActiveFilters = Object.values(filters).some(v => v !== '');
+    const togglePos0 = (lot, pos0) => {
+        const key = `${lot}-${pos0}`;
+        setExpandedPos0(prev => ({...prev, [key]: !prev[key]}));
+    };
+
+    const renderMontantCell = (data, type) => {
+        const montant = data[type] || 0;
+        return (
+            <td className="px-4 py-2 text-right text-sm">
+                {montant > 0 ? montant.toLocaleString('fr-CH', {minimumFractionDigits: 2}) : '-'}
+            </td>
+        );
+    };
+
+    const calculateEcart = (data) => {
+        const depenses = (data.commandes || 0) + (data.regies || 0);
+        const ecart = (data.estimation || 0) - depenses;
+        return ecart;
+    };
+
+    const renderEcartCell = (data) => {
+        const ecart = calculateEcart(data);
+        const textColor = ecart >= 0 ? 'text-green-600' : 'text-red-600';
+        return (
+            <td className={`px-4 py-2 text-right text-sm font-medium ${textColor}`}>
+                {ecart.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
+            </td>
+        );
+    };
 
     return (
         <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-6">📊 Tableau de Bord</h2>
-
-            {/* Filtres */}
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-semibold">🔍 Filtres</h3>
-                    {hasActiveFilters && (
-                        <button
-                            onClick={resetFilters}
-                            className="text-sm text-blue-600 hover:underline"
-                        >
-                            ✖ Réinitialiser
-                        </button>
-                    )}
-                </div>
-                <div className="grid grid-cols-4 gap-3">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Lot</label>
-                        <select
-                            value={filters.lot}
-                            onChange={(e) => setFilters({...filters, lot: e.target.value})}
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                        >
-                            <option value="">Tous</option>
-                            {allLots.map(lot => (
-                                <option key={lot} value={lot}>{lot}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Position Niv. 0</label>
-                        <select
-                            value={filters.position0}
-                            onChange={(e) => setFilters({...filters, position0: e.target.value})}
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                        >
-                            <option value="">Toutes</option>
-                            {allPos0.map(pos => (
-                                <option key={pos} value={pos}>{pos}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Position Niv. 1</label>
-                        <select
-                            value={filters.position1}
-                            onChange={(e) => setFilters({...filters, position1: e.target.value})}
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                        >
-                            <option value="">Toutes</option>
-                            {allPos1.map(pos => (
-                                <option key={pos} value={pos}>{pos}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Fournisseur</label>
-                        <select
-                            value={filters.fournisseur}
-                            onChange={(e) => setFilters({...filters, fournisseur: e.target.value})}
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                        >
-                            <option value="">Tous</option>
-                            {allFournisseurs.map(f => (
-                                <option key={f} value={f}>{f}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">🎯 Alignement Budgétaire</h2>
+                <input
+                    type="text"
+                    placeholder="🔍 Rechercher..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="px-4 py-2 border rounded-lg w-64"
+                />
             </div>
 
-            {/* Statistiques principales */}
-            <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Budget Initial</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                        {stats.totalEstimation.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                    </p>
-                    <p className="text-xs text-gray-500">CHF</p>
-                </div>
-
-                <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Engagé</p>
-                    <p className="text-2xl font-bold text-green-600">
-                        {stats.totalDepenses.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                        {stats.tauxEngagement.toFixed(1)}% du budget
-                    </p>
-                </div>
-
-                <div className={`p-4 rounded-lg ${stats.ecart >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                    <p className="text-sm text-gray-600">Écart Budget</p>
-                    <p className={`text-2xl font-bold ${stats.ecart >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {stats.ecart.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                    </p>
-                    <p className="text-xs text-gray-500">CHF</p>
-                </div>
-
-                <div className="p-4 bg-purple-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Factures Payées</p>
-                    <p className="text-2xl font-bold text-purple-600">
-                        {stats.totalFacturesPayees.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                        {stats.totalFactures > 0 
-                            ? `${(stats.totalFacturesPayees / stats.totalFactures * 100).toFixed(0)}%`
-                            : '0%'
-                        } du total
-                    </p>
-                </div>
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
+                <p className="font-medium text-blue-800">💡 Ventilation au prorata des estimations</p>
+                <p className="text-blue-700">
+                    Lorsqu'une offre/commande/régie couvre plusieurs lots ou positions, 
+                    son montant est ventilé proportionnellement aux estimations de chaque position.
+                </p>
             </div>
 
-            {/* Détails par catégorie */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-4 border rounded-lg">
-                    <h3 className="font-semibold mb-3">💰 Répartition Budget</h3>
-                    <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                            <span>Offres:</span>
-                            <span className="font-medium">{stats.totalOffres.toLocaleString('fr-CH')} CHF</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Offres Complémentaires:</span>
-                            <span className="font-medium">{stats.totalOffresComp.toLocaleString('fr-CH')} CHF</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Commandes:</span>
-                            <span className="font-medium">{stats.totalCommandes.toLocaleString('fr-CH')} CHF</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Régies:</span>
-                            <span className="font-medium">{stats.totalRegies.toLocaleString('fr-CH')} CHF</span>
-                        </div>
-                        <div className="flex justify-between border-t pt-2 font-semibold">
-                            <span>Total Factures:</span>
-                            <span className="text-purple-600">{stats.totalFactures.toLocaleString('fr-CH')} CHF</span>
-                        </div>
-                    </div>
-                </div>
+            <div className="overflow-x-auto">
+                <table className="w-full">
+                    <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Hiérarchie</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Estimation</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Offres</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">OC</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Commandes</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Régies</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Factures</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Écart</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {Object.keys(filteredHierarchy).length === 0 ? (
+                            <tr>
+                                <td colSpan="8" className="text-center py-12 text-gray-500">
+                                    {searchTerm ? 'Aucun résultat trouvé' : 'Aucune donnée à afficher'}
+                                </td>
+                            </tr>
+                        ) : (
+                            Object.keys(filteredHierarchy).sort().map(lot => (
+                                <React.Fragment key={lot}>
+                                    {/* Ligne Lot */}
+                                    <tr className="bg-blue-50 font-semibold hover:bg-blue-100 cursor-pointer"
+                                        onClick={() => toggleLot(lot)}>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-2">
+                                                {expandedLots[lot] ? 
+                                                    <window.Icons.ChevronDown size={18} /> : 
+                                                    <window.Icons.ChevronRight size={18} />
+                                                }
+                                                <span className="text-blue-800">📦 {lot}</span>
+                                            </div>
+                                        </td>
+                                        {renderMontantCell(filteredHierarchy[lot], 'estimation')}
+                                        {renderMontantCell(filteredHierarchy[lot], 'offres')}
+                                        {renderMontantCell(filteredHierarchy[lot], 'offresComp')}
+                                        {renderMontantCell(filteredHierarchy[lot], 'commandes')}
+                                        {renderMontantCell(filteredHierarchy[lot], 'regies')}
+                                        {renderMontantCell(filteredHierarchy[lot], 'factures')}
+                                        {renderEcartCell(filteredHierarchy[lot])}
+                                    </tr>
 
-                <div className="p-4 border rounded-lg">
-                    <h3 className="font-semibold mb-3">📋 Compteurs</h3>
-                    <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                            <span>Estimations:</span>
-                            <span className="font-medium">{filteredData.estimations.length} / {estimations.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Offres:</span>
-                            <span className="font-medium">{filteredData.offres.length} / {offres.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Offres Complémentaires:</span>
-                            <span className="font-medium">{filteredData.offresComplementaires.length} / {offresComplementaires.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Commandes:</span>
-                            <span className="font-medium">{filteredData.commandes.length} / {commandes.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Régies:</span>
-                            <span className="font-medium">{filteredData.regies.length} / {regies.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Factures:</span>
-                            <span className="font-medium">{filteredData.factures.length} / {factures.length}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                                    {/* Positions 0 */}
+                                    {expandedLots[lot] && Object.keys(filteredHierarchy[lot].positions0).sort().map(pos0 => (
+                                        <React.Fragment key={`${lot}-${pos0}`}>
+                                            <tr className="bg-green-50 hover:bg-green-100 cursor-pointer"
+                                                onClick={() => togglePos0(lot, pos0)}>
+                                                <td className="px-4 py-3 pl-12">
+                                                    <div className="flex items-center gap-2">
+                                                        {expandedPos0[`${lot}-${pos0}`] ? 
+                                                            <window.Icons.ChevronDown size={16} /> : 
+                                                            <window.Icons.ChevronRight size={16} />
+                                                        }
+                                                        <span className="text-green-800">📁 {pos0}</span>
+                                                    </div>
+                                                </td>
+                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'estimation')}
+                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'offres')}
+                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'offresComp')}
+                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'commandes')}
+                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'regies')}
+                                                {renderMontantCell(filteredHierarchy[lot].positions0[pos0], 'factures')}
+                                                {renderEcartCell(filteredHierarchy[lot].positions0[pos0])}
+                                            </tr>
 
-            {/* Alertes */}
-            <div className="space-y-3">
-                {stats.ecart < 0 && (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-800 font-semibold">⚠️ Dépassement de budget</p>
-                        <p className="text-sm text-red-700">
-                            Le budget est dépassé de {Math.abs(stats.ecart).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                        </p>
-                    </div>
-                )}
-
-                {stats.tauxEngagement > 90 && stats.ecart >= 0 && (
-                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-yellow-800 font-semibold">⚠️ Budget presque épuisé</p>
-                        <p className="text-sm text-yellow-700">
-                            {stats.tauxEngagement.toFixed(1)}% du budget est engagé
-                        </p>
-                    </div>
-                )}
-
-                {filteredData.factures.filter(f => f.statut === 'En retard').length > 0 && (
-                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                        <p className="text-orange-800 font-semibold">📅 Factures en retard</p>
-                        <p className="text-sm text-orange-700">
-                            {filteredData.factures.filter(f => f.statut === 'En retard').length} facture(s) en retard de paiement
-                        </p>
-                    </div>
-                )}
+                                            {/* Positions 1 */}
+                                            {expandedPos0[`${lot}-${pos0}`] && Object.keys(filteredHierarchy[lot].positions0[pos0].positions1).sort().map(pos1 => (
+                                                <tr key={`${lot}-${pos0}-${pos1}`} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-2 pl-20 text-sm text-gray-700">
+                                                        📄 {pos1}
+                                                    </td>
+                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'estimation')}
+                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'offres')}
+                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'offresComp')}
+                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'commandes')}
+                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'regies')}
+                                                    {renderMontantCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1], 'factures')}
+                                                    {renderEcartCell(filteredHierarchy[lot].positions0[pos0].positions1[pos1])}
+                                                </tr>
+                                            ))}
+                                        </React.Fragment>
+                                    ))}
+                                </React.Fragment>
+                            ))
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
