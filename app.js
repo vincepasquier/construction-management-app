@@ -1125,6 +1125,7 @@ const handleSaveEstimation = (estimation) => {
                     }}
                     onSave={handleSaveFacture}
                     commandes={commandes}
+                    estimations={estimations}  
                 />
             )}
 
