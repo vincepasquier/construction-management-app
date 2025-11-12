@@ -6,11 +6,10 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
         lot: '',
         position0: '',
         position1: '',
-        fournisseur: '',
-        etape: '' // 🆕 NOUVEAU
+        fournisseur: ''
     });
 
-    // Extraction des listes uniques pour les filtres
+    // Listes pour les filtres
     const allLots = useMemo(() => {
         return [...new Set(estimations.flatMap(e => e.lots || []))].sort();
     }, [estimations]);
@@ -31,20 +30,47 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
         return [...fournisseurs].sort();
     }, [offres, commandes, factures]);
 
-    // Calcul des statistiques globales
+    // Fonction de filtrage
+    const applyFilters = (item) => {
+        if (filters.lot && !item.lots?.includes(filters.lot)) return false;
+        if (filters.position0 && !item.positions0?.includes(filters.position0)) return false;
+        if (filters.position1 && !item.positions1?.includes(filters.position1)) return false;
+        if (filters.fournisseur && item.fournisseur !== filters.fournisseur) return false;
+        return true;
+    };
+
+    // Données filtrées
+    const filteredData = useMemo(() => {
+        return {
+            estimations: estimations.filter(applyFilters),
+            offres: offres.filter(applyFilters),
+            offresComplementaires: offresComplementaires.filter(applyFilters),
+            commandes: commandes.filter(applyFilters),
+            regies: regies.filter(applyFilters),
+            factures: factures.filter(applyFilters)
+        };
+    }, [estimations, offres, offresComplementaires, commandes, regies, factures, filters]);
+
+    // Calcul des statistiques sur les données filtrées
     const stats = useMemo(() => {
-        const totalEstimation = estimations.reduce((sum, e) => sum + (e.montant || 0), 0);
+        const totalEstimation = filteredData.estimations.reduce((sum, e) => sum + (e.montant || 0), 0);
         
         // Ne compter que les offres favorites ou sans AO
-        const totalOffres = offres
+        const totalOffres = filteredData.offres
             .filter(o => o.isFavorite === true || !o.appelOffreId)
             .reduce((sum, o) => sum + (o.montant || 0), 0);
             
-        const totalOffresComp = offresComplementaires.reduce((sum, oc) => sum + (oc.montant || 0), 0);
-        const totalCommandes = commandes.reduce((sum, c) => sum + (c.calculatedMontant || c.montant || 0), 0);
-        const totalRegies = regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
-        const totalFactures = factures.reduce((sum, f) => sum + (f.montantHT || 0), 0);
-        const totalFacturesPayees = factures.filter(f => f.statut === 'Payée').reduce((sum, f) => sum + (f.montantHT || 0), 0);
+        const totalOffresComp = filteredData.offresComplementaires.reduce((sum, oc) => sum + (oc.montant || 0), 0);
+        const totalCommandes = filteredData.commandes.reduce((sum, c) => sum + (c.montant || 0), 0);
+        const totalRegies = filteredData.regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
+        const totalFactures = filteredData.factures.reduce((sum, f) => sum + (f.montantHT || 0), 0);
+        const totalFacturesPayees = filteredData.factures
+            .filter(f => f.statut === 'Payée')
+            .reduce((sum, f) => sum + (f.montantHT || 0), 0);
+
+        const totalDepenses = totalCommandes + totalRegies;
+        const ecart = totalEstimation - totalDepenses;
+        const tauxEngagement = totalEstimation > 0 ? (totalDepenses / totalEstimation * 100) : 0;
 
         return {
             totalEstimation,
@@ -54,42 +80,14 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
             totalRegies,
             totalFactures,
             totalFacturesPayees,
-            totalDepenses: totalCommandes + totalRegies,
-            ecartEstimation: totalEstimation - (totalCommandes + totalRegies),
-            tauxEngagement: totalEstimation > 0 ? ((totalCommandes + totalRegies) / totalEstimation * 100) : 0
+            totalDepenses,
+            ecart,
+            tauxEngagement
         };
-    }, [estimations, offres, offresComplementaires, commandes, regies, factures]);
+    }, [filteredData]);
 
-    // Données filtrées
-    const filteredData = useMemo(() => {
-        const filterItem = (item) => {
-            if (filters.lot && !item.lots?.includes(filters.lot)) return false;
-            if (filters.position0 && !item.positions0?.includes(filters.position0)) return false;
-            if (filters.position1 && !item.positions1?.includes(filters.position1)) return false;
-            if (filters.fournisseur && item.fournisseur !== filters.fournisseur) return false;
-            if (filters.etape && item.etape !== filters.etape) return false; // 🆕 NOUVEAU
-            return true;
-        };
-
-        return {
-            estimations: estimations.filter(filterItem),
-            offres: offres.filter(filterItem),
-            offresComplementaires: offresComplementaires.filter(filterItem),
-            commandes: commandes.filter(filterItem),
-            regies: regies.filter(filterItem),
-            factures: factures.filter(filterItem)
-        };
-    }, [estimations, offres, offresComplementaires, commandes, regies, factures, filters]);
-
-    // Réinitialiser les filtres
     const resetFilters = () => {
-        setFilters({
-            lot: '',
-            position0: '',
-            position1: '',
-            fournisseur: '',
-            etape: '' // 🆕 NOUVEAU
-        });
+        setFilters({ lot: '', position0: '', position1: '', fournisseur: '' });
     };
 
     const hasActiveFilters = Object.values(filters).some(v => v !== '');
@@ -111,7 +109,7 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                         </button>
                     )}
                 </div>
-                <div className="grid grid-cols-5 gap-3">
+                <div className="grid grid-cols-4 gap-3">
                     <div>
                         <label className="block text-sm font-medium mb-1">Lot</label>
                         <select
@@ -164,19 +162,6 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                             ))}
                         </select>
                     </div>
-                    {/* 🆕 NOUVEAU FILTRE ÉTAPE */}
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Étape</label>
-                        <select
-                            value={filters.etape}
-                            onChange={(e) => setFilters({...filters, etape: e.target.value})}
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                        >
-                            <option value="">Toutes</option>
-                            <option value="1">Étape 1</option>
-                            <option value="2">Étape 2</option>
-                        </select>
-                    </div>
                 </div>
             </div>
 
@@ -200,10 +185,10 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                     </p>
                 </div>
 
-                <div className={`p-4 rounded-lg ${stats.ecartEstimation >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                <div className={`p-4 rounded-lg ${stats.ecart >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
                     <p className="text-sm text-gray-600">Écart Budget</p>
-                    <p className={`text-2xl font-bold ${stats.ecartEstimation >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {stats.ecartEstimation.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
+                    <p className={`text-2xl font-bold ${stats.ecart >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {stats.ecart.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
                     </p>
                     <p className="text-xs text-gray-500">CHF</p>
                 </div>
@@ -214,7 +199,10 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                         {stats.totalFacturesPayees.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
                     </p>
                     <p className="text-xs text-gray-500">
-                        {stats.totalFactures > 0 ? ((stats.totalFacturesPayees / stats.totalFactures) * 100).toFixed(1) : 0}% payé
+                        {stats.totalFactures > 0 
+                            ? `${(stats.totalFacturesPayees / stats.totalFactures * 100).toFixed(0)}%`
+                            : '0%'
+                        } du total
                     </p>
                 </div>
             </div>
@@ -222,27 +210,27 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
             {/* Détails par catégorie */}
             <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="p-4 border rounded-lg">
-                    <h3 className="font-semibold mb-3">💰 Flux Financiers</h3>
+                    <h3 className="font-semibold mb-3">💰 Répartition Budget</h3>
                     <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                             <span>Offres:</span>
-                            <span className="font-medium">{stats.totalOffres.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF</span>
+                            <span className="font-medium">{stats.totalOffres.toLocaleString('fr-CH')} CHF</span>
                         </div>
                         <div className="flex justify-between">
                             <span>Offres Complémentaires:</span>
-                            <span className="font-medium">{stats.totalOffresComp.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF</span>
+                            <span className="font-medium">{stats.totalOffresComp.toLocaleString('fr-CH')} CHF</span>
                         </div>
                         <div className="flex justify-between">
                             <span>Commandes:</span>
-                            <span className="font-medium">{stats.totalCommandes.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF</span>
+                            <span className="font-medium">{stats.totalCommandes.toLocaleString('fr-CH')} CHF</span>
                         </div>
                         <div className="flex justify-between">
                             <span>Régies:</span>
-                            <span className="font-medium">{stats.totalRegies.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF</span>
+                            <span className="font-medium">{stats.totalRegies.toLocaleString('fr-CH')} CHF</span>
                         </div>
-                        <div className="flex justify-between border-t pt-2">
-                            <span className="font-semibold">Factures Total:</span>
-                            <span className="font-bold">{stats.totalFactures.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF</span>
+                        <div className="flex justify-between border-t pt-2 font-semibold">
+                            <span>Total Factures:</span>
+                            <span className="text-purple-600">{stats.totalFactures.toLocaleString('fr-CH')} CHF</span>
                         </div>
                     </div>
                 </div>
@@ -278,18 +266,18 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                 </div>
             </div>
 
-            {/* Alertes et indicateurs */}
+            {/* Alertes */}
             <div className="space-y-3">
-                {stats.ecartEstimation < 0 && (
+                {stats.ecart < 0 && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                         <p className="text-red-800 font-semibold">⚠️ Dépassement de budget</p>
                         <p className="text-sm text-red-700">
-                            Le budget est dépassé de {Math.abs(stats.ecartEstimation).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                            Le budget est dépassé de {Math.abs(stats.ecart).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
                         </p>
                     </div>
                 )}
 
-                {stats.tauxEngagement > 90 && stats.ecartEstimation >= 0 && (
+                {stats.tauxEngagement > 90 && stats.ecart >= 0 && (
                     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <p className="text-yellow-800 font-semibold">⚠️ Budget presque épuisé</p>
                         <p className="text-sm text-yellow-700">
@@ -298,11 +286,11 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
                     </div>
                 )}
 
-                {factures.filter(f => f.statut === 'En retard').length > 0 && (
+                {filteredData.factures.filter(f => f.statut === 'En retard').length > 0 && (
                     <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                         <p className="text-orange-800 font-semibold">📅 Factures en retard</p>
                         <p className="text-sm text-orange-700">
-                            {factures.filter(f => f.statut === 'En retard').length} facture(s) en retard de paiement
+                            {filteredData.factures.filter(f => f.statut === 'En retard').length} facture(s) en retard de paiement
                         </p>
                     </div>
                 )}
