@@ -1,4 +1,4 @@
-// Alignement Budgétaire - Vue hiérarchique Lot > Position0 > Position1
+// Alignement Budgétaire - Vue hiérarchique avec ventilation au prorata
 const { useState, useMemo } = React;
 
 window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, commandes, regies, factures }) => {
@@ -6,84 +6,143 @@ window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, com
     const [expandedPos0, setExpandedPos0] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Construction de la hiérarchie des données
+    // Construction de la hiérarchie avec ventilation
     const hierarchyData = useMemo(() => {
         const hierarchy = {};
 
-        // Fonction pour ajouter des montants à la hiérarchie
+        // Fonction pour ventiler le montant au prorata des estimations
         const addToHierarchy = (lots, pos0s, pos1s, montant, type) => {
-            (lots || []).forEach(lot => {
+            if (!lots || lots.length === 0) return;
+            
+            // Calculer les estimations totales pour cette combinaison
+            const estimationsMap = {};
+            let totalEstimation = 0;
+            
+            lots.forEach(lot => {
+                (pos0s || []).forEach(pos0 => {
+                    (pos1s || []).forEach(pos1 => {
+                        const key = `${lot}|${pos0}|${pos1}`;
+                        
+                        // Trouver l'estimation correspondante
+                        const est = estimations.find(e => 
+                            e.lots?.includes(lot) && 
+                            e.positions0?.includes(pos0) && 
+                            e.positions1?.includes(pos1)
+                        );
+                        
+                        const estMontant = est ? (est.montant || 0) : 0;
+                        estimationsMap[key] = estMontant;
+                        totalEstimation += estMontant;
+                    });
+                });
+            });
+            
+            // Si pas d'estimations, répartir équitablement
+            const nbCombinations = lots.length * (pos0s?.length || 1) * (pos1s?.length || 1);
+            
+            lots.forEach(lot => {
                 if (!hierarchy[lot]) {
                     hierarchy[lot] = { 
-                        estimation: 0, 
-                        offres: 0, 
-                        offresComp: 0,
-                        commandes: 0, 
-                        regies: 0, 
-                        factures: 0,
+                        estimation: 0, offres: 0, offresComp: 0,
+                        commandes: 0, regies: 0, factures: 0,
                         positions0: {} 
                     };
                 }
-                hierarchy[lot][type] += montant;
-
+                
                 (pos0s || []).forEach(pos0 => {
                     if (!hierarchy[lot].positions0[pos0]) {
                         hierarchy[lot].positions0[pos0] = { 
-                            estimation: 0, 
-                            offres: 0, 
-                            offresComp: 0,
-                            commandes: 0, 
-                            regies: 0, 
-                            factures: 0,
+                            estimation: 0, offres: 0, offresComp: 0,
+                            commandes: 0, regies: 0, factures: 0,
                             positions1: {} 
                         };
                     }
-                    hierarchy[lot].positions0[pos0][type] += montant;
-
+                    
                     (pos1s || []).forEach(pos1 => {
+                        const key = `${lot}|${pos0}|${pos1}`;
+                        const estMontant = estimationsMap[key];
+                        
+                        // Calculer le montant ventilé
+                        const montantVentile = totalEstimation > 0 
+                            ? montant * (estMontant / totalEstimation)
+                            : montant / nbCombinations;
+                        
                         if (!hierarchy[lot].positions0[pos0].positions1[pos1]) {
                             hierarchy[lot].positions0[pos0].positions1[pos1] = { 
-                                estimation: 0, 
-                                offres: 0, 
-                                offresComp: 0,
-                                commandes: 0, 
-                                regies: 0, 
-                                factures: 0
+                                estimation: 0, offres: 0, offresComp: 0,
+                                commandes: 0, regies: 0, factures: 0
                             };
                         }
-                        hierarchy[lot].positions0[pos0].positions1[pos1][type] += montant;
+                        
+                        // Ajouter le montant ventilé aux 3 niveaux
+                        hierarchy[lot].positions0[pos0].positions1[pos1][type] += montantVentile;
+                        hierarchy[lot].positions0[pos0][type] += montantVentile;
+                        hierarchy[lot][type] += montantVentile;
                     });
                 });
             });
         };
 
-        // Ajouter les estimations
+        // Ajouter les estimations (pas de ventilation, montant direct)
         estimations.forEach(est => {
-            addToHierarchy(est.lots, est.positions0, est.positions1, est.montant || 0, 'estimation');
+            (est.lots || []).forEach(lot => {
+                if (!hierarchy[lot]) {
+                    hierarchy[lot] = { 
+                        estimation: 0, offres: 0, offresComp: 0,
+                        commandes: 0, regies: 0, factures: 0,
+                        positions0: {} 
+                    };
+                }
+                hierarchy[lot].estimation += est.montant || 0;
+
+                (est.positions0 || []).forEach(pos0 => {
+                    if (!hierarchy[lot].positions0[pos0]) {
+                        hierarchy[lot].positions0[pos0] = { 
+                            estimation: 0, offres: 0, offresComp: 0,
+                            commandes: 0, regies: 0, factures: 0,
+                            positions1: {} 
+                        };
+                    }
+                    hierarchy[lot].positions0[pos0].estimation += est.montant || 0;
+
+                    (est.positions1 || []).forEach(pos1 => {
+                        if (!hierarchy[lot].positions0[pos0].positions1[pos1]) {
+                            hierarchy[lot].positions0[pos0].positions1[pos1] = { 
+                                estimation: 0, offres: 0, offresComp: 0,
+                                commandes: 0, regies: 0, factures: 0
+                            };
+                        }
+                        hierarchy[lot].positions0[pos0].positions1[pos1].estimation += est.montant || 0;
+                    });
+                });
+            });
         });
 
-        // Ajouter les offres
+        // Ajouter les offres (avec ventilation)
         offres.forEach(off => {
-            addToHierarchy(off.lots, off.positions0, off.positions1, off.montant || 0, 'offres');
+            // Ne compter que les favorites ou sans AO
+            if (off.isFavorite === true || !off.appelOffreId) {
+                addToHierarchy(off.lots, off.positions0, off.positions1, off.montant || 0, 'offres');
+            }
         });
 
-        // Ajouter les offres complémentaires
+        // Ajouter les offres complémentaires (avec ventilation)
         offresComplementaires.forEach(oc => {
             addToHierarchy(oc.lots, oc.positions0, oc.positions1, oc.montant || 0, 'offresComp');
         });
 
-        // Ajouter les commandes
+        // Ajouter les commandes (avec ventilation)
         commandes.forEach(cmd => {
-            const montant = cmd.calculatedMontant || cmd.montant || 0;
+            const montant = cmd.montant || 0;
             addToHierarchy(cmd.lots, cmd.positions0, cmd.positions1, montant, 'commandes');
         });
 
-        // Ajouter les régies
+        // Ajouter les régies (avec ventilation)
         regies.forEach(regie => {
             addToHierarchy(regie.lots, regie.positions0, regie.positions1, regie.montantTotal || 0, 'regies');
         });
 
-        // Ajouter les factures
+        // Ajouter les factures (avec ventilation basée sur la commande)
         factures.forEach(fact => {
             const cmd = commandes.find(c => c.id === fact.commandeId);
             if (cmd) {
@@ -164,7 +223,7 @@ window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, com
         const ecart = calculateEcart(data);
         const textColor = ecart >= 0 ? 'text-green-600' : 'text-red-600';
         return (
-            <td className={`px-4 py-2 text-right text-sm font-semibold ${textColor}`}>
+            <td className={`px-4 py-2 text-right text-sm font-medium ${textColor}`}>
                 {ecart.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
             </td>
         );
@@ -173,39 +232,36 @@ window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, com
     return (
         <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">📌 Alignement Budgétaire</h2>
-                <div className="flex gap-3">
-                    <input
-                        type="text"
-                        placeholder="🔍 Rechercher..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="px-4 py-2 border rounded-lg w-64"
-                    />
-                    <button
-                        onClick={() => {
-                            setExpandedLots({});
-                            setExpandedPos0({});
-                        }}
-                        className="px-4 py-2 border rounded-lg hover:bg-gray-50"
-                    >
-                        Tout réduire
-                    </button>
-                </div>
+                <h2 className="text-2xl font-bold">🎯 Alignement Budgétaire</h2>
+                <input
+                    type="text"
+                    placeholder="🔍 Rechercher..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="px-4 py-2 border rounded-lg w-64"
+                />
+            </div>
+
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
+                <p className="font-medium text-blue-800">💡 Ventilation au prorata des estimations</p>
+                <p className="text-blue-700">
+                    Lorsqu'une offre/commande/régie couvre plusieurs lots ou positions, 
+                    son montant est ventilé proportionnellement aux estimations de chaque position.
+                </p>
             </div>
 
             <div className="overflow-x-auto">
                 <table className="w-full">
                     <thead className="bg-gray-50 sticky top-0">
                         <tr>
-                            <th className="px-4 py-3 text-left text-sm font-medium">Hiérarchie</th>
-                            <th className="px-4 py-3 text-right text-sm font-medium">Estimation</th>
-                            <th className="px-4 py-3 text-right text-sm font-medium">Offres</th>
-                            <th className="px-4 py-3 text-right text-sm font-medium">OC</th>
-                            <th className="px-4 py-3 text-right text-sm font-medium">Commandes</th>
-                            <th className="px-4 py-3 text-right text-sm font-medium">Régies</th>
-                            <th className="px-4 py-3 text-right text-sm font-medium">Factures</th>
-                            <th className="px-4 py-3 text-right text-sm font-medium">Écart</th>
+                            <th className="px-4 py-3 text-left text-sm font-semibold">Hiérarchie</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Estimation</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Offres</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">OC</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Commandes</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Régies</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Factures</th>
+                            <th className="px-4 py-3 text-right text-sm font-semibold">Écart</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -216,7 +272,7 @@ window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, com
                                 </td>
                             </tr>
                         ) : (
-                            Object.keys(filteredHierarchy).map(lot => (
+                            Object.keys(filteredHierarchy).sort().map(lot => (
                                 <React.Fragment key={lot}>
                                     {/* Ligne Lot */}
                                     <tr className="bg-blue-50 font-semibold hover:bg-blue-100 cursor-pointer"
@@ -240,7 +296,7 @@ window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, com
                                     </tr>
 
                                     {/* Positions 0 */}
-                                    {expandedLots[lot] && Object.keys(filteredHierarchy[lot].positions0).map(pos0 => (
+                                    {expandedLots[lot] && Object.keys(filteredHierarchy[lot].positions0).sort().map(pos0 => (
                                         <React.Fragment key={`${lot}-${pos0}`}>
                                             <tr className="bg-green-50 hover:bg-green-100 cursor-pointer"
                                                 onClick={() => togglePos0(lot, pos0)}>
@@ -263,7 +319,7 @@ window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, com
                                             </tr>
 
                                             {/* Positions 1 */}
-                                            {expandedPos0[`${lot}-${pos0}`] && Object.keys(filteredHierarchy[lot].positions0[pos0].positions1).map(pos1 => (
+                                            {expandedPos0[`${lot}-${pos0}`] && Object.keys(filteredHierarchy[lot].positions0[pos0].positions1).sort().map(pos1 => (
                                                 <tr key={`${lot}-${pos0}-${pos1}`} className="hover:bg-gray-50">
                                                     <td className="px-4 py-2 pl-20 text-sm text-gray-700">
                                                         📄 {pos1}
@@ -284,24 +340,6 @@ window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, com
                         )}
                     </tbody>
                 </table>
-            </div>
-
-            {/* Légende */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-semibold mb-2">📖 Légende</h3>
-                <div className="grid grid-cols-3 gap-2 text-sm">
-                    <div><span className="font-semibold">Estimation :</span> Budget initial</div>
-                    <div><span className="font-semibold">Offres :</span> Offres reçues</div>
-                    <div><span className="font-semibold">OC :</span> Offres complémentaires</div>
-                    <div><span className="font-semibold">Commandes :</span> Commandes passées</div>
-                    <div><span className="font-semibold">Régies :</span> Travaux en régie</div>
-                    <div><span className="font-semibold">Factures :</span> Factures reçues</div>
-                    <div className="col-span-3">
-                        <span className="font-semibold">Écart :</span> Estimation - (Commandes + Régies)
-                        <span className="ml-2 text-green-600">Vert = Sous budget</span>
-                        <span className="ml-2 text-red-600">Rouge = Dépassement</span>
-                    </div>
-                </div>
             </div>
         </div>
     );
