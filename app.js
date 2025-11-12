@@ -363,7 +363,7 @@ const handleSessionNameChange = (newName) => {
                 {/* Contenu des onglets */}
                 <div className="mb-6">
                     {/* Dashboard */}
-                    {activeTab === 'dashboard' && (
+                    {/*activeTab === 'dashboard' && (
                         <window.Dashboard
                             estimations={estimations}
                             offres={offres}
@@ -372,7 +372,7 @@ const handleSessionNameChange = (newName) => {
                             regies={regies}
                             factures={factures}
                         />
-                    )}
+                    )*/}
 
                     {/* Estimations */}
                     {activeTab === 'estimations' && (
