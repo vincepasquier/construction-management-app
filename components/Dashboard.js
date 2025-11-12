@@ -1,4 +1,4 @@
-// Alignement Budgétaire - Vue hiérarchique Lot > Position0 > Position1
+// Alignement Budgétaire - Vue hiérarchique avec ventilation au prorata
 const { useState, useMemo } = React;
 
 window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, commandes, regies, factures }) => {
@@ -6,115 +6,160 @@ window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, com
     const [expandedPos0, setExpandedPos0] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Construction de la hiérarchie des données
+    // Construction de la hiérarchie avec ventilation au prorata
     const hierarchyData = useMemo(() => {
         const hierarchy = {};
 
-        // Fonction pour ajouter des montants à la hiérarchie (SANS duplication)
-        const addToHierarchy = (lots, pos0s, pos1s, montant, type) => {
-            if (!lots || lots.length === 0) return;
-            
-            // Calculer le nombre total de combinaisons
-            const nbLots = lots.length;
-            const nbPos0 = (pos0s && pos0s.length > 0) ? pos0s.length : 1;
-            const nbPos1 = (pos1s && pos1s.length > 0) ? pos1s.length : 1;
-            const nbCombinations = nbLots * nbPos0 * nbPos1;
-            
-            // Répartir équitablement le montant
-            const montantParCombinaison = montant / nbCombinations;
-
-            lots.forEach(lot => {
+        // 1. D'ABORD créer la structure depuis les estimations
+        estimations.forEach(est => {
+            (est.lots || []).forEach(lot => {
                 if (!hierarchy[lot]) {
                     hierarchy[lot] = { 
-                        estimation: 0, 
-                        offres: 0, 
-                        offresComp: 0,
-                        commandes: 0, 
-                        regies: 0, 
-                        factures: 0,
+                        estimation: 0, offres: 0, offresComp: 0,
+                        commandes: 0, regies: 0, factures: 0,
                         positions0: {} 
                     };
                 }
+                hierarchy[lot].estimation += est.montant || 0;
 
-                if (!pos0s || pos0s.length === 0) {
-                    // Pas de positions, ajouter au lot
-                    hierarchy[lot][type] += montantParCombinaison;
-                } else {
-                    pos0s.forEach(pos0 => {
-                        if (!hierarchy[lot].positions0[pos0]) {
-                            hierarchy[lot].positions0[pos0] = { 
-                                estimation: 0, 
-                                offres: 0, 
-                                offresComp: 0,
-                                commandes: 0, 
-                                regies: 0, 
-                                factures: 0,
-                                positions1: {} 
+                (est.positions0 || []).forEach(pos0 => {
+                    if (!hierarchy[lot].positions0[pos0]) {
+                        hierarchy[lot].positions0[pos0] = { 
+                            estimation: 0, offres: 0, offresComp: 0,
+                            commandes: 0, regies: 0, factures: 0,
+                            positions1: {} 
+                        };
+                    }
+                    hierarchy[lot].positions0[pos0].estimation += est.montant || 0;
+
+                    (est.positions1 || []).forEach(pos1 => {
+                        if (!hierarchy[lot].positions0[pos0].positions1[pos1]) {
+                            hierarchy[lot].positions0[pos0].positions1[pos1] = { 
+                                estimation: 0, offres: 0, offresComp: 0,
+                                commandes: 0, regies: 0, factures: 0
                             };
                         }
+                        hierarchy[lot].positions0[pos0].positions1[pos1].estimation += est.montant || 0;
+                    });
+                });
+            });
+        });
 
+        // 2. Fonction pour ventiler au prorata
+        const addToHierarchyProrata = (lots, pos0s, pos1s, montant, type) => {
+            if (!lots || lots.length === 0 || !montant) return;
+            
+            // Construire la liste des combinaisons valides
+            const combinations = [];
+            
+            lots.forEach(lot => {
+                if (!hierarchy[lot]) return; // Lot n'existe pas dans estimations
+                
+                if (!pos0s || pos0s.length === 0) {
+                    // Pas de positions spécifiées
+                    combinations.push({ lot, pos0: null, pos1: null, estimation: hierarchy[lot].estimation });
+                } else {
+                    pos0s.forEach(pos0 => {
+                        if (!hierarchy[lot].positions0[pos0]) return; // pos0 n'existe pas
+                        
                         if (!pos1s || pos1s.length === 0) {
-                            // Pas de pos1, ajouter à pos0 et lot
-                            const montantPos0 = montantParCombinaison * nbPos1;
-                            hierarchy[lot].positions0[pos0][type] += montantPos0;
-                            hierarchy[lot][type] += montantPos0;
+                            // Pas de pos1 spécifiées
+                            combinations.push({ 
+                                lot, pos0, pos1: null, 
+                                estimation: hierarchy[lot].positions0[pos0].estimation 
+                            });
                         } else {
                             pos1s.forEach(pos1 => {
-                                if (!hierarchy[lot].positions0[pos0].positions1[pos1]) {
-                                    hierarchy[lot].positions0[pos0].positions1[pos1] = { 
-                                        estimation: 0, 
-                                        offres: 0, 
-                                        offresComp: 0,
-                                        commandes: 0, 
-                                        regies: 0, 
-                                        factures: 0
-                                    };
-                                }
+                                if (!hierarchy[lot].positions0[pos0].positions1[pos1]) return; // pos1 n'existe pas
                                 
-                                // Ajouter aux 3 niveaux
-                                hierarchy[lot].positions0[pos0].positions1[pos1][type] += montantParCombinaison;
-                                hierarchy[lot].positions0[pos0][type] += montantParCombinaison;
-                                hierarchy[lot][type] += montantParCombinaison;
+                                combinations.push({ 
+                                    lot, pos0, pos1, 
+                                    estimation: hierarchy[lot].positions0[pos0].positions1[pos1].estimation 
+                                });
                             });
                         }
                     });
                 }
             });
+            
+            // Si aucune combinaison valide, ne rien faire
+            if (combinations.length === 0) {
+                console.warn(`Aucune position valide trouvée pour lots=${lots}, pos0=${pos0s}, pos1=${pos1s}`);
+                return;
+            }
+            
+            // Calculer le total des estimations
+            const totalEstimation = combinations.reduce((sum, c) => sum + c.estimation, 0);
+            
+            // Si pas d'estimations, répartir équitablement
+            if (totalEstimation === 0) {
+                const montantParCombinaison = montant / combinations.length;
+                
+                combinations.forEach(({ lot, pos0, pos1 }) => {
+                    if (pos1) {
+                        // Ajouter aux 3 niveaux
+                        hierarchy[lot].positions0[pos0].positions1[pos1][type] += montantParCombinaison;
+                        hierarchy[lot].positions0[pos0][type] += montantParCombinaison;
+                        hierarchy[lot][type] += montantParCombinaison;
+                    } else if (pos0) {
+                        // Ajouter aux 2 niveaux
+                        hierarchy[lot].positions0[pos0][type] += montantParCombinaison;
+                        hierarchy[lot][type] += montantParCombinaison;
+                    } else {
+                        // Ajouter au lot seulement
+                        hierarchy[lot][type] += montantParCombinaison;
+                    }
+                });
+            } else {
+                // Ventiler au prorata
+                combinations.forEach(({ lot, pos0, pos1, estimation }) => {
+                    const ratio = estimation / totalEstimation;
+                    const montantVentile = montant * ratio;
+                    
+                    if (pos1) {
+                        // Ajouter aux 3 niveaux
+                        hierarchy[lot].positions0[pos0].positions1[pos1][type] += montantVentile;
+                        hierarchy[lot].positions0[pos0][type] += montantVentile;
+                        hierarchy[lot][type] += montantVentile;
+                    } else if (pos0) {
+                        // Ajouter aux 2 niveaux
+                        hierarchy[lot].positions0[pos0][type] += montantVentile;
+                        hierarchy[lot][type] += montantVentile;
+                    } else {
+                        // Ajouter au lot seulement
+                        hierarchy[lot][type] += montantVentile;
+                    }
+                });
+            }
         };
 
-        // Ajouter les estimations
-        estimations.forEach(est => {
-            addToHierarchy(est.lots, est.positions0, est.positions1, est.montant || 0, 'estimation');
-        });
-
-        // Ajouter les offres (favorites seulement)
+        // 3. Ajouter les offres (favorites seulement)
         offres.forEach(off => {
             if (off.isFavorite === true || !off.appelOffreId) {
-                addToHierarchy(off.lots, off.positions0, off.positions1, off.montant || 0, 'offres');
+                addToHierarchyProrata(off.lots, off.positions0, off.positions1, off.montant || 0, 'offres');
             }
         });
 
-        // Ajouter les offres complémentaires
+        // 4. Ajouter les offres complémentaires
         offresComplementaires.forEach(oc => {
-            addToHierarchy(oc.lots, oc.positions0, oc.positions1, oc.montant || 0, 'offresComp');
+            addToHierarchyProrata(oc.lots, oc.positions0, oc.positions1, oc.montant || 0, 'offresComp');
         });
 
-        // Ajouter les commandes
+        // 5. Ajouter les commandes
         commandes.forEach(cmd => {
-            const montant = cmd.montant || 0;
-            addToHierarchy(cmd.lots, cmd.positions0, cmd.positions1, montant, 'commandes');
+            addToHierarchyProrata(cmd.lots, cmd.positions0, cmd.positions1, cmd.montant || 0, 'commandes');
         });
 
-        // Ajouter les régies
+        // 6. Ajouter les régies
         regies.forEach(regie => {
-            addToHierarchy(regie.lots, regie.positions0, regie.positions1, regie.montantTotal || 0, 'regies');
+            addToHierarchyProrata(regie.lots, regie.positions0, regie.positions1, regie.montantTotal || 0, 'regies');
         });
 
-        // Ajouter les factures
+        // 7. Ajouter les factures
         factures.forEach(fact => {
             const cmd = commandes.find(c => c.id === fact.commandeId);
             if (cmd) {
-                addToHierarchy(cmd.lots, cmd.positions0, cmd.positions1, fact.montantHT || 0, 'factures');
+                addToHierarchyProrata(cmd.lots, cmd.positions0, cmd.positions1, fact.montantHT || 0, 'factures');
             }
         });
 
@@ -211,9 +256,10 @@ window.AlignementBudgetaire = ({ estimations, offres, offresComplementaires, com
             </div>
 
             <div className="mb-4 p-3 bg-blue-50 rounded-lg text-sm">
-                <p className="font-medium text-blue-800">💡 Répartition équitable</p>
+                <p className="font-medium text-blue-800">💡 Ventilation au prorata des estimations</p>
                 <p className="text-blue-700">
-                    Les montants sont répartis équitablement sur toutes les positions sélectionnées.
+                    Les montants sont ventilés proportionnellement aux estimations de chaque position. 
+                    Si pas d'estimations, répartition équitable.
                 </p>
             </div>
 
