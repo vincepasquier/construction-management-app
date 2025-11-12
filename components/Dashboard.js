@@ -54,24 +54,32 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
     }, [estimations, offres, offresComplementaires, commandes, regies, factures, filters]);
 
     // Statistiques globales
-    const stats = useMemo(() => {
-        const totalEstimation = filteredData.estimations.reduce((sum, e) => sum + (e.montant || 0), 0);
+// Statistiques globales
+const stats = useMemo(() => {
+    // ✅ CORRECTION : Gérer les deux formats d'estimation
+    const totalEstimation = filteredData.estimations.reduce((sum, e) => {
+        // Format hiérarchique (nouveau)
+        if (e.montantTotal !== undefined) {
+            return sum + (e.montantTotal || 0);
+        }
+        // Format plat (ancien/import CSV)
+        return sum + (e.montant || 0);
+    }, 0);
+    
+    const totalOffres = filteredData.offres
+        .filter(o => o.isFavorite === true || !o.appelOffreId)
+        .reduce((sum, o) => sum + (o.montant || 0), 0);
         
-        const totalOffres = filteredData.offres
-            .filter(o => o.isFavorite === true || !o.appelOffreId)
-            .reduce((sum, o) => sum + (o.montant || 0), 0);
-            
-        const totalOffresComp = filteredData.offresComplementaires.reduce((sum, oc) => sum + (oc.montant || 0), 0);
-        const totalCommandes = filteredData.commandes.reduce((sum, c) => sum + (c.montant || 0), 0);
-        const totalRegies = filteredData.regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
-        const totalFactures = filteredData.factures.reduce((sum, f) => sum + (f.montantHT || 0), 0);
-        const totalFacturesPayees = filteredData.factures
-            .filter(f => f.statut === 'Payée')
-            .reduce((sum, f) => sum + (f.montantHT || 0), 0);
-
-        const totalDepenses = totalCommandes + totalRegies;
-        const ecart = totalEstimation - totalDepenses;
-        const tauxEngagement = totalEstimation > 0 ? (totalDepenses / totalEstimation * 100) : 0;
+    const totalOffresComp = filteredData.offresComplementaires.reduce((sum, oc) => sum + (oc.montant || 0), 0);
+    const totalCommandes = filteredData.commandes.reduce((sum, c) => sum + (c.montant || 0), 0);
+    const totalRegies = filteredData.regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
+    const totalFactures = filteredData.factures.reduce((sum, f) => sum + (f.montantHT || 0), 0);
+    const totalFacturesPayees = filteredData.factures
+        .filter(f => f.statut === 'Payée')
+        .reduce((sum, f) => sum + (f.montantHT || 0), 0);
+    const totalDepenses = totalCommandes + totalRegies;
+    const ecart = totalEstimation - totalDepenses;
+    const tauxEngagement = totalEstimation > 0 ? (totalDepenses / totalEstimation * 100) : 0;
 
         return {
             totalEstimation,
