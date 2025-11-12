@@ -307,14 +307,14 @@ const ConstructionManagement = () => {
                     <div className="flex gap-1 overflow-x-auto">
                         {[
                             { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
+                            { id: 'alignement', label: '📌 Alignement', icon: '📌' },
                             { id: 'estimations', label: '📋 Estimations', icon: '📋' },
                             { id: 'appelOffres', label: '🎯 Appels d\'Offres', icon: '🎯' },
                             { id: 'offres', label: '💼 Offres', icon: '💼' },
                             { id: 'offresComplementaires', label: '➕ OC', icon: '➕' },
                             { id: 'commandes', label: '📦 Commandes', icon: '📦' },
                             { id: 'regies', label: '⏱️ Régies', icon: '⏱️' },
-                            { id: 'factures', label: '💰 Factures', icon: '💰' },
-                            { id: 'alignement', label: '📌 Alignement', icon: '📌' }
+                            { id: 'factures', label: '💰 Factures', icon: '💰' }
                         ].map(tab => (
                             <button
                                 key={tab.id}
