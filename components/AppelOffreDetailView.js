@@ -29,10 +29,21 @@ const handleChangeFavorite = (offreId) => {
         return;
     }
     
-    // Utiliser la fonction dédiée qui gère tout proprement
-    if (onChangeFavorite) {
-        onChangeFavorite(appelOffre.id, offreId);
-    }
+    const updatedOffres = offres.map(o => {
+        if (o.appelOffreId === appelOffre.id) {
+            return { ...o, isFavorite: o.id === offreId };
+        }
+        return o;
+    });
+    
+    // Fermer le modal d'abord
+    onClose();
+    
+    // Puis mettre à jour après un délai
+    setTimeout(() => {
+        onUpdateOffres(updatedOffres);
+        alert('✅ Offre favorite mise à jour');
+    }, 100);
 };
     
     try {
