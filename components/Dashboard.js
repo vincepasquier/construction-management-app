@@ -11,17 +11,68 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
 
     const [timeView, setTimeView] = useState('cumulative'); // 'cumulative' ou 'monthly'
 
-    // Listes pour les filtres
+    // Listes pour les filtres - CORRECTION pour gérer les deux formats
     const allLots = useMemo(() => {
-        return [...new Set(estimations.flatMap(e => e.lots || []))].sort();
+        const lots = new Set();
+        estimations.forEach(est => {
+            // Format hiérarchique (nouveau)
+            if (est.lots && Array.isArray(est.lots) && est.lots.length > 0 && typeof est.lots[0] === 'object') {
+                est.lots.forEach(lot => {
+                    if (lot.numero) lots.add(lot.numero);
+                });
+            }
+            // Format plat (ancien/import CSV)
+            else if (est.lots && Array.isArray(est.lots)) {
+                est.lots.forEach(lot => lots.add(String(lot)));
+            }
+        });
+        return [...lots].sort();
     }, [estimations]);
 
     const allPos0 = useMemo(() => {
-        return [...new Set(estimations.flatMap(e => e.positions0 || []))].sort();
+        const positions = new Set();
+        estimations.forEach(est => {
+            // Format hiérarchique (nouveau)
+            if (est.lots && Array.isArray(est.lots) && est.lots.length > 0 && typeof est.lots[0] === 'object') {
+                est.lots.forEach(lot => {
+                    if (lot.positions0 && Array.isArray(lot.positions0)) {
+                        lot.positions0.forEach(pos0 => {
+                            if (pos0.nom) positions.add(pos0.nom);
+                        });
+                    }
+                });
+            }
+            // Format plat (ancien/import CSV)
+            else if (est.positions0 && Array.isArray(est.positions0)) {
+                est.positions0.forEach(pos => positions.add(String(pos)));
+            }
+        });
+        return [...positions].sort();
     }, [estimations]);
 
     const allPos1 = useMemo(() => {
-        return [...new Set(estimations.flatMap(e => e.positions1 || []))].sort();
+        const positions = new Set();
+        estimations.forEach(est => {
+            // Format hiérarchique (nouveau)
+            if (est.lots && Array.isArray(est.lots) && est.lots.length > 0 && typeof est.lots[0] === 'object') {
+                est.lots.forEach(lot => {
+                    if (lot.positions0 && Array.isArray(lot.positions0)) {
+                        lot.positions0.forEach(pos0 => {
+                            if (pos0.positions1 && Array.isArray(pos0.positions1)) {
+                                pos0.positions1.forEach(pos1 => {
+                                    if (pos1.nom) positions.add(pos1.nom);
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+            // Format plat (ancien/import CSV)
+            else if (est.positions1 && Array.isArray(est.positions1)) {
+                est.positions1.forEach(pos => positions.add(String(pos)));
+            }
+        });
+        return [...positions].sort();
     }, [estimations]);
 
     const allFournisseurs = useMemo(() => {
@@ -32,80 +83,79 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
         return [...fournisseurs].sort();
     }, [offres, commandes, factures]);
 
-// Données filtrées
-const filteredData = useMemo(() => {
-    // Fonction de filtrage
-    const applyFilters = (item) => {
-        // Pour les estimations hiérarchiques, vérifier dans la structure
-        if (item.lots && Array.isArray(item.lots) && item.lots.length > 0 && typeof item.lots[0] === 'object') {
-            // C'est une estimation hiérarchique - filtrage plus complexe
-            if (filters.lot) {
-                const hasLot = item.lots.some(lot => lot.numero === filters.lot);
-                if (!hasLot) return false;
+    // Données filtrées
+    const filteredData = useMemo(() => {
+        // Fonction de filtrage
+        const applyFilters = (item) => {
+            // Pour les estimations hiérarchiques, vérifier dans la structure
+            if (item.lots && Array.isArray(item.lots) && item.lots.length > 0 && typeof item.lots[0] === 'object') {
+                // C'est une estimation hiérarchique - filtrage plus complexe
+                if (filters.lot) {
+                    const hasLot = item.lots.some(lot => String(lot.numero) === String(filters.lot));
+                    if (!hasLot) return false;
+                }
+                if (filters.position0) {
+                    const hasPos0 = item.lots.some(lot => 
+                        lot.positions0?.some(pos0 => pos0.nom === filters.position0)
+                    );
+                    if (!hasPos0) return false;
+                }
+                if (filters.position1) {
+                    const hasPos1 = item.lots.some(lot => 
+                        lot.positions0?.some(pos0 => 
+                            pos0.positions1?.some(pos1 => pos1.nom === filters.position1)
+                        )
+                    );
+                    if (!hasPos1) return false;
+                }
+                // Pas de fournisseur dans les estimations
+                return true;
             }
-            if (filters.position0) {
-                const hasPos0 = item.lots.some(lot => 
-                    lot.positions0?.some(pos0 => pos0.nom === filters.position0)
-                );
-                if (!hasPos0) return false;
-            }
-            if (filters.position1) {
-                const hasPos1 = item.lots.some(lot => 
-                    lot.positions0?.some(pos0 => 
-                        pos0.positions1?.some(pos1 => pos1.nom === filters.position1)
-                    )
-                );
-                if (!hasPos1) return false;
-            }
-            // Pas de fournisseur dans les estimations
+            
+            // Filtrage classique pour les autres items
+            if (filters.lot && !item.lots?.includes(filters.lot)) return false;
+            if (filters.position0 && !item.positions0?.includes(filters.position0)) return false;
+            if (filters.position1 && !item.positions1?.includes(filters.position1)) return false;
+            if (filters.fournisseur && item.fournisseur !== filters.fournisseur) return false;
             return true;
-        }
+        };
         
-        // Filtrage classique pour les autres items
-        if (filters.lot && !item.lots?.includes(filters.lot)) return false;
-        if (filters.position0 && !item.positions0?.includes(filters.position0)) return false;
-        if (filters.position1 && !item.positions1?.includes(filters.position1)) return false;
-        if (filters.fournisseur && item.fournisseur !== filters.fournisseur) return false;
-        return true;
-    };
-    
-    return {
-        estimations: estimations.filter(applyFilters),
-        offres: offres.filter(applyFilters),
-        offresComplementaires: offresComplementaires.filter(applyFilters),
-        commandes: commandes.filter(applyFilters),
-        regies: regies.filter(applyFilters),
-        factures: factures.filter(applyFilters)
-    };
-}, [estimations, offres, offresComplementaires, commandes, regies, factures, filters]);
+        return {
+            estimations: estimations.filter(applyFilters),
+            offres: offres.filter(applyFilters),
+            offresComplementaires: offresComplementaires.filter(applyFilters),
+            commandes: commandes.filter(applyFilters),
+            regies: regies.filter(applyFilters),
+            factures: factures.filter(applyFilters)
+        };
+    }, [estimations, offres, offresComplementaires, commandes, regies, factures, filters]);
 
     // Statistiques globales
-// Statistiques globales
-const stats = useMemo(() => {
-    // ✅ CORRECTION : Gérer les deux formats d'estimation
-    const totalEstimation = filteredData.estimations.reduce((sum, e) => {
-        // Format hiérarchique (nouveau)
-        if (e.montantTotal !== undefined) {
-            return sum + (e.montantTotal || 0);
-        }
-        // Format plat (ancien/import CSV)
-        return sum + (e.montant || 0);
-    }, 0);
-    
-    const totalOffres = filteredData.offres
-        .filter(o => o.isFavorite === true || !o.appelOffreId)
-        .reduce((sum, o) => sum + (o.montant || 0), 0);
+    const stats = useMemo(() => {
+        // ✅ CORRECTION : Gérer les deux formats d'estimation
+        const totalEstimation = filteredData.estimations.reduce((sum, e) => {
+            // Format hiérarchique (nouveau)
+            if (e.montantTotal !== undefined) {
+                return sum + (e.montantTotal || 0);
+            }
+            // Format plat (ancien/import CSV)
+            return sum + (e.montant || 0);
+        }, 0);
         
-    const totalOffresComp = filteredData.offresComplementaires.reduce((sum, oc) => sum + (oc.montant || 0), 0);
-    const totalCommandes = filteredData.commandes.reduce((sum, c) => sum + (c.montant || 0), 0);
-    const totalRegies = filteredData.regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
-    const totalFactures = filteredData.factures.reduce((sum, f) => sum + (f.montantHT || 0), 0);
-    const totalFacturesPayees = filteredData.factures
-        .filter(f => f.statut === 'Payée')
-        .reduce((sum, f) => sum + (f.montantHT || 0), 0);
-    const totalDepenses = totalCommandes + totalRegies;
-    const ecart = totalEstimation - totalDepenses;
-    const tauxEngagement = totalEstimation > 0 ? (totalDepenses / totalEstimation * 100) : 0;
+        const totalOffres = filteredData.offres
+            .filter(o => o.isFavorite === true || !o.appelOffreId)
+            .reduce((sum, o) => sum + (o.montant || 0), 0);
+            
+        const totalOffresComp = filteredData.offresComplementaires.reduce((sum, oc) => sum + (oc.montant || 0), 0);
+        const totalCommandes = filteredData.commandes.reduce((sum, c) => sum + (c.montant || 0), 0);
+        const totalRegies = filteredData.regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
+        const totalFactures = filteredData.factures.reduce((sum, f) => sum + (f.montantHT || 0), 0);
+        const totalFacturesPayees = filteredData.factures
+            .filter(f => f.statut === 'Payée')
+            .reduce((sum, f) => sum + (f.montantHT || 0), 0);
+        const totalDepenses = totalCommandes + totalRegies;
+        const ecart = totalEstimation - totalDepenses;
+        const tauxEngagement = totalEstimation > 0 ? (totalDepenses / totalEstimation * 100) : 0;
 
         return {
             totalEstimation,
