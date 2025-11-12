@@ -1,9 +1,13 @@
-// Application principale de gestion de projet de construction
+// ========================================
+// APPLICATION PRINCIPALE - AVEC SMARTTABLE
+// ========================================
 const { useState, useEffect } = React;
-const { Plus, Trash2 } = window.Icons;
+const { Plus, Trash2, Edit2 } = window.Icons;
 
 const ConstructionManagement = () => {
-    // États principaux
+    // ========================================
+    // ÉTATS PRINCIPAUX
+    // ========================================
     const [estimations, setEstimations] = useState([]);
     const [offres, setOffres] = useState([]);
     const [commandes, setCommandes] = useState([]);
@@ -13,7 +17,9 @@ const ConstructionManagement = () => {
     const [appelOffres, setAppelOffres] = useState([]);
     const [sessionName, setSessionName] = useState('Projet_Sans_Nom');
     
-    // États UI
+    // ========================================
+    // ÉTATS UI
+    // ========================================
     const [activeTab, setActiveTab] = useState('dashboard');
     const [showImportModal, setShowImportModal] = useState(false);
     const [showExportModal, setShowExportModal] = useState(false);
@@ -25,7 +31,9 @@ const ConstructionManagement = () => {
     const [showAppelOffreModal, setShowAppelOffreModal] = useState(false);
     const [showAppelOffreDetail, setShowAppelOffreDetail] = useState(false);
     
-    // États d'édition
+    // ========================================
+    // ÉTATS D'ÉDITION
+    // ========================================
     const [editingOffre, setEditingOffre] = useState(null);
     const [editingCommande, setEditingCommande] = useState(null);
     const [editingFacture, setEditingFacture] = useState(null);
@@ -34,24 +42,24 @@ const ConstructionManagement = () => {
     const [editingAppelOffre, setEditingAppelOffre] = useState(null);
     const [selectedAppelOffre, setSelectedAppelOffre] = useState(null);
 
-    // Chargement initial des données
+    // ========================================
+    // CHARGEMENT INITIAL
+    // ========================================
     useEffect(() => {
         loadAllData();
     }, []);
 
-    // Charger le nom de session
-useEffect(() => {
-    const savedSession = localStorage.getItem('sessionName');
-    if (savedSession) {
-        setSessionName(savedSession);
-    }
-}, []);
+    useEffect(() => {
+        const savedSession = localStorage.getItem('sessionName');
+        if (savedSession) {
+            setSessionName(savedSession);
+        }
+    }, []);
 
-// Sauvegarder le nom de session quand il change
-const handleSessionNameChange = (newName) => {
-    setSessionName(newName);
-    localStorage.setItem('sessionName', newName);
-};
+    const handleSessionNameChange = (newName) => {
+        setSessionName(newName);
+        localStorage.setItem('sessionName', newName);
+    };
 
     const loadAllData = async () => {
         const data = await window.loadData();
@@ -64,7 +72,11 @@ const handleSessionNameChange = (newName) => {
         setAppelOffres(data.appelOffres || []);
     };
 
-    // Handlers pour OffreModal
+    // ========================================
+    // HANDLERS DE SAUVEGARDE
+    // ========================================
+    
+    // Handler Offres
     const handleSaveOffre = (offre) => {
         let updated = editingOffre ? 
             offres.map(o => o.id === editingOffre.id ? offre : o) : 
@@ -87,7 +99,7 @@ const handleSessionNameChange = (newName) => {
         alert(editingOffre ? '✅ Offre modifiée' : '✅ Offre créée');
     };
 
-    // Handlers pour OffreComplementaireModal
+    // Handler Offres Complémentaires
     const handleSaveOffreComp = (offreComp) => {
         const updated = editingOffreComp ? 
             offresComplementaires.map(oc => oc.id === editingOffreComp.id ? offreComp : oc) : 
@@ -100,7 +112,7 @@ const handleSessionNameChange = (newName) => {
         alert(editingOffreComp ? '✅ Offre complémentaire modifiée' : '✅ Offre complémentaire créée');
     };
 
-    // Handlers pour CommandeModal
+    // Handler Commandes
     const handleSaveCommande = (commande) => {
         const updated = editingCommande ? 
             commandes.map(c => c.id === editingCommande.id ? commande : c) : 
@@ -146,7 +158,7 @@ const handleSessionNameChange = (newName) => {
         alert(editingCommande ? '✅ Commande modifiée' : '✅ Commande créée');
     };
 
-    // Handlers pour RegieModal
+    // Handler Régies
     const handleSaveRegie = (regie) => {
         const updated = editingRegie ? 
             regies.map(r => r.id === editingRegie.id ? regie : r) : 
@@ -159,7 +171,7 @@ const handleSessionNameChange = (newName) => {
         alert(editingRegie ? '✅ Régie modifiée' : '✅ Régie créée');
     };
 
-    // Handlers pour FactureModal
+    // Handler Factures
     const handleSaveFacture = (facture) => {
         const updated = editingFacture ? 
             factures.map(f => f.id === editingFacture.id ? facture : f) : 
@@ -172,7 +184,7 @@ const handleSessionNameChange = (newName) => {
         alert(editingFacture ? '✅ Facture modifiée' : '✅ Facture créée');
     };
 
-    // Handlers pour AppelOffreModal
+    // Handler Appels d'Offres
     const handleSaveAppelOffre = (appelOffre) => {
         const updated = editingAppelOffre ? 
             appelOffres.map(ao => ao.id === editingAppelOffre.id ? appelOffre : ao) : 
@@ -190,25 +202,6 @@ const handleSessionNameChange = (newName) => {
         setOffres(updatedOffres);
         window.saveData('offres', updatedOffres);
     };
-
-    // Changer la favorite depuis la vue détaillée (évite les erreurs React)
-    const handleChangeFavoriteFromDetail = (aoId, newFavoriteId) => {
-    const updatedOffres = offres.map(o => {
-        if (o.appelOffreId === aoId) {
-            return { ...o, isFavorite: o.id === newFavoriteId };
-        }
-        return o;
-    });
-    
-    setOffres(updatedOffres);
-    window.saveData('offres', updatedOffres);
-    
-    // Fermer le modal
-    setShowAppelOffreDetail(false);
-    setSelectedAppelOffre(null);
-    
-    alert('✅ Offre favorite mise à jour');
-};
 
     // Créer une commande depuis un AO
     const handleCreateCommandeFromAO = (offreFavorite, appelOffre) => {
@@ -256,7 +249,9 @@ const handleSessionNameChange = (newName) => {
         alert('✅ Commande créée ! L\'offre favorite a été acceptée et l\'AO est attribué.');
     };
 
-    // Handlers d'export
+    // ========================================
+    // HANDLERS D'EXPORT
+    // ========================================
     const handleExportAllData = () => {
         window.exportAllData({
             estimations,
@@ -269,89 +264,65 @@ const handleSessionNameChange = (newName) => {
         });
     };
 
+    // ========================================
+    // RENDU PRINCIPAL
+    // ========================================
     return (
-        <div className="min-h-screen bg-gray-100 p-6">
-            <div className="max-w-7xl mx-auto">
-                {/* En-tête */}
-{/* En-tête */}
-<div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-    <div className="flex justify-between items-center">
-        <div>
-            <h1 className="text-3xl font-bold">🏗️ Gestion du Projet de Construction</h1>
-            <p className="text-gray-600 mt-2">Suivi complet des estimations, offres, commandes et factures</p>
-        </div>
-        <div className="flex flex-col gap-3">
-            {/* 🆕 SESSION MANAGER - NOUVEAU */}
-            <window.SessionManager
-                sessionName={sessionName}
-                onSessionNameChange={handleSessionNameChange}
-            />
-            
-            {/* Boutons d'action */}
-            <div className="flex gap-2">
-                <button
-                    onClick={() => setShowExportModal(true)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-                    title="Exporter les données"
-                >
-                    📤 Exporter
-                </button>
-                <button
-                    onClick={() => setShowImportModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                    title="Importer des données"
-                >
-                    📥 Importer
-                </button>
-                <button
-                    onClick={() => {
-                        if (confirm('⚠️ ATTENTION !\n\nCette action va SUPPRIMER TOUTES LES DONNÉES de manière IRRÉVERSIBLE.\n\nÊtes-vous absolument sûr de vouloir continuer ?')) {
-                            if (confirm('Dernière confirmation : Toutes les estimations, offres, commandes, régies, factures et appels d\'offres seront supprimés.\n\nConfirmer la suppression ?')) {
-                                localStorage.clear();
-                                setEstimations([]);
-                                setOffres([]);
-                                setCommandes([]);
-                                setOffresComplementaires([]);
-                                setRegies([]);
-                                setFactures([]);
-                                setAppelOffres([]);
-                                setSessionName('Projet_Sans_Nom');
-                                alert('✅ Toutes les données ont été supprimées !');
-                                window.location.reload();
-                            }
-                        }
-                    }}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
-                    title="Supprimer toutes les données"
-                >
-                    🗑️ Reset
-                </button>
+        <div className="min-h-screen bg-gray-50">
+            {/* En-tête */}
+            <div className="bg-white shadow-sm border-b">
+                <div className="max-w-7xl mx-auto px-4 py-4">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">
+                                🏗️ Gestion de Construction
+                            </h1>
+                            <p className="text-sm text-gray-600 mt-1">
+                                Session: {sessionName}
+                            </p>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setShowImportModal(true)}
+                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                            >
+                                <window.Icons.Upload size={20} />
+                                Importer
+                            </button>
+                            <button
+                                onClick={handleExportAllData}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                            >
+                                <window.Icons.Download size={20} />
+                                Exporter
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-</div>
 
-                {/* Onglets de navigation */}
-                <div className="bg-white rounded-lg shadow-lg mb-6">
-                    <div className="flex overflow-x-auto">
+            {/* Navigation par onglets */}
+            <div className="bg-white border-b">
+                <div className="max-w-7xl mx-auto px-4">
+                    <div className="flex gap-1 overflow-x-auto">
                         {[
                             { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
-                            { id: 'alignement', label: '📌 Alignement', icon: '📌' },
                             { id: 'estimations', label: '📋 Estimations', icon: '📋' },
                             { id: 'appelOffres', label: '🎯 Appels d\'Offres', icon: '🎯' },
                             { id: 'offres', label: '💼 Offres', icon: '💼' },
                             { id: 'offresComplementaires', label: '➕ OC', icon: '➕' },
                             { id: 'commandes', label: '📦 Commandes', icon: '📦' },
                             { id: 'regies', label: '⏱️ Régies', icon: '⏱️' },
-                            { id: 'factures', label: '💰 Factures', icon: '💰' }
+                            { id: 'factures', label: '💰 Factures', icon: '💰' },
+                            { id: 'alignement', label: '📌 Alignement', icon: '📌' }
                         ].map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`px-6 py-4 font-medium whitespace-nowrap transition-colors ${
+                                className={`px-4 py-3 font-medium transition-colors whitespace-nowrap ${
                                     activeTab === tab.id
-                                        ? 'bg-blue-600 text-white border-b-4 border-blue-800'
-                                        : 'text-gray-600 hover:bg-gray-50'
+                                        ? 'text-blue-600 border-b-2 border-blue-600'
+                                        : 'text-gray-600 hover:text-gray-900'
                                 }`}
                             >
                                 {tab.label}
@@ -359,9 +330,11 @@ const handleSessionNameChange = (newName) => {
                         ))}
                     </div>
                 </div>
+            </div>
 
-                {/* Contenu des onglets */}
-                <div className="mb-6">
+            {/* Contenu principal */}
+            <div className="max-w-7xl mx-auto px-4 py-6">
+                <div className="space-y-6">
                     {/* Dashboard */}
                     {activeTab === 'dashboard' && (
                         <window.Dashboard
@@ -378,243 +351,155 @@ const handleSessionNameChange = (newName) => {
                     {activeTab === 'estimations' && (
                         <div className="bg-white rounded-lg shadow-lg p-6">
                             <div className="flex justify-between mb-6">
-                                <h2 className="text-xl font-bold">Estimations Budgétaires</h2>
-                                <div className="flex gap-2">
-                                    <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer flex items-center gap-2">
-                                        📥 Importer CSV
-                                        <input
-                                            type="file"
-                                            accept=".csv"
-                                            className="hidden"
-                                            onChange={(e) => {
-                                                const file = e.target.files[0];
-                                                if (file) {
-                                                    window.importCSVData(file, 'Estimations', (data) => {
-                                                        setEstimations(data);
-                                                        window.saveData('estimations', data);
-                                                        alert('✅ Estimations importées !');
-                                                    });
-                                                }
-                                                e.target.value = '';
-                                            }}
-                                        />
-                                    </label>
-                                    <button
-                                        onClick={() => window.exportToCSV(estimations, 'estimations')}
-                                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                                    >
-                                        💾 Exporter CSV
-                                    </button>
-                                </div>
+                                <h2 className="text-xl font-bold">📋 Estimations</h2>
                             </div>
-                            {estimations.length === 0 ? (
-                                <div className="text-center py-12 text-gray-500">
-                                    <p>Aucune estimation. Importez vos données pour commencer.</p>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-4 py-3 text-left text-sm">Lot</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Position 0</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Position 1</th>
-                                                    <th className="px-4 py-3 text-center text-sm">Étape</th>
-                                                    <th className="px-4 py-3 text-right text-sm">Montant (CHF)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {estimations.map((est, idx) => (
-                                                    <tr key={idx} className="border-t hover:bg-gray-50">
-                                                        <td className="px-4 py-3">{est.lots?.join(', ') || '-'}</td>
-                                                        <td className="px-4 py-3">{est.positions0?.join(', ') || '-'}</td>
-                                                        <td className="px-4 py-3">{est.positions1?.join(', ') || '-'}</td>
-                                                        <td className="px-4 py-3 text-center">
-                                                            {est.etape ? (
-                                                                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                                    est.etape === '1' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
-                                                                }`}>
-                                                                    Étape {est.etape}
-                                                                </span>
-                                                            ) : '-'}
-                                                        </td>
-                                                        <td className="px-4 py-3 text-right font-medium">
-                                                            {est.montant?.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                                        <div className="grid grid-cols-3 gap-4">
-                                            <div>
-                                                <p className="text-sm text-gray-600">Total Général</p>
-                                                <p className="text-xl font-bold text-blue-600">
-                                                    {estimations.reduce((sum, e) => sum + (e.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Total Étape 1</p>
-                                                <p className="text-xl font-bold text-blue-600">
-                                                    {estimations.filter(e => e.etape === '1').reduce((sum, e) => sum + (e.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-600">Total Étape 2</p>
-                                                <p className="text-xl font-bold text-purple-600">
-                                                    {estimations.filter(e => e.etape === '2').reduce((sum, e) => sum + (e.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+                            <div className="text-center py-12 text-gray-500">
+                                <p>Aucune estimation - Fonctionnalité à venir</p>
+                            </div>
                         </div>
                     )}
 
-                    {/* Onglet Appels d'Offres */}
+                    {/* Appels d'Offres avec SmartTable */}
                     {activeTab === 'appelOffres' && (
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <div className="flex justify-between mb-6">
-                                <h2 className="text-xl font-bold">Appels d'Offres</h2>
-                                <button 
-                                    onClick={() => { 
-                                        setEditingAppelOffre(null); 
-                                        setShowAppelOffreModal(true); 
-                                    }} 
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                >
-                                    <Plus />Nouvel AO
-                                </button>
-                            </div>
-                            
-                            {appelOffres.length === 0 ? (
-                                <div className="text-center py-12 text-gray-500">
-                                    <p>Aucun appel d'offres</p>
-                                </div>
-                            ) : (
+                        <window.SmartTable
+                            data={appelOffres}
+                            columns={[
+                                { key: 'numero', label: 'N° AO', align: 'left' },
+                                { key: 'designation', label: 'Désignation', align: 'left' },
+                                { key: 'dateCreation', label: 'Date création', align: 'center' },
+                                { key: 'dateLimite', label: 'Date limite', align: 'center' },
+                                { key: 'lots', label: 'Lots', align: 'left' },
+                                { key: 'statut', label: 'Statut', align: 'center' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
+                            ]}
+                            renderRow={(ao) => {
+                                const offresLiees = offres.filter(o => o.appelOffreId === ao.id);
+                                const offreFavorite = offresLiees.find(o => o.isFavorite);
+                                return (
+                                    <tr key={ao.id} className="border-t hover:bg-gray-50">
+                                        <td className="px-4 py-3">
+                                            <button 
+                                                onClick={() => { 
+                                                    setSelectedAppelOffre(ao); 
+                                                    setShowAppelOffreDetail(true); 
+                                                }} 
+                                                className="text-blue-600 hover:underline font-medium"
+                                                title="Voir les détails et comparer les offres"
+                                            >
+                                                {ao.numero}
+                                            </button>
+                                        </td>
+                                        <td className="px-4 py-3">{ao.designation}</td>
+                                        <td className="px-4 py-3 text-center text-sm">
+                                            {new Date(ao.dateCreation).toLocaleDateString('fr-CH')}
+                                        </td>
+                                        <td className="px-4 py-3 text-center text-sm">
+                                            {ao.dateLimite ? new Date(ao.dateLimite).toLocaleDateString('fr-CH') : '-'}
+                                        </td>
+                                        <td className="px-4 py-3 text-xs">{ao.lots?.join(', ') || '-'}</td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span className={`px-2 py-1 rounded text-xs ${
+                                                ao.statut === 'Attribué' ? 'bg-green-100 text-green-800' :
+                                                ao.statut === 'Annulé' ? 'bg-red-100 text-red-800' :
+                                                'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                                {ao.statut}
+                                            </span>
+                                            {offresLiees.length > 0 && (
+                                                <span className="ml-2 text-xs text-gray-600">
+                                                    ({offresLiees.length} offre{offresLiees.length > 1 ? 's' : ''}{offreFavorite && ' ⭐'})
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <button 
+                                                onClick={() => { 
+                                                    if (confirm('Supprimer cet appel d\'offres ?')) { 
+                                                        const updated = appelOffres.filter(a => a.id !== ao.id); 
+                                                        setAppelOffres(updated); 
+                                                        window.saveData('appelOffres', updated); 
+                                                    }
+                                                }} 
+                                                className="text-red-600 hover:text-red-800"
+                                            >
+                                                <Trash2 />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            }}
+                            emptyMessage="Aucun appel d'offres"
+                            actions={
                                 <>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-4 py-3 text-left text-sm">N° AO</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Désignation</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Date création</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Date limite</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Lots</th>
-                                                    <th className="px-4 py-3 text-center text-sm">Offres reçues</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Statut</th>
-                                                    <th className="px-4 py-3 text-center text-sm">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {appelOffres.map(ao => {
-                                                    const offresLiees = offres.filter(o => o.appelOffreId === ao.id);
-                                                    const offreFavorite = offresLiees.find(o => o.isFavorite);
-                                                    
-                                                    return (
-                                                        <tr key={ao.id} className="border-t hover:bg-gray-50">
-                                                            <td className="px-4 py-3">
-                                                                <button 
-                                                                    onClick={() => { 
-                                                                        setSelectedAppelOffre(ao); 
-                                                                        setShowAppelOffreDetail(true); 
-                                                                    }} 
-                                                                    className="text-blue-600 hover:underline font-medium"
-                                                                    title="Voir les détails et comparer les offres"
-                                                                >
-                                                                    {ao.numero}
-                                                                </button>
-                                                            </td>
-                                                            <td className="px-4 py-3">{ao.designation}</td>
-                                                            <td className="px-4 py-3 text-sm">
-                                                                {new Date(ao.dateCreation).toLocaleDateString('fr-CH')}
-                                                            </td>
-                                                            <td className="px-4 py-3 text-sm">
-                                                                {ao.dateLimite ? new Date(ao.dateLimite).toLocaleDateString('fr-CH') : '-'}
-                                                            </td>
-                                                            <td className="px-4 py-3 text-xs">{ao.lots?.join(', ') || '-'}</td>
-                                                            <td className="px-4 py-3 text-center">
-                                                                <span className={`px-2 py-1 rounded text-xs ${
-                                                                    offresLiees.length === 0 ? 'bg-gray-100 text-gray-800' :
-                                                                    offresLiees.length === 1 ? 'bg-yellow-100 text-yellow-800' :
-                                                                    'bg-green-100 text-green-800'
-                                                                }`}>
-                                                                    {offresLiees.length}
-                                                                    {offreFavorite && ' (⭐)'}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-4 py-3">
-                                                                <span className={`px-2 py-1 rounded text-xs ${
-                                                                    ao.statut === 'Attribué' ? 'bg-green-100 text-green-800' : 
-                                                                    ao.statut === 'Annulé' ? 'bg-red-100 text-red-800' :
-                                                                    'bg-yellow-100 text-yellow-800'
-                                                                }`}>
-                                                                    {ao.statut}
-                                                                </span>
-                                                            </td>
-                                                            <td className="px-4 py-3">
-    <div className="flex justify-center gap-2">
-        <button
-            onClick={() => {
-                setEditingAppelOffre(ao);
-                setShowAppelOffreModal(true);
-            }}
-            className="text-blue-600 hover:text-blue-800"
-            title="Modifier"
-        >
-            ✏️
-        </button>
-        <button 
-            onClick={() => { 
-                if (confirm('Supprimer cet appel d\'offres ?')) { 
-                    const updated = appelOffres.filter(a => a.id !== ao.id); 
-                    setAppelOffres(updated); 
-                    window.saveData('appelOffres', updated); 
-                }
-            }} 
-            className="text-red-600 hover:text-red-800"
-            title="Supprimer"
-        >
-            <Trash2 size={18} />
-        </button>
-    </div>
-</td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                                        <p className="font-semibold">
-                                            Total appels d'offres: {appelOffres.length} 
-                                            ({appelOffres.filter(ao => ao.statut === 'En consultation').length} en consultation, 
-                                            {appelOffres.filter(ao => ao.statut === 'Attribué').length} attribués)
-                                        </p>
-                                    </div>
+                                    <h2 className="text-xl font-bold">🎯 Appels d'Offres</h2>
+                                    <button
+                                        onClick={() => { 
+                                            setEditingAppelOffre(null); 
+                                            setShowAppelOffreModal(true); 
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Plus size={20} />
+                                        Nouvel AO
+                                    </button>
                                 </>
-                            )}
-                        </div>
+                            }
+                        />
                     )}
 
-                    {/* Offres */}
+                    {/* Offres avec SmartTable */}
                     {activeTab === 'offres' && (
-                        <div className="bg-white rounded-lg shadow-lg p-6">
-                            <div className="flex justify-between mb-6">
-                                <h2 className="text-xl font-bold">Offres</h2>
-                                <div className="flex gap-2">
-                                    {offres.length > 0 && (
-                                        <button
-                                            onClick={() => window.exportToCSV(offres, 'offres')}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                        <window.SmartTable
+                            data={offres}
+                            columns={[
+                                { key: 'numero', label: 'N° Offre', align: 'left' },
+                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+                                { key: 'lots', label: 'Lots', align: 'left' },
+                                { key: 'statut', label: 'Statut', align: 'center' },
+                                { key: 'montant', label: 'Montant (CHF)', align: 'right' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
+                            ]}
+                            renderRow={(offre) => (
+                                <tr key={offre.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3">
+                                        <span className="font-medium text-blue-600">
+                                            {offre.numero}
+                                        </span>
+                                        {offre.isFavorite && (
+                                            <span className="ml-2 text-yellow-500" title="Offre favorite">⭐</span>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3">{offre.fournisseur}</td>
+                                    <td className="px-4 py-3 text-xs">{offre.lots?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className={`px-2 py-1 rounded text-xs ${
+                                            offre.statut === 'Acceptée' ? 'bg-green-100 text-green-800' :
+                                            offre.statut === 'Refusée' ? 'bg-red-100 text-red-800' :
+                                            'bg-gray-100 text-gray-800'
+                                        }`}>
+                                            {offre.statut || 'En attente'}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {offre.montant?.toLocaleString('fr-CH')} CHF
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <button 
+                                            onClick={() => {
+                                                setEditingOffre(offre);
+                                                setShowOffreModal(true);
+                                            }}
+                                            className="text-blue-600 hover:text-blue-800"
                                         >
-                                            💾 Exporter CSV
+                                            <Edit2 />
                                         </button>
-                                    )}
+                                    </td>
+                                </tr>
+                            )}
+                            emptyMessage="Aucune offre"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">💼 Offres</h2>
                                     <button
                                         onClick={() => {
                                             setEditingOffre(null);
@@ -622,297 +507,276 @@ const handleSessionNameChange = (newName) => {
                                         }}
                                         className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
                                     >
-                                        <Plus />Nouvelle offre
+                                        <Plus size={20} />
+                                        Nouvelle offre
                                     </button>
-                                </div>
-                            </div>
-
-                            {offres.length === 0 ? (
-                                <div className="text-center py-12 text-gray-500">
-                                    <p>Aucune offre</p>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-4 py-3 text-left text-sm">N° Offre</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Version</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Fournisseur</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Date</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Lots</th>
-                                                    <th className="px-4 py-3 text-center text-sm">Étape</th>
-                                                    <th className="px-4 py-3 text-right text-sm">Montant (CHF)</th>
-                                                    <th className="px-4 py-3 text-left text-sm">Statut</th>
-                                                    <th className="px-4 py-3 text-center text-sm">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {offres.map(offre => (
-                                                    <tr key={offre.id} className="border-t hover:bg-gray-50">
-                                                        <td className="px-4 py-3">
-                                                            <button
-                                                                onClick={() => {
-                                                                    setEditingOffre(offre);
-                                                                    setShowOffreModal(true);
-                                                                }}
-                                                                className="text-blue-600 hover:underline font-medium"
-                                                            >
-                                                                {offre.numero}
-                                                            </button>
-                                                            {offre.isFavorite && (
-                                                                <span className="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
-                                                                    ⭐ Favorite
-                                                                </span>
-                                                            )}
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">
-                                                                V{offre.version}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-4 py-3">{offre.fournisseur}</td>
-                                                        <td className="px-4 py-3 text-sm">
-                                                            {new Date(offre.dateOffre).toLocaleDateString('fr-CH')}
-                                                        </td>
-                                                        <td className="px-4 py-3 text-xs">{offre.lots?.join(', ') || '-'}</td>
-                                                        <td className="px-4 py-3 text-center">
-                                                            {offre.etape ? (
-                                                                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                                                    offre.etape === '1' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
-                                                                }`}>
-                                                                    Ét. {offre.etape}
-                                                                </span>
-                                                            ) : '-'}
-                                                        </td>
-                                                        <td className="px-4 py-3 text-right font-medium">
-                                                            {offre.montant?.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <span className={`px-2 py-1 rounded text-xs ${
-                                                                offre.statut === 'Acceptée' ? 'bg-green-100 text-green-800' :
-                                                                offre.statut === 'Refusée' ? 'bg-red-100 text-red-800' :
-                                                                offre.statut === 'Expirée' ? 'bg-gray-100 text-gray-800' :
-                                                                'bg-yellow-100 text-yellow-800'
-                                                            }`}>
-                                                                {offre.statut}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-center">
-                                                            <button
-                                                                onClick={() => {
-                                                                    if (confirm('Supprimer cette offre ?')) {
-                                                                        const updated = offres.filter(o => o.id !== offre.id);
-                                                                        setOffres(updated);
-                                                                        window.saveData('offres', updated);
-                                                                    }
-                                                                }}
-                                                                className="text-red-600 hover:text-red-800"
-                                                            >
-                                                                <Trash2 size={18} />
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                                        <p className="font-semibold">
-                                            Total offres: {offres.reduce((sum, o) => sum + (o.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                                        </p>
-                                    </div>
                                 </>
+                            }
+                        />
+                    )}
+{/* Offres Complémentaires avec SmartTable */}
+                    {activeTab === 'offresComplementaires' && (
+                        <window.SmartTable
+                            data={offresComplementaires}
+                            columns={[
+                                { key: 'numero', label: 'N° OC', align: 'left' },
+                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+                                { key: 'designation', label: 'Désignation', align: 'left' },
+                                { key: 'lots', label: 'Lots', align: 'left' },
+                                { key: 'statut', label: 'Statut', align: 'center' },
+                                { key: 'montant', label: 'Montant (CHF)', align: 'right' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
+                            ]}
+                            renderRow={(oc) => (
+                                <tr key={oc.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium text-blue-600">{oc.numero}</td>
+                                    <td className="px-4 py-3">{oc.fournisseur}</td>
+                                    <td className="px-4 py-3">{oc.designation}</td>
+                                    <td className="px-4 py-3 text-xs">{oc.lots?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className={`px-2 py-1 rounded text-xs ${
+                                            oc.statut === 'Acceptée' ? 'bg-green-100 text-green-800' :
+                                            oc.statut === 'Refusée' ? 'bg-red-100 text-red-800' :
+                                            'bg-gray-100 text-gray-800'
+                                        }`}>
+                                            {oc.statut || 'En attente'}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {oc.montant?.toLocaleString('fr-CH')} CHF
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <button 
+                                            onClick={() => {
+                                                setEditingOffreComp(oc);
+                                                setShowOffreCompModal(true);
+                                            }}
+                                            className="text-blue-600 hover:text-blue-800"
+                                        >
+                                            <Edit2 />
+                                        </button>
+                                    </td>
+                                </tr>
                             )}
-                        </div>
+                            emptyMessage="Aucune offre complémentaire"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">➕ Offres Complémentaires</h2>
+                                    <button
+                                        onClick={() => {
+                                            setEditingOffreComp(null);
+                                            setShowOffreCompModal(true);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Plus size={20} />
+                                        Nouvelle OC
+                                    </button>
+                                </>
+                            }
+                        />
                     )}
 
-                   {/* Offres Complémentaires */}
-{activeTab === 'offresComplementaires' && (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="flex justify-between mb-6">
-            <h2 className="text-xl font-bold">Offres Complémentaires</h2>
-            <button
-                onClick={() => {
-                    setEditingOffreComp(null);
-                    setShowOffreCompModal(true);
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-            >
-                <Plus />Nouvelle OC
-            </button>
-        </div>
-        <div className="text-center py-12 text-gray-500">
-            <p>Aucune offre complémentaire</p>
-        </div>
-    </div>
-)}
-
-{/* Commandes */}
-{/* Commandes */}
-{activeTab === 'commandes' && (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="flex justify-between mb-6">
-            <h2 className="text-xl font-bold">Commandes</h2>
-            <button
-                onClick={() => {
-                    setEditingCommande(null);
-                    setShowCommandeModal(true);
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-            >
-                <Plus />Nouvelle commande
-            </button>
-        </div>
-        
-        {commandes.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-                <p>Aucune commande</p>
-            </div>
-        ) : (
-            <>
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-4 py-3 text-left text-sm font-medium">N° Commande</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Fournisseur</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Lots</th>
-                                <th className="px-4 py-3 text-left text-sm font-medium">Positions</th>
-                                <th className="px-4 py-3 text-right text-sm font-medium">Montant (CHF)</th>
-                                <th className="px-4 py-3 text-center text-sm font-medium">Statut</th>
-                                <th className="px-4 py-3 text-center text-sm font-medium">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {commandes.map((commande) => (
-                                <tr key={commande.id} className="border-t hover:bg-gray-50">
-                                    <td className="px-4 py-3 font-medium">{commande.numero}</td>
-                                    <td className="px-4 py-3">{commande.fournisseur}</td>
-                                    <td className="px-4 py-3 text-sm">
-                                        {commande.lots && commande.lots.length > 0 
-                                            ? commande.lots.join(', ') 
-                                            : <span className="text-gray-400">-</span>
-                                        }
-                                    </td>
-                                    <td className="px-4 py-3 text-sm">
-                                        {commande.positions0 && commande.positions0.length > 0 
-                                            ? (
-                                                <>
-                                                    {commande.positions0.join(', ')}
-                                                    {commande.positions1 && commande.positions1.length > 0 && (
-                                                        <span className="text-gray-500"> / {commande.positions1.join(', ')}</span>
-                                                    )}
-                                                </>
-                                            )
-                                            : <span className="text-gray-400">-</span>
-                                        }
-                                    </td>
-                                    <td className="px-4 py-3 text-right font-semibold">
-                                        {(commande.montant || 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})}
+                    {/* Commandes avec SmartTable */}
+                    {activeTab === 'commandes' && (
+                        <window.SmartTable
+                            data={commandes}
+                            columns={[
+                                { key: 'numero', label: 'N° Commande', align: 'left' },
+                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+                                { key: 'lots', label: 'Lots', align: 'left' },
+                                { key: 'dateCommande', label: 'Date', align: 'center' },
+                                { key: 'statut', label: 'Statut', align: 'center' },
+                                { key: 'montant', label: 'Montant (CHF)', align: 'right' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
+                            ]}
+                            renderRow={(cmd) => (
+                                <tr key={cmd.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium text-blue-600">{cmd.numero}</td>
+                                    <td className="px-4 py-3">{cmd.fournisseur}</td>
+                                    <td className="px-4 py-3 text-xs">{cmd.lots?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-center text-sm">
+                                        {new Date(cmd.dateCommande).toLocaleDateString('fr-CH')}
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         <span className={`px-2 py-1 rounded text-xs ${
-                                            commande.statut === 'Validée' ? 'bg-green-100 text-green-800' :
-                                            commande.statut === 'En cours' ? 'bg-blue-100 text-blue-800' :
-                                            commande.statut === 'Annulée' ? 'bg-red-100 text-red-800' :
-                                            'bg-gray-100 text-gray-800'
+                                            cmd.statut === 'Terminée' ? 'bg-green-100 text-green-800' :
+                                            cmd.statut === 'Annulée' ? 'bg-red-100 text-red-800' :
+                                            'bg-yellow-100 text-yellow-800'
                                         }`}>
-                                            {commande.statut}
+                                            {cmd.statut || 'En cours'}
                                         </span>
                                     </td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex justify-center gap-2">
-                                            <button
-                                                onClick={() => {
-                                                    setEditingCommande(commande);
-                                                    setShowCommandeModal(true);
-                                                }}
-                                                className="text-blue-600 hover:text-blue-800"
-                                                title="Modifier"
-                                            >
-                                                ✏️
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    if (confirm('Supprimer cette commande ?')) {
-                                                        const updated = commandes.filter(c => c.id !== commande.id);
-                                                        setCommandes(updated);
-                                                        window.saveData('commandes', updated);
-                                                    }
-                                                }}
-                                                className="text-red-600 hover:text-red-800"
-                                                title="Supprimer"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {(cmd.calculatedMontant || cmd.montant || 0).toLocaleString('fr-CH')} CHF
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <button 
+                                            onClick={() => {
+                                                setEditingCommande(cmd);
+                                                setShowCommandeModal(true);
+                                            }}
+                                            className="text-blue-600 hover:text-blue-800"
+                                        >
+                                            <Edit2 />
+                                        </button>
                                     </td>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <div className="flex justify-between items-center">
-                        <p className="font-semibold">
-                            Total commandes: {commandes.length}
-                        </p>
-                        <p className="font-semibold text-lg">
-                            {commandes.reduce((sum, c) => sum + (c.montant || 0), 0).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                        </p>
-                    </div>
-                </div>
-            </>
-        )}
-    </div>
-)}
+                            )}
+                            emptyMessage="Aucune commande"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">📦 Commandes</h2>
+                                    <button
+                                        onClick={() => {
+                                            setEditingCommande(null);
+                                            setShowCommandeModal(true);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Plus size={20} />
+                                        Nouvelle commande
+                                    </button>
+                                </>
+                            }
+                        />
+                    )}
 
-{/* Régies */}
-{activeTab === 'regies' && (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="flex justify-between mb-6">
-            <h2 className="text-xl font-bold">Régies</h2>
-            <button
-                onClick={() => {
-                    setEditingRegie(null);
-                    setShowRegieModal(true);
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-            >
-                <Plus />Nouvelle régie
-            </button>
-        </div>
-        <div className="text-center py-12 text-gray-500">
-            <p>Aucune régie</p>
-        </div>
-    </div>
-)}
+                    {/* Régies avec SmartTable */}
+                    {activeTab === 'regies' && (
+                        <window.SmartTable
+                            data={regies}
+                            columns={[
+                                { key: 'numero', label: 'N° Régie', align: 'left' },
+                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+                                { key: 'designation', label: 'Désignation', align: 'left' },
+                                { key: 'lots', label: 'Lots', align: 'left' },
+                                { key: 'dateDebut', label: 'Date début', align: 'center' },
+                                { key: 'dateFin', label: 'Date fin', align: 'center' },
+                                { key: 'montantTotal', label: 'Montant Total (CHF)', align: 'right' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
+                            ]}
+                            renderRow={(regie) => (
+                                <tr key={regie.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium text-blue-600">{regie.numero}</td>
+                                    <td className="px-4 py-3">{regie.fournisseur}</td>
+                                    <td className="px-4 py-3">{regie.designation}</td>
+                                    <td className="px-4 py-3 text-xs">{regie.lots?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-center text-sm">
+                                        {regie.dateDebut ? new Date(regie.dateDebut).toLocaleDateString('fr-CH') : '-'}
+                                    </td>
+                                    <td className="px-4 py-3 text-center text-sm">
+                                        {regie.dateFin ? new Date(regie.dateFin).toLocaleDateString('fr-CH') : '-'}
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {(regie.montantTotal || 0).toLocaleString('fr-CH')} CHF
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <button 
+                                            onClick={() => {
+                                                setEditingRegie(regie);
+                                                setShowRegieModal(true);
+                                            }}
+                                            className="text-blue-600 hover:text-blue-800"
+                                        >
+                                            <Edit2 />
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
+                            emptyMessage="Aucune régie"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">⏱️ Régies</h2>
+                                    <button
+                                        onClick={() => {
+                                            setEditingRegie(null);
+                                            setShowRegieModal(true);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Plus size={20} />
+                                        Nouvelle régie
+                                    </button>
+                                </>
+                            }
+                        />
+                    )}
 
-{/* Factures */}
-{activeTab === 'factures' && (
-    <div className="bg-white rounded-lg shadow-lg p-6">
-        <div className="flex justify-between mb-6">
-            <h2 className="text-xl font-bold">Factures</h2>
-            <button
-                onClick={() => {
-                    setEditingFacture(null);
-                    setShowFactureModal(true);
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-            >
-                <Plus />Nouvelle facture
-            </button>
-        </div>
-        <div className="text-center py-12 text-gray-500">
-            <p>Aucune facture</p>
-        </div>
-    </div>
-)}
+                    {/* Factures avec SmartTable */}
+                    {activeTab === 'factures' && (
+                        <window.SmartTable
+                            data={factures}
+                            columns={[
+                                { key: 'numero', label: 'N° Facture', align: 'left' },
+                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+                                { key: 'dateFacture', label: 'Date', align: 'center' },
+                                { key: 'dateEcheance', label: 'Échéance', align: 'center' },
+                                { key: 'montantHT', label: 'Montant HT', align: 'right' },
+                                { key: 'montantTTC', label: 'Montant TTC', align: 'right' },
+                                { key: 'statut', label: 'Statut', align: 'center' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '100px' }
+                            ]}
+                            renderRow={(facture) => (
+                                <tr key={facture.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium text-blue-600">{facture.numero}</td>
+                                    <td className="px-4 py-3">{facture.fournisseur}</td>
+                                    <td className="px-4 py-3 text-center text-sm">
+                                        {new Date(facture.dateFacture).toLocaleDateString('fr-CH')}
+                                    </td>
+                                    <td className="px-4 py-3 text-center text-sm">
+                                        {facture.dateEcheance ? new Date(facture.dateEcheance).toLocaleDateString('fr-CH') : '-'}
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {(facture.montantHT || 0).toLocaleString('fr-CH')} CHF
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {(facture.montantTTC || 0).toLocaleString('fr-CH')} CHF
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className={`px-2 py-1 rounded text-xs ${
+                                            facture.statut === 'Payée' ? 'bg-green-100 text-green-800' :
+                                            facture.statut === 'En attente' ? 'bg-yellow-100 text-yellow-800' :
+                                            facture.statut === 'En retard' ? 'bg-red-100 text-red-800' :
+                                            'bg-gray-100 text-gray-800'
+                                        }`}>
+                                            {facture.statut}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <button 
+                                            onClick={() => {
+                                                setEditingFacture(facture);
+                                                setShowFactureModal(true);
+                                            }}
+                                            className="text-blue-600 hover:text-blue-800"
+                                        >
+                                            <Edit2 />
+                                        </button>
+                                    </td>
+                                </tr>
+                            )}
+                            emptyMessage="Aucune facture"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">💰 Factures</h2>
+                                    <button
+                                        onClick={() => {
+                                            setEditingFacture(null);
+                                            setShowFactureModal(true);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Plus size={20} />
+                                        Nouvelle facture
+                                    </button>
+                                </>
+                            }
+                        />
+                    )}
 
                     {/* Alignement Budgétaire */}
-                        {activeTab === 'alignement' && (
+                    {activeTab === 'alignement' && (
                         <window.AlignementBudgetaire
                             estimations={estimations}
                             offres={offres}
@@ -925,30 +789,20 @@ const handleSessionNameChange = (newName) => {
                 </div>
             </div>
 
-            {/* Modals */}
-{showImportModal && (
-    <window.ImportModal
-        onClose={() => setShowImportModal(false)}
-        onImport={loadAllData}
-        onSessionRestore={handleSessionNameChange}
-    />
-)}
-                    {showExportModal && (
-    <window.ExportModal
-        onClose={() => setShowExportModal(false)}
-        sessionName={sessionName}
-        data={{
-            estimations,
-            offres,
-            commandes,
-            offresComplementaires,
-            regies,
-            factures,
-            appelOffres
-        }}
-    />
-)}
+                     {/* ======================================== */}
+            {/* MODALS */}
+            {/* ======================================== */}
 
+            {/* Modal Import */}
+            {showImportModal && (
+                <window.ImportModal
+                    onClose={() => setShowImportModal(false)}
+                    onImport={loadAllData}
+                    onSessionRestore={handleSessionNameChange}
+                />
+            )}
+
+            {/* Modal Offre */}
             {showOffreModal && (
                 <window.OffreModal
                     initialData={editingOffre}
@@ -963,6 +817,7 @@ const handleSessionNameChange = (newName) => {
                 />
             )}
 
+            {/* Modal Offre Complémentaire */}
             {showOffreCompModal && (
                 <window.OffreComplementaireModal
                     initialData={editingOffreComp}
@@ -972,10 +827,10 @@ const handleSessionNameChange = (newName) => {
                     }}
                     onSave={handleSaveOffreComp}
                     estimations={estimations}
-                    offres={offres}
                 />
             )}
 
+            {/* Modal Commande */}
             {showCommandeModal && (
                 <window.CommandeModal
                     initialData={editingCommande}
@@ -990,6 +845,7 @@ const handleSessionNameChange = (newName) => {
                 />
             )}
 
+            {/* Modal Régie */}
             {showRegieModal && (
                 <window.RegieModal
                     initialData={editingRegie}
@@ -1002,50 +858,51 @@ const handleSessionNameChange = (newName) => {
                 />
             )}
 
-{showFactureModal && (
-    <window.FactureModal
-        initialData={editingFacture}
-        onClose={() => {
-            setShowFactureModal(false);
-            setEditingFacture(null);
-        }}
-        onSave={handleSaveFacture}
-        commandes={commandes}
-        regies={regies}
-        estimations={estimations}
-    />
-)}
+            {/* Modal Facture */}
+            {showFactureModal && (
+                <window.FactureModal
+                    initialData={editingFacture}
+                    onClose={() => {
+                        setShowFactureModal(false);
+                        setEditingFacture(null);
+                    }}
+                    onSave={handleSaveFacture}
+                    commandes={commandes}
+                />
+            )}
 
+            {/* Modal Appel d'Offres */}
+            {showAppelOffreModal && (
+                <window.AppelOffreModal
+                    initialData={editingAppelOffre}
+                    onClose={() => {
+                        setShowAppelOffreModal(false);
+                        setEditingAppelOffre(null);
+                    }}
+                    onSave={handleSaveAppelOffre}
+                    estimations={estimations}
+                />
+            )}
 
-{showAppelOffreModal && (
-    <window.AppelOffreModal
-        initialData={editingAppelOffre}
-        onClose={() => {
-            setShowAppelOffreModal(false);
-            setEditingAppelOffre(null);
-        }}
-        onSave={handleSaveAppelOffre}
-        estimations={estimations}
-    />
-)}
-
-{showAppelOffreDetail && selectedAppelOffre && (
-    <window.AppelOffreDetailView
-        appelOffre={selectedAppelOffre}
-        offres={offres}
-        onClose={() => {
-            setShowAppelOffreDetail(false);
-            setSelectedAppelOffre(null);
-        }}
-        onUpdateOffres={handleUpdateFavorites}
-        onChangeFavorite={handleChangeFavoriteFromDetail}
-        onCreateCommande={handleCreateCommandeFromAO}
-    />
-)}
+            {/* Vue détaillée Appel d'Offres */}
+            {showAppelOffreDetail && selectedAppelOffre && (
+                <window.AppelOffreDetailView
+                    appelOffre={selectedAppelOffre}
+                    offres={offres}
+                    onClose={() => {
+                        setShowAppelOffreDetail(false);
+                        setSelectedAppelOffre(null);
+                    }}
+                    onUpdateOffres={handleUpdateFavorites}
+                    onCreateCommande={handleCreateCommandeFromAO}
+                />
+            )}
         </div>
     );
 };
 
-// Montage de l'application
+// ========================================
+// MONTAGE DE L'APPLICATION
+// ========================================
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<ConstructionManagement />);
