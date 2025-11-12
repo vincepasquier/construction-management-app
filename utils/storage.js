@@ -32,7 +32,8 @@ window.loadData = async () => {
         commandes: storage.get('commandes')?.value || [],
         offresComplementaires: storage.get('offresComplementaires')?.value || [],
         regies: storage.get('regies')?.value || [],
-        factures: storage.get('factures')?.value || []
+        factures: storage.get('factures')?.value || [],
+        appelOffres: storage.get('appelOffres')?.value || []  // ✅ AJOUTÉ
     };
 };
 
