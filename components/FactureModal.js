@@ -1,7 +1,7 @@
-// Modal de gestion des factures
-const { useState } = React;
+// Modal de gestion des factures avec système de situations
+const { useState, useMemo } = React;
 
-window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = [], estimations = [] }) => {
+window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = [], estimations = [], factures = [] }) => {
     const [formData, setFormData] = useState(initialData || {
         numero: '',
         commandeId: '',
@@ -19,13 +19,72 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
         montantTTC: '',
         statut: 'En attente',
         dateReglement: '',
-        description: ''
+        description: '',
+        numeroSituation: null
     });
 
-    // Pré-remplir depuis une commande
+    // Calculer les informations de situation pour la commande sélectionnée
+    const situationInfo = useMemo(() => {
+        if (!formData.commandeId) return null;
+
+        const commande = commandes.find(c => c.id === formData.commandeId);
+        if (!commande) return null;
+
+        const montantCommande = commande.montant || commande.calculatedMontant || 0;
+
+        // Trouver toutes les factures existantes pour cette commande (sauf la facture en cours d'édition)
+        const facturesCommande = factures.filter(f => 
+            f.commandeId === formData.commandeId && 
+            f.id !== initialData?.id
+        );
+
+        // Calculer le total déjà facturé
+        const totalFacture = facturesCommande.reduce((sum, f) => sum + (f.montantHT || 0), 0);
+
+        // Calculer le prochain numéro de situation
+        const prochaineSituation = initialData?.numeroSituation || 
+            (facturesCommande.length > 0 ? Math.max(...facturesCommande.map(f => f.numeroSituation || 0)) + 1 : 1);
+
+        // Calculer le pourcentage de cette facture
+        const montantActuel = parseFloat(formData.montantHT) || 0;
+        const pourcentageActuel = montantCommande > 0 ? (montantActuel / montantCommande * 100) : 0;
+
+        // Calculer le total avec cette facture
+        const totalAvecActuelle = totalFacture + montantActuel;
+        const pourcentageTotal = montantCommande > 0 ? (totalAvecActuelle / montantCommande * 100) : 0;
+
+        // Calculer le reste
+        const reste = montantCommande - totalAvecActuelle;
+        const pourcentageReste = montantCommande > 0 ? (reste / montantCommande * 100) : 0;
+
+        return {
+            commande,
+            montantCommande,
+            facturesExistantes: facturesCommande,
+            nombreSituations: facturesCommande.length,
+            prochaineSituation,
+            totalFacture,
+            pourcentageFacture: (totalFacture / montantCommande * 100) || 0,
+            montantActuel,
+            pourcentageActuel,
+            totalAvecActuelle,
+            pourcentageTotal,
+            reste,
+            pourcentageReste,
+            depassement: pourcentageTotal > 100
+        };
+    }, [formData.commandeId, formData.montantHT, commandes, factures, initialData]);
+
+    // Pré-remplir depuis une commande (SANS le montant)
     const handleCommandeChange = (commandeId) => {
         const commande = commandes.find(c => c.id === commandeId);
         if (commande) {
+            // Calculer le prochain numéro de situation
+            const facturesCommande = factures.filter(f => f.commandeId === commandeId);
+            const prochaineSituation = facturesCommande.length > 0 
+                ? Math.max(...facturesCommande.map(f => f.numeroSituation || 0)) + 1 
+                : 1;
+
             setFormData({
                 ...formData,
                 commandeId: commandeId,
@@ -35,13 +94,15 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
                 positions0: commande.positions0 || [],
                 positions1: commande.positions1 || [],
                 etape: commande.etape || '',
-                montantHT: commande.montant || commande.calculatedMontant || ''
+                numeroSituation: prochaineSituation,
+                montantHT: '' // ✅ Reste vide - l'utilisateur saisit manuellement
             });
         } else {
             setFormData({
                 ...formData,
                 commandeId: commandeId,
-                regieId: ''
+                regieId: '',
+                numeroSituation: null
             });
         }
     };
@@ -59,13 +120,15 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
                 positions0: regie.positions0 || [],
                 positions1: regie.positions1 || [],
                 etape: regie.etape || '',
-                montantHT: regie.montantTotal || ''
+                numeroSituation: null,
+                montantHT: '' // ✅ Reste vide aussi pour les régies
             });
         } else {
             setFormData({
                 ...formData,
                 regieId: regieId,
-                commandeId: ''
+                commandeId: '',
+                numeroSituation: null
             });
         }
     };
@@ -97,6 +160,13 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
             return;
         }
 
+        // Vérifier le dépassement si lié à une commande
+        if (situationInfo && situationInfo.depassement) {
+            if (!confirm(`⚠️ ATTENTION : Le total facturé dépassera 100% de la commande (${situationInfo.pourcentageTotal.toFixed(1)}%).\n\nVoulez-vous continuer ?`)) {
+                return;
+            }
+        }
+
         const facture = {
             ...formData,
             id: initialData?.id || `FACT-${Date.now()}`,
@@ -104,7 +174,8 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
             montantHT: parseFloat(formData.montantHT) || 0,
             tauxTVA: parseFloat(formData.tauxTVA) || 0,
             montantTVA: tva,
-            montantTTC: ttc
+            montantTTC: ttc,
+            numeroSituation: formData.numeroSituation || null
         };
 
         onSave(facture);
@@ -194,6 +265,57 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
                         </div>
                     </div>
 
+                    {/* Récapitulatif des situations - NOUVEAU */}
+                    {situationInfo && (
+                        <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                            <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                                📊 Commande {situationInfo.commande.numero} - {situationInfo.montantCommande.toLocaleString('fr-CH')} CHF
+                            </h3>
+
+                            {situationInfo.facturesExistantes.length > 0 && (
+                                <div className="mb-3 space-y-1">
+                                    <p className="text-sm font-medium text-blue-800">Factures existantes :</p>
+                                    {situationInfo.facturesExistantes
+                                        .sort((a, b) => (a.numeroSituation || 0) - (b.numeroSituation || 0))
+                                        .map(f => (
+                                            <div key={f.id} className="text-sm text-blue-700 pl-4">
+                                                • Situation {f.numeroSituation} : {(f.montantHT || 0).toLocaleString('fr-CH')} CHF 
+                                                ({((f.montantHT / situationInfo.montantCommande) * 100).toFixed(1)}%)
+                                            </div>
+                                        ))
+                                    }
+                                    <div className="text-sm font-semibold text-blue-800 pl-4 pt-2 border-t border-blue-300 mt-2">
+                                        Total facturé : {situationInfo.totalFacture.toLocaleString('fr-CH')} CHF 
+                                        ({situationInfo.pourcentageFacture.toFixed(1)}%)
+                                    </div>
+                                    <div className="text-sm text-blue-700 pl-4">
+                                        Reste à facturer : {situationInfo.reste.toLocaleString('fr-CH')} CHF 
+                                        ({situationInfo.pourcentageReste.toFixed(1)}%)
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex items-center gap-2 p-3 bg-white rounded border-2 border-blue-300">
+                                <span className="text-2xl">➜</span>
+                                <div>
+                                    <p className="font-bold text-blue-900">
+                                        Cette facture sera : Situation {situationInfo.prochaineSituation}
+                                    </p>
+                                    {situationInfo.montantActuel > 0 && (
+                                        <p className="text-sm text-blue-700 mt-1">
+                                            {situationInfo.montantActuel.toLocaleString('fr-CH')} CHF = {situationInfo.pourcentageActuel.toFixed(1)}% de la commande
+                                        </p>
+                                    )}
+                                    {situationInfo.depassement && (
+                                        <p className="text-sm text-red-600 font-semibold mt-1">
+                                            ⚠️ Dépassement : Total sera de {situationInfo.pourcentageTotal.toFixed(1)}%
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Dates */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
@@ -257,6 +379,11 @@ window.FactureModal = ({ initialData, onClose, onSave, commandes = [], regies = 
                                 className="w-full px-3 py-2 border rounded-lg"
                                 placeholder="0.00"
                             />
+                            {situationInfo && situationInfo.montantActuel > 0 && (
+                                <p className="text-xs text-blue-600 mt-1">
+                                    Représente {situationInfo.pourcentageActuel.toFixed(1)}% de la commande
+                                </p>
+                            )}
                         </div>
 
                         <div>
