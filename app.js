@@ -338,7 +338,7 @@ const handleSessionNameChange = (newName) => {
                             { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
                             { id: 'alignement', label: '📌 Alignement', icon: '📌' },
                             { id: 'estimations', label: '📋 Estimations', icon: '📋' },
-                            { id: 'appelOffres', label: '🎯 Appels d\'Offres', icon: '🎯' },
+                           // { id: 'appelOffres', label: '🎯 Appels d\'Offres', icon: '🎯' },//
                             { id: 'offres', label: '💼 Offres', icon: '💼' },
                             { id: 'offresComplementaires', label: '➕ OC', icon: '➕' },
                             { id: 'commandes', label: '📦 Commandes', icon: '📦' },
@@ -475,7 +475,7 @@ const handleSessionNameChange = (newName) => {
                     )}
 
                     {/* Onglet Appels d'Offres */}
-                    {activeTab === 'appelOffres' && (
+                    {/*activeTab === 'appelOffres' && (
                         <div className="bg-white rounded-lg shadow-lg p-6">
                             <div className="flex justify-between mb-6">
                                 <h2 className="text-xl font-bold">Appels d'Offres</h2>
@@ -599,7 +599,7 @@ const handleSessionNameChange = (newName) => {
                                 </>
                             )}
                         </div>
-                    )}
+                    )}*/}
 
                     {/* Offres */}
                     {activeTab === 'offres' && (
@@ -1028,7 +1028,7 @@ const handleSessionNameChange = (newName) => {
                 />
             )}
 
-            {showAppelOffreDetail && selectedAppelOffre && (
+            {/*showAppelOffreDetail && selectedAppelOffre && (
                 <window.AppelOffreDetailView
                     appelOffre={selectedAppelOffre}
                     offres={offres}
@@ -1043,7 +1043,7 @@ const handleSessionNameChange = (newName) => {
             )}
         </div>
     );
-};
+*/};
 
 // Montage de l'application
 const root = ReactDOM.createRoot(document.getElementById('root'));
