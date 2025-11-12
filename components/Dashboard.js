@@ -32,26 +32,52 @@ window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, reg
         return [...fournisseurs].sort();
     }, [offres, commandes, factures]);
 
+// Données filtrées
+const filteredData = useMemo(() => {
     // Fonction de filtrage
     const applyFilters = (item) => {
+        // Pour les estimations hiérarchiques, vérifier dans la structure
+        if (item.lots && Array.isArray(item.lots) && item.lots.length > 0 && typeof item.lots[0] === 'object') {
+            // C'est une estimation hiérarchique - filtrage plus complexe
+            if (filters.lot) {
+                const hasLot = item.lots.some(lot => lot.numero === filters.lot);
+                if (!hasLot) return false;
+            }
+            if (filters.position0) {
+                const hasPos0 = item.lots.some(lot => 
+                    lot.positions0?.some(pos0 => pos0.nom === filters.position0)
+                );
+                if (!hasPos0) return false;
+            }
+            if (filters.position1) {
+                const hasPos1 = item.lots.some(lot => 
+                    lot.positions0?.some(pos0 => 
+                        pos0.positions1?.some(pos1 => pos1.nom === filters.position1)
+                    )
+                );
+                if (!hasPos1) return false;
+            }
+            // Pas de fournisseur dans les estimations
+            return true;
+        }
+        
+        // Filtrage classique pour les autres items
         if (filters.lot && !item.lots?.includes(filters.lot)) return false;
         if (filters.position0 && !item.positions0?.includes(filters.position0)) return false;
         if (filters.position1 && !item.positions1?.includes(filters.position1)) return false;
         if (filters.fournisseur && item.fournisseur !== filters.fournisseur) return false;
         return true;
     };
-
-    // Données filtrées
-    const filteredData = useMemo(() => {
-        return {
-            estimations: estimations.filter(applyFilters),
-            offres: offres.filter(applyFilters),
-            offresComplementaires: offresComplementaires.filter(applyFilters),
-            commandes: commandes.filter(applyFilters),
-            regies: regies.filter(applyFilters),
-            factures: factures.filter(applyFilters)
-        };
-    }, [estimations, offres, offresComplementaires, commandes, regies, factures, filters]);
+    
+    return {
+        estimations: estimations.filter(applyFilters),
+        offres: offres.filter(applyFilters),
+        offresComplementaires: offresComplementaires.filter(applyFilters),
+        commandes: commandes.filter(applyFilters),
+        regies: regies.filter(applyFilters),
+        factures: factures.filter(applyFilters)
+    };
+}, [estimations, offres, offresComplementaires, commandes, regies, factures, filters]);
 
     // Statistiques globales
 // Statistiques globales
