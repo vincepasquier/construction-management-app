@@ -23,16 +23,38 @@ window.AppelOffreDetailView = ({ appelOffre, offres = [], onClose, onUpdateOffre
     }, [offresLiees]);
 
     // Changer l'offre favorite
-    const handleChangeFavorite = (offreId) => {
+// Changer l'offre favorite
+const handleChangeFavorite = (offreId) => {
+    if (!confirm('Changer l\'offre favorite ?')) {
+        return;
+    }
+    
+    try {
         const updatedOffres = offres.map(o => {
             if (o.appelOffreId === appelOffre.id) {
                 return { ...o, isFavorite: o.id === offreId };
             }
             return o;
         });
+        
+        // Vérifier qu'une seule offre est favorite
+        const favorites = updatedOffres.filter(o => 
+            o.appelOffreId === appelOffre.id && o.isFavorite
+        );
+        
+        if (favorites.length !== 1) {
+            console.error('Erreur : nombre de favorites incorrect', favorites);
+            alert('❌ Erreur lors du changement de favorite');
+            return;
+        }
+        
         onUpdateOffres(updatedOffres);
         alert('✅ Offre favorite mise à jour');
-    };
+    } catch (error) {
+        console.error('Erreur handleChangeFavorite:', error);
+        alert('❌ Erreur : ' + error.message);
+    }
+};
 
     // Créer une commande à partir de l'offre favorite
     const handleCreateCommandeFromFavorite = () => {
