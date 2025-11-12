@@ -1043,7 +1043,7 @@ const handleSessionNameChange = (newName) => {
             )}
         </div>
     );
-*/};
+};*/}
 
 // Montage de l'application
 const root = ReactDOM.createRoot(document.getElementById('root'));
