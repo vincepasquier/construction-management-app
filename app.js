@@ -336,7 +336,7 @@ const handleSessionNameChange = (newName) => {
                     <div className="flex overflow-x-auto">
                         {[
                             { id: 'dashboard', label: '📊 Dashboard', icon: '📊' },
-                            //{ id: 'alignement', label: '📌 Alignement', icon: '📌' },//
+                            { id: 'alignement', label: '📌 Alignement', icon: '📌' },
                             { id: 'estimations', label: '📋 Estimations', icon: '📋' },
                             { id: 'appelOffres', label: '🎯 Appels d\'Offres', icon: '🎯' },
                             { id: 'offres', label: '💼 Offres', icon: '💼' },
@@ -912,7 +912,6 @@ const handleSessionNameChange = (newName) => {
 )}
 
                     {/* Alignement Budgétaire */}
-{/* DESAC
                         {activeTab === 'alignement' && (
                         <window.AlignementBudgetaire
                             estimations={estimations}
@@ -923,7 +922,6 @@ const handleSessionNameChange = (newName) => {
                             factures={factures}
                         />
                     )}
-                                */}
                 </div>
             </div>
 
