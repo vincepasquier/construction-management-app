@@ -1,7 +1,7 @@
 // Vue détaillée d'un appel d'offres avec comparaison des offres
 const { useState, useMemo } = React;
 
-window.AppelOffreDetailView = ({ appelOffre, offres = [], onClose, onUpdateOffres, onCreateCommande }) => {
+window.AppelOffreDetailView = ({ appelOffre, offres = [], onClose, onUpdateOffres, onChangeFavorite, onCreateCommande }) => {
     const [selectedOffreId, setSelectedOffreId] = useState(null);
 
     // Filtrer les offres liées à cet appel d'offres
@@ -28,6 +28,12 @@ const handleChangeFavorite = (offreId) => {
     if (!confirm('Changer l\'offre favorite ?')) {
         return;
     }
+    
+    // Utiliser la fonction dédiée qui gère tout proprement
+    if (onChangeFavorite) {
+        onChangeFavorite(appelOffre.id, offreId);
+    }
+};
     
     try {
         const updatedOffres = offres.map(o => {
