@@ -537,20 +537,33 @@ const handleSessionNameChange = (newName) => {
                                                                     {ao.statut}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-4 py-3 text-center">
-                                                                <button 
-                                                                    onClick={() => { 
-                                                                        if (confirm('Supprimer cet appel d\'offres ?')) { 
-                                                                            const updated = appelOffres.filter(a => a.id !== ao.id); 
-                                                                            setAppelOffres(updated); 
-                                                                            window.saveData('appelOffres', updated); 
-                                                                        }
-                                                                    }} 
-                                                                    className="text-red-600 hover:text-red-800"
-                                                                >
-                                                                    <Trash2 size={18} />
-                                                                </button>
-                                                            </td>
+                                                            <td className="px-4 py-3">
+    <div className="flex justify-center gap-2">
+        <button
+            onClick={() => {
+                setEditingAppelOffre(ao);
+                setShowAppelOffreModal(true);
+            }}
+            className="text-blue-600 hover:text-blue-800"
+            title="Modifier"
+        >
+            ✏️
+        </button>
+        <button 
+            onClick={() => { 
+                if (confirm('Supprimer cet appel d\'offres ?')) { 
+                    const updated = appelOffres.filter(a => a.id !== ao.id); 
+                    setAppelOffres(updated); 
+                    window.saveData('appelOffres', updated); 
+                }
+            }} 
+            className="text-red-600 hover:text-red-800"
+            title="Supprimer"
+        >
+            <Trash2 size={18} />
+        </button>
+    </div>
+</td>
                                                         </tr>
                                                     );
                                                 })}
