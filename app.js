@@ -2,7 +2,7 @@
 // APPLICATION PRINCIPALE - AVEC SMARTTABLE
 // ========================================
 const { useState, useEffect } = React;
-const { Plus, Trash2, Edit2 } = window.Icons;
+const { Plus, Trash2, Edit2, Upload, Download, FileJson, FileSpreadsheet, ChevronDown } = window.Icons;  // 🆕 MODIFIÉ
 
 const ConstructionManagement = () => {
     // ========================================
@@ -32,7 +32,8 @@ const ConstructionManagement = () => {
     const [showAppelOffreDetail, setShowAppelOffreDetail] = useState(false);
     const [showEstimationBuilder, setShowEstimationBuilder] = useState(false);
     const [editingEstimation, setEditingEstimation] = useState(null);
-    
+    const [showImportMenu, setShowImportMenu] = useState(false);  // 🆕 AJOUTÉ
+
     // ========================================
     // ÉTATS D'ÉDITION
     // ========================================
@@ -43,6 +44,12 @@ const ConstructionManagement = () => {
     const [editingRegie, setEditingRegie] = useState(null);
     const [editingAppelOffre, setEditingAppelOffre] = useState(null);
     const [selectedAppelOffre, setSelectedAppelOffre] = useState(null);
+
+    // ========================================
+    // REFS POUR LES IMPORTS
+    // ========================================
+    const importJSONRef = React.useRef(null);  // 🆕 AJOUTÉ
+    const importFacturesCSVRef = React.useRef(null);  // 🆕 AJOUTÉ
 
     // ========================================
     // CHARGEMENT INITIAL
@@ -72,6 +79,204 @@ const ConstructionManagement = () => {
         setRegies(data.regies);
         setFactures(data.factures);
         setAppelOffres(data.appelOffres || []);
+    };
+
+    // ========================================
+    // 🆕 FONCTIONS D'IMPORT/EXPORT JSON
+    // ========================================
+    
+    // Export JSON Session complète
+    const handleExportJSON = () => {
+        const sessionData = {
+            version: '1.0',
+            exportDate: new Date().toISOString(),
+            sessionName: sessionName,
+            data: {
+                estimations: estimations,
+                appelOffres: appelOffres,
+                offres: offres,
+                commandes: commandes,
+                offresComplementaires: offresComplementaires,
+                regies: regies,
+                factures: factures
+            }
+        };
+        
+        const jsonString = JSON.stringify(sessionData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${sessionName}_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('✅ Session complète exportée avec succès');
+    };
+
+    // Import JSON Session complète
+    const handleImportJSON = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const sessionData = JSON.parse(e.target.result);
+                
+                if (!sessionData.data) {
+                    throw new Error('Format de fichier invalide');
+                }
+                
+                const stats = `• ${sessionData.data.estimations?.length || 0} estimation(s)
+- ${sessionData.data.appelOffres?.length || 0} appel(s) d'offres
+- ${sessionData.data.offres?.length || 0} offre(s)
+- ${sessionData.data.commandes?.length || 0} commande(s)
+- ${sessionData.data.offresComplementaires?.length || 0} offre(s) complémentaire(s)
+- ${sessionData.data.regies?.length || 0} régie(s)
+- ${sessionData.data.factures?.length || 0} facture(s)`;
+                
+                const confirmation = confirm(
+                    `⚠️ ATTENTION !\n\n` +
+                    `Cette action va REMPLACER toutes vos données actuelles par :\n\n` +
+                    stats + `\n\n` +
+                    `Session : ${sessionData.sessionName || 'Sans nom'}\n` +
+                    `Exporté le : ${new Date(sessionData.exportDate).toLocaleString('fr-CH')}\n\n` +
+                    `Voulez-vous continuer ?`
+                );
+                
+                if (!confirmation) {
+                    event.target.value = '';
+                    return;
+                }
+                
+                // Restaurer toutes les données
+                if (sessionData.data.estimations) {
+                    setEstimations(sessionData.data.estimations);
+                    window.saveData('estimations', sessionData.data.estimations);
+                }
+                
+                if (sessionData.data.appelOffres) {
+                    setAppelOffres(sessionData.data.appelOffres);
+                    window.saveData('appelOffres', sessionData.data.appelOffres);
+                }
+                
+                if (sessionData.data.offres) {
+                    setOffres(sessionData.data.offres);
+                    window.saveData('offres', sessionData.data.offres);
+                }
+                
+                if (sessionData.data.commandes) {
+                    setCommandes(sessionData.data.commandes);
+                    window.saveData('commandes', sessionData.data.commandes);
+                }
+                
+                if (sessionData.data.offresComplementaires) {
+                    setOffresComplementaires(sessionData.data.offresComplementaires);
+                    window.saveData('offresComplementaires', sessionData.data.offresComplementaires);
+                }
+                
+                if (sessionData.data.regies) {
+                    setRegies(sessionData.data.regies);
+                    window.saveData('regies', sessionData.data.regies);
+                }
+                
+                if (sessionData.data.factures) {
+                    setFactures(sessionData.data.factures);
+                    window.saveData('factures', sessionData.data.factures);
+                }
+                
+                // Restaurer le nom de session
+                if (sessionData.sessionName) {
+                    handleSessionNameChange(sessionData.sessionName);
+                }
+                
+                alert(`✅ Session complète restaurée !\n\n` + stats);
+                event.target.value = '';
+                
+            } catch (error) {
+                console.error('Erreur import JSON:', error);
+                alert('❌ Erreur lors de l\'import : ' + error.message);
+            }
+        };
+        
+        reader.readAsText(file, 'UTF-8');
+    };
+
+    // Import CSV Factures
+    const handleImportFacturesCSV = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const csvContent = e.target.result;
+                const lines = csvContent.split('\n');
+                const header = lines[0].replace(/^\uFEFF/, '').split(';').map(h => h.trim());
+                const facturesImportees = [];
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const values = line.split(';');
+                    const row = {};
+                    header.forEach((col, idx) => {
+                        row[col] = values[idx] ? values[idx].trim() : '';
+                    });
+                    
+                    const facture = {
+                        id: `facture-${Date.now()}-${i}`,
+                        numero: row['Numéro Facture'] || '',
+                        fournisseur: row['Fournisseur'] || '',
+                        commandeId: row['Numéro Commande'] ? 
+                            commandes.find(c => c.numero === row['Numéro Commande'])?.id || '' : '',
+                        statut: row['Statut'] || 'En attente',
+                        montantHT: parseFloat(row['Montant HT']) || 0,
+                        dateFacture: new Date().toISOString().split('T')[0],
+                        dateEcheance: '',
+                        tauxTVA: 8.1,
+                        numeroSituation: null,
+                        description: '',
+                        lots: [],
+                        positions0: [],
+                        positions1: [],
+                        dateCreation: new Date().toISOString()
+                    };
+                    
+                    facture.montantTVA = (facture.montantHT * facture.tauxTVA) / 100;
+                    facture.montantTTC = facture.montantHT + facture.montantTVA;
+                    facturesImportees.push(facture);
+                }
+                
+                if (facturesImportees.length > 0) {
+                    const confirmation = confirm(
+                        `Importer ${facturesImportees.length} facture(s) ?\n\n` +
+                        `⚠️ Cela REMPLACERA toutes les factures existantes.`
+                    );
+                    
+                    if (confirmation) {
+                        setFactures(facturesImportees);
+                        window.saveData('factures', facturesImportees);
+                        alert(`✅ ${facturesImportees.length} facture(s) importée(s)`);
+                    }
+                } else {
+                    alert('⚠️ Aucune facture valide trouvée');
+                }
+                
+                event.target.value = '';
+                
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('❌ Erreur: ' + error.message);
+            }
+        };
+        
+        reader.readAsText(file, 'UTF-8');
     };
 
     // ========================================
@@ -185,18 +390,19 @@ const ConstructionManagement = () => {
         setEditingFacture(null);
         alert(editingFacture ? '✅ Facture modifiée' : '✅ Facture créée');
     };
+
     // Handler Estimations
-const handleSaveEstimation = (estimation) => {
-    const updated = editingEstimation ? 
-        estimations.map(e => e.id === editingEstimation.id ? estimation : e) : 
-        [...estimations, estimation];
-    
-    setEstimations(updated);
-    window.saveData('estimations', updated);
-    setShowEstimationBuilder(false);
-    setEditingEstimation(null);
-    alert(editingEstimation ? '✅ Estimation modifiée' : '✅ Estimation créée');
-};
+    const handleSaveEstimation = (estimation) => {
+        const updated = editingEstimation ? 
+            estimations.map(e => e.id === editingEstimation.id ? estimation : e) : 
+            [...estimations, estimation];
+        
+        setEstimations(updated);
+        window.saveData('estimations', updated);
+        setShowEstimationBuilder(false);
+        setEditingEstimation(null);
+        alert(editingEstimation ? '✅ Estimation modifiée' : '✅ Estimation créée');
+    };
 
     // Handler Appels d'Offres
     const handleSaveAppelOffre = (appelOffre) => {
@@ -279,6 +485,79 @@ const handleSaveEstimation = (estimation) => {
     };
 
     // ========================================
+    // 🆕 COMPOSANT MENU D'IMPORT
+    // ========================================
+    const ImportMenu = () => {
+        return (
+            <div className="relative">
+                <button
+                    onClick={() => setShowImportMenu(!showImportMenu)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
+                >
+                    <Upload size={20} />
+                    Importer
+                    <ChevronDown size={16} />
+                </button>
+                
+                {showImportMenu && (
+                    <>
+                        <div 
+                            className="fixed inset-0 z-40"
+                            onClick={() => setShowImportMenu(false)}
+                        />
+                        
+                        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                            <button
+                                onClick={() => {
+                                    importJSONRef.current?.click();
+                                    setShowImportMenu(false);
+                                }}
+                                className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b"
+                            >
+                                <FileJson size={20} className="text-purple-600" />
+                                <div>
+                                    <div className="font-semibold text-gray-800">Session complète</div>
+                                    <div className="text-xs text-gray-500">Fichier JSON (toutes les données)</div>
+                                </div>
+                            </button>
+                            
+                            <button
+                                onClick={() => {
+                                    importFacturesCSVRef.current?.click();
+                                    setShowImportMenu(false);
+                                }}
+                                className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3"
+                            >
+                                <FileSpreadsheet size={20} className="text-green-600" />
+                                <div>
+                                    <div className="font-semibold text-gray-800">Factures CSV</div>
+                                    <div className="text-xs text-gray-500">Import depuis Excel/CSV</div>
+                                </div>
+                            </button>
+                        </div>
+                    </>
+                )}
+                
+                <input
+                    ref={importJSONRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportJSON}
+                    className="hidden"
+                />
+                
+                <input
+                    ref={importFacturesCSVRef}
+                    type="file"
+                    accept=".csv"
+                    onChange={handleImportFacturesCSV}
+                    className="hidden"
+                />
+            </div>
+        );
+    };
+
+    // ========================================
     // RENDU PRINCIPAL
     // ========================================
     return (
@@ -295,27 +574,22 @@ const handleSaveEstimation = (estimation) => {
                                 Session: {sessionName}
                             </p>
                         </div>
+                        {/* 🆕 MODIFIÉ - Nouveaux boutons */}
                         <div className="flex gap-2">
+                            <ImportMenu />
                             <button
-                                onClick={() => setShowImportModal(true)}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-                            >
-                                <window.Icons.Upload size={20} />
-                                Importer
-                            </button>
-                            <button
-                                onClick={() => setShowExportModal(true)}
+                                onClick={handleExportJSON}
                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
                             >
-                                <window.Icons.Download size={20} />
-                                Exporter
+                                <Download size={20} />
+                                Exporter Session
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Navigation par onglets */}
+{/* Navigation par onglets */}
             <div className="bg-white border-b">
                 <div className="max-w-7xl mx-auto px-4">
                     <div className="flex gap-1 overflow-x-auto">
@@ -361,137 +635,134 @@ const handleSaveEstimation = (estimation) => {
                         />
                     )}
 
-{/* Estimations avec SmartTable */}
-{activeTab === 'estimations' && (
-    <window.SmartTable
-        data={estimations}
-        columns={[
-            { key: 'designation', label: 'Désignation', align: 'left' },
-            { key: 'lots', label: 'Lots', align: 'left' },
-            { key: 'positions0', label: 'Pos. 0', align: 'left' },
-            { key: 'positions1', label: 'Pos. 1', align: 'left' },
-            { key: 'etape', label: 'Étape', align: 'center' },
-            { key: 'montant', label: 'Montant (CHF)', align: 'right' },
-            { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
-        ]}
-        renderRow={(est) => {
-            // Détecter le format (hiérarchique ou plat)
-            const isHierarchique = est.lots && Array.isArray(est.lots) && est.lots.length > 0 && typeof est.lots[0] === 'object';
-            
-            if (isHierarchique) {
-                // Format hiérarchique (nouveau)
-                const nombreLots = est.lots?.length || 0;
-                return (
-                    <tr key={est.id} className="border-t hover:bg-gray-50 bg-blue-50">
-                        <td className="px-4 py-3 font-medium">{est.designation}</td>
-                        <td className="px-4 py-3 text-center" colSpan="4">
-                            <span className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
-                                📊 Structure hiérarchique - {nombreLots} lot{nombreLots > 1 ? 's' : ''}
-                            </span>
-                        </td>
-                        <td className="px-4 py-3 text-right font-bold text-blue-600">
-                            {(est.montantTotal || 0).toLocaleString('fr-CH')} CHF
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                                <button 
-                                    onClick={() => {
-                                        setEditingEstimation(est);
-                                        setShowEstimationBuilder(true);
-                                    }}
-                                    className="text-blue-600 hover:text-blue-800"
-                                    title="Modifier"
-                                >
-                                    <Edit2 size={16} />
-                                </button>
-                                <button 
-                                    onClick={() => {
-                                        if (confirm(`Supprimer l'estimation "${est.designation}" ?`)) {
-                                            const updated = estimations.filter(e => e.id !== est.id);
-                                            setEstimations(updated);
-                                            window.saveData('estimations', updated);
-                                            alert('✅ Estimation supprimée');
-                                        }
-                                    }}
-                                    className="text-red-600 hover:text-red-800"
-                                    title="Supprimer"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                );
-            } else {
-                // Format plat (ancien/import CSV)
-                return (
-                    <tr key={est.id} className="border-t hover:bg-gray-50">
-                        <td className="px-4 py-3">{est.designation || '-'}</td>
-                        <td className="px-4 py-3 text-xs">{est.lots?.join(', ') || '-'}</td>
-                        <td className="px-4 py-3 text-xs">{est.positions0?.join(', ') || '-'}</td>
-                        <td className="px-4 py-3 text-xs">{est.positions1?.join(', ') || '-'}</td>
-                        <td className="px-4 py-3 text-center text-xs">{est.etape || '-'}</td>
-                        <td className="px-4 py-3 text-right font-medium">
-                            {(est.montant || 0).toLocaleString('fr-CH')} CHF
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                            <div className="flex items-center justify-center gap-2">
-                                <button 
-                                    onClick={() => {
-                                        alert('⚠️ Cette estimation au format CSV ne peut pas être éditée.\nVeuillez créer une nouvelle estimation hiérarchique.');
-                                    }}
-                                    className="text-gray-400 cursor-not-allowed"
-                                    title="Non éditable (format CSV)"
-                                >
-                                    <Edit2 size={16} />
-                                </button>
-                                <button 
-                                    onClick={() => {
-                                        if (confirm(`Supprimer cette ligne d'estimation ?`)) {
-                                            const updated = estimations.filter(e => e.id !== est.id);
-                                            setEstimations(updated);
-                                            window.saveData('estimations', updated);
-                                            alert('✅ Ligne supprimée');
-                                        }
-                                    }}
-                                    className="text-red-600 hover:text-red-800"
-                                    title="Supprimer"
-                                >
-                                    <Trash2 size={16} />
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                );
-            }
-        }}
-        emptyMessage="Aucune estimation - Créez votre première estimation !"
-        actions={
-            <>
-                <h2 className="text-xl font-bold">📋 Estimations</h2>
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setShowImportModal(true)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
-                    >
-                        <window.Icons.Upload size={20} />
-                        Importer CSV
-                    </button>
-                    <button
-                        onClick={() => {
-                            setEditingEstimation(null);
-                            setShowEstimationBuilder(true);
-                        }}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                    >
-                        <Plus size={20} />
-                        Nouvelle estimation
-                    </button>
-                </div>
-            </>
-        }
-    />
-)}
+                    {/* Estimations avec SmartTable */}
+                    {activeTab === 'estimations' && (
+                        <window.SmartTable
+                            data={estimations}
+                            columns={[
+                                { key: 'designation', label: 'Désignation', align: 'left' },
+                                { key: 'lots', label: 'Lots', align: 'left' },
+                                { key: 'positions0', label: 'Pos. 0', align: 'left' },
+                                { key: 'positions1', label: 'Pos. 1', align: 'left' },
+                                { key: 'etape', label: 'Étape', align: 'center' },
+                                { key: 'montant', label: 'Montant (CHF)', align: 'right' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
+                            ]}
+                            renderRow={(est) => {
+                                const isHierarchique = est.lots && Array.isArray(est.lots) && est.lots.length > 0 && typeof est.lots[0] === 'object';
+                                
+                                if (isHierarchique) {
+                                    const nombreLots = est.lots?.length || 0;
+                                    return (
+                                        <tr key={est.id} className="border-t hover:bg-gray-50 bg-blue-50">
+                                            <td className="px-4 py-3 font-medium">{est.designation}</td>
+                                            <td className="px-4 py-3 text-center" colSpan="4">
+                                                <span className="px-3 py-1 bg-blue-600 text-white rounded-full text-sm">
+                                                    📊 Structure hiérarchique - {nombreLots} lot{nombreLots > 1 ? 's' : ''}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-bold text-blue-600">
+                                                {(est.montantTotal || 0).toLocaleString('fr-CH')} CHF
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button 
+                                                        onClick={() => {
+                                                            setEditingEstimation(est);
+                                                            setShowEstimationBuilder(true);
+                                                        }}
+                                                        className="text-blue-600 hover:text-blue-800"
+                                                        title="Modifier"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => {
+                                                            if (confirm(`Supprimer l'estimation "${est.designation}" ?`)) {
+                                                                const updated = estimations.filter(e => e.id !== est.id);
+                                                                setEstimations(updated);
+                                                                window.saveData('estimations', updated);
+                                                                alert('✅ Estimation supprimée');
+                                                            }
+                                                        }}
+                                                        className="text-red-600 hover:text-red-800"
+                                                        title="Supprimer"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                } else {
+                                    return (
+                                        <tr key={est.id} className="border-t hover:bg-gray-50">
+                                            <td className="px-4 py-3">{est.designation || '-'}</td>
+                                            <td className="px-4 py-3 text-xs">{est.lots?.join(', ') || '-'}</td>
+                                            <td className="px-4 py-3 text-xs">{est.positions0?.join(', ') || '-'}</td>
+                                            <td className="px-4 py-3 text-xs">{est.positions1?.join(', ') || '-'}</td>
+                                            <td className="px-4 py-3 text-center text-xs">{est.etape || '-'}</td>
+                                            <td className="px-4 py-3 text-right font-medium">
+                                                {(est.montant || 0).toLocaleString('fr-CH')} CHF
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <button 
+                                                        onClick={() => {
+                                                            alert('⚠️ Cette estimation au format CSV ne peut pas être éditée.\nVeuillez créer une nouvelle estimation hiérarchique.');
+                                                        }}
+                                                        className="text-gray-400 cursor-not-allowed"
+                                                        title="Non éditable (format CSV)"
+                                                    >
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => {
+                                                            if (confirm(`Supprimer cette ligne d'estimation ?`)) {
+                                                                const updated = estimations.filter(e => e.id !== est.id);
+                                                                setEstimations(updated);
+                                                                window.saveData('estimations', updated);
+                                                                alert('✅ Ligne supprimée');
+                                                            }
+                                                        }}
+                                                        className="text-red-600 hover:text-red-800"
+                                                        title="Supprimer"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                }
+                            }}
+                            emptyMessage="Aucune estimation - Créez votre première estimation !"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">📋 Estimations</h2>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setShowImportModal(true)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
+                                        >
+                                            <window.Icons.Upload size={20} />
+                                            Importer CSV
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setEditingEstimation(null);
+                                                setShowEstimationBuilder(true);
+                                            }}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                        >
+                                            <Plus size={20} />
+                                            Nouvelle estimation
+                                        </button>
+                                    </div>
+                                </>
+                            }
+                        />
+                    )}
 
                     {/* Appels d'Offres avec SmartTable */}
                     {activeTab === 'appelOffres' && (
@@ -582,449 +853,455 @@ const handleSaveEstimation = (estimation) => {
                     )}
 
 {/* Offres avec SmartTable */}
-{activeTab === 'offres' && (
-    <window.SmartTable
-        data={offres}
-        columns={[
-            { key: 'numero', label: 'N° Offre', align: 'left' },
-            { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
-            { key: 'lots', label: 'Lots', align: 'left' },
-            { key: 'statut', label: 'Statut', align: 'center' },
-            { key: 'montant', label: 'Montant (CHF)', align: 'right' },
-            { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
-        ]}
-        renderRow={(offre) => (
-            <tr key={offre.id} className="border-t hover:bg-gray-50">
-                <td className="px-4 py-3">
-                    <span className="font-medium text-blue-600">
-                        {offre.numero}
-                    </span>
-                    {offre.isFavorite && (
-                        <span className="ml-2 text-yellow-500" title="Offre favorite">⭐</span>
+                    {activeTab === 'offres' && (
+                        <window.SmartTable
+                            data={offres}
+                            columns={[
+                                { key: 'numero', label: 'N° Offre', align: 'left' },
+                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+                                { key: 'lots', label: 'Lots', align: 'left' },
+                                { key: 'statut', label: 'Statut', align: 'center' },
+                                { key: 'montant', label: 'Montant (CHF)', align: 'right' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
+                            ]}
+                            renderRow={(offre) => (
+                                <tr key={offre.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3">
+                                        <span className="font-medium text-blue-600">
+                                            {offre.numero}
+                                        </span>
+                                        {offre.isFavorite && (
+                                            <span className="ml-2 text-yellow-500" title="Offre favorite">⭐</span>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3">{offre.fournisseur}</td>
+                                    <td className="px-4 py-3 text-xs">{offre.lots?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className={`px-2 py-1 rounded text-xs ${
+                                            offre.statut === 'Acceptée' ? 'bg-green-100 text-green-800' :
+                                            offre.statut === 'Refusée' ? 'bg-red-100 text-red-800' :
+                                            'bg-gray-100 text-gray-800'
+                                        }`}>
+                                            {offre.statut || 'En attente'}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {offre.montant?.toLocaleString('fr-CH')} CHF
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <button 
+                                                onClick={() => {
+                                                    setEditingOffre(offre);
+                                                    setShowOffreModal(true);
+                                                }}
+                                                className="text-blue-600 hover:text-blue-800"
+                                                title="Modifier"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    if (confirm(`Supprimer l'offre ${offre.numero} ?`)) {
+                                                        const updated = offres.filter(o => o.id !== offre.id);
+                                                        setOffres(updated);
+                                                        window.saveData('offres', updated);
+                                                        alert('✅ Offre supprimée');
+                                                    }
+                                                }}
+                                                className="text-red-600 hover:text-red-800"
+                                                title="Supprimer"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                            emptyMessage="Aucune offre"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">💼 Offres</h2>
+                                    <button
+                                        onClick={() => {
+                                            setEditingOffre(null);
+                                            setShowOffreModal(true);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Plus size={20} />
+                                        Nouvelle offre
+                                    </button>
+                                </>
+                            }
+                        />
                     )}
-                </td>
-                <td className="px-4 py-3">{offre.fournisseur}</td>
-                <td className="px-4 py-3 text-xs">{offre.lots?.join(', ') || '-'}</td>
-                <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-1 rounded text-xs ${
-                        offre.statut === 'Acceptée' ? 'bg-green-100 text-green-800' :
-                        offre.statut === 'Refusée' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                    }`}>
-                        {offre.statut || 'En attente'}
-                    </span>
-                </td>
-                <td className="px-4 py-3 text-right font-medium">
-                    {offre.montant?.toLocaleString('fr-CH')} CHF
-                </td>
-                <td className="px-4 py-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                        <button 
-                            onClick={() => {
-                                setEditingOffre(offre);
-                                setShowOffreModal(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="Modifier"
-                        >
-                            <Edit2 size={16} />
-                        </button>
-                        <button 
-                            onClick={() => {
-                                if (confirm(`Supprimer l'offre ${offre.numero} ?`)) {
-                                    const updated = offres.filter(o => o.id !== offre.id);
-                                    setOffres(updated);
-                                    window.saveData('offres', updated);
-                                    alert('✅ Offre supprimée');
-                                }
-                            }}
-                            className="text-red-600 hover:text-red-800"
-                            title="Supprimer"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        )}
-        emptyMessage="Aucune offre"
-        actions={
-            <>
-                <h2 className="text-xl font-bold">💼 Offres</h2>
-                <button
-                    onClick={() => {
-                        setEditingOffre(null);
-                        setShowOffreModal(true);
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                >
-                    <Plus size={20} />
-                    Nouvelle offre
-                </button>
-            </>
-        }
-    />
-)}
-{/* Offres Complémentaires avec SmartTable */}
-{activeTab === 'offresComplementaires' && (
-    <window.SmartTable
-        data={offresComplementaires}
-        columns={[
-            { key: 'numero', label: 'N° OC', align: 'left' },
-            { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
-            { key: 'designation', label: 'Désignation', align: 'left' },
-            { key: 'lots', label: 'Lots', align: 'left' },
-            { key: 'statut', label: 'Statut', align: 'center' },
-            { key: 'montant', label: 'Montant (CHF)', align: 'right' },
-            { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
-        ]}
-        renderRow={(oc) => (
-            <tr key={oc.id} className="border-t hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-blue-600">{oc.numero}</td>
-                <td className="px-4 py-3">{oc.fournisseur}</td>
-                <td className="px-4 py-3">{oc.designation}</td>
-                <td className="px-4 py-3 text-xs">{oc.lots?.join(', ') || '-'}</td>
-                <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-1 rounded text-xs ${
-                        oc.statut === 'Acceptée' ? 'bg-green-100 text-green-800' :
-                        oc.statut === 'Refusée' ? 'bg-red-100 text-red-800' :
-                        'bg-gray-100 text-gray-800'
-                    }`}>
-                        {oc.statut || 'En attente'}
-                    </span>
-                </td>
-                <td className="px-4 py-3 text-right font-medium">
-                    {oc.montant?.toLocaleString('fr-CH')} CHF
-                </td>
-                <td className="px-4 py-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                        <button 
-                            onClick={() => {
-                                setEditingOffreComp(oc);
-                                setShowOffreCompModal(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="Modifier"
-                        >
-                            <Edit2 size={16} />
-                        </button>
-                        <button 
-                            onClick={() => {
-                                if (confirm(`Supprimer l'offre complémentaire ${oc.numero} ?`)) {
-                                    const updated = offresComplementaires.filter(o => o.id !== oc.id);
-                                    setOffresComplementaires(updated);
-                                    window.saveData('offresComplementaires', updated);
-                                    alert('✅ Offre complémentaire supprimée');
-                                }
-                            }}
-                            className="text-red-600 hover:text-red-800"
-                            title="Supprimer"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        )}
-        emptyMessage="Aucune offre complémentaire"
-        actions={
-            <>
-                <h2 className="text-xl font-bold">➕ Offres Complémentaires</h2>
-                <button
-                    onClick={() => {
-                        setEditingOffreComp(null);
-                        setShowOffreCompModal(true);
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                >
-                    <Plus size={20} />
-                    Nouvelle OC
-                </button>
-            </>
-        }
-    />
-)}
 
- {/* Commandes avec SmartTable */}
-{activeTab === 'commandes' && (
-    <window.SmartTable
-        data={commandes}
-        columns={[
-            { key: 'numero', label: 'N° Commande', align: 'left' },
-            { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
-            { key: 'lots', label: 'Lots', align: 'left' },
-            { key: 'dateCommande', label: 'Date', align: 'center' },
-            { key: 'statut', label: 'Statut', align: 'center' },
-            { key: 'montant', label: 'Montant (CHF)', align: 'right' },
-            { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
-        ]}
-        renderRow={(cmd) => (
-            <tr key={cmd.id} className="border-t hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-blue-600">{cmd.numero}</td>
-                <td className="px-4 py-3">{cmd.fournisseur}</td>
-                <td className="px-4 py-3 text-xs">{cmd.lots?.join(', ') || '-'}</td>
-                <td className="px-4 py-3 text-center text-sm">
-                    {new Date(cmd.dateCommande).toLocaleDateString('fr-CH')}
-                </td>
-                <td className="px-4 py-3 text-center">
-                    <span className={`px-2 py-1 rounded text-xs ${
-                        cmd.statut === 'Terminée' ? 'bg-green-100 text-green-800' :
-                        cmd.statut === 'Annulée' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                    }`}>
-                        {cmd.statut || 'En cours'}
-                    </span>
-                </td>
-                <td className="px-4 py-3 text-right font-medium">
-                    {(cmd.calculatedMontant || cmd.montant || 0).toLocaleString('fr-CH')} CHF
-                </td>
-                <td className="px-4 py-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                        <button 
-                            onClick={() => {
-                                setEditingCommande(cmd);
-                                setShowCommandeModal(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="Modifier"
-                        >
-                            <Edit2 size={16} />
-                        </button>
-                        <button 
-                            onClick={() => {
-                                if (confirm(`Supprimer la commande ${cmd.numero} ?\n\nAttention : Les factures liées resteront présentes.`)) {
-                                    const updated = commandes.filter(c => c.id !== cmd.id);
-                                    setCommandes(updated);
-                                    window.saveData('commandes', updated);
-                                    alert('✅ Commande supprimée');
-                                }
-                            }}
-                            className="text-red-600 hover:text-red-800"
-                            title="Supprimer"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        )}
-        emptyMessage="Aucune commande"
-        actions={
-            <>
-                <h2 className="text-xl font-bold">📦 Commandes</h2>
-                <button
-                    onClick={() => {
-                        setEditingCommande(null);
-                        setShowCommandeModal(true);
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                >
-                    <Plus size={20} />
-                    Nouvelle commande
-                </button>
-            </>
-        }
-    />
-)}
+                    {/* Offres Complémentaires avec SmartTable */}
+                    {activeTab === 'offresComplementaires' && (
+                        <window.SmartTable
+                            data={offresComplementaires}
+                            columns={[
+                                { key: 'numero', label: 'N° OC', align: 'left' },
+                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+                                { key: 'designation', label: 'Désignation', align: 'left' },
+                                { key: 'lots', label: 'Lots', align: 'left' },
+                                { key: 'statut', label: 'Statut', align: 'center' },
+                                { key: 'montant', label: 'Montant (CHF)', align: 'right' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
+                            ]}
+                            renderRow={(oc) => (
+                                <tr key={oc.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium text-blue-600">{oc.numero}</td>
+                                    <td className="px-4 py-3">{oc.fournisseur}</td>
+                                    <td className="px-4 py-3">{oc.designation}</td>
+                                    <td className="px-4 py-3 text-xs">{oc.lots?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className={`px-2 py-1 rounded text-xs ${
+                                            oc.statut === 'Acceptée' ? 'bg-green-100 text-green-800' :
+                                            oc.statut === 'Refusée' ? 'bg-red-100 text-red-800' :
+                                            'bg-gray-100 text-gray-800'
+                                        }`}>
+                                            {oc.statut || 'En attente'}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {oc.montant?.toLocaleString('fr-CH')} CHF
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <button 
+                                                onClick={() => {
+                                                    setEditingOffreComp(oc);
+                                                    setShowOffreCompModal(true);
+                                                }}
+                                                className="text-blue-600 hover:text-blue-800"
+                                                title="Modifier"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    if (confirm(`Supprimer l'offre complémentaire ${oc.numero} ?`)) {
+                                                        const updated = offresComplementaires.filter(o => o.id !== oc.id);
+                                                        setOffresComplementaires(updated);
+                                                        window.saveData('offresComplementaires', updated);
+                                                        alert('✅ Offre complémentaire supprimée');
+                                                    }
+                                                }}
+                                                className="text-red-600 hover:text-red-800"
+                                                title="Supprimer"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                            emptyMessage="Aucune offre complémentaire"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">➕ Offres Complémentaires</h2>
+                                    <button
+                                        onClick={() => {
+                                            setEditingOffreComp(null);
+                                            setShowOffreCompModal(true);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Plus size={20} />
+                                        Nouvelle OC
+                                    </button>
+                                </>
+                            }
+                        />
+                    )}
+
+                    {/* Commandes avec SmartTable */}
+                    {activeTab === 'commandes' && (
+                        <window.SmartTable
+                            data={commandes}
+                            columns={[
+                                { key: 'numero', label: 'N° Commande', align: 'left' },
+                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+                                { key: 'lots', label: 'Lots', align: 'left' },
+                                { key: 'dateCommande', label: 'Date', align: 'center' },
+                                { key: 'statut', label: 'Statut', align: 'center' },
+                                { key: 'montant', label: 'Montant (CHF)', align: 'right' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
+                            ]}
+                            renderRow={(cmd) => (
+                                <tr key={cmd.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium text-blue-600">{cmd.numero}</td>
+                                    <td className="px-4 py-3">{cmd.fournisseur}</td>
+                                    <td className="px-4 py-3 text-xs">{cmd.lots?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-center text-sm">
+                                        {new Date(cmd.dateCommande).toLocaleDateString('fr-CH')}
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <span className={`px-2 py-1 rounded text-xs ${
+                                            cmd.statut === 'Terminée' ? 'bg-green-100 text-green-800' :
+                                            cmd.statut === 'Annulée' ? 'bg-red-100 text-red-800' :
+                                            'bg-yellow-100 text-yellow-800'
+                                        }`}>
+                                            {cmd.statut || 'En cours'}
+                                        </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {(cmd.calculatedMontant || cmd.montant || 0).toLocaleString('fr-CH')} CHF
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <button 
+                                                onClick={() => {
+                                                    setEditingCommande(cmd);
+                                                    setShowCommandeModal(true);
+                                                }}
+                                                className="text-blue-600 hover:text-blue-800"
+                                                title="Modifier"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    if (confirm(`Supprimer la commande ${cmd.numero} ?\n\nAttention : Les factures liées resteront présentes.`)) {
+                                                        const updated = commandes.filter(c => c.id !== cmd.id);
+                                                        setCommandes(updated);
+                                                        window.saveData('commandes', updated);
+                                                        alert('✅ Commande supprimée');
+                                                    }
+                                                }}
+                                                className="text-red-600 hover:text-red-800"
+                                                title="Supprimer"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                            emptyMessage="Aucune commande"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">📦 Commandes</h2>
+                                    <button
+                                        onClick={() => {
+                                            setEditingCommande(null);
+                                            setShowCommandeModal(true);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Plus size={20} />
+                                        Nouvelle commande
+                                    </button>
+                                </>
+                            }
+                        />
+                    )}
+
 {/* Régies avec SmartTable */}
-{activeTab === 'regies' && (
-    <window.SmartTable
-        data={regies}
-        columns={[
-            { key: 'numero', label: 'N° Régie', align: 'left' },
-            { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
-            { key: 'designation', label: 'Désignation', align: 'left' },
-            { key: 'lots', label: 'Lots', align: 'left' },
-            { key: 'dateDebut', label: 'Date début', align: 'center' },
-            { key: 'dateFin', label: 'Date fin', align: 'center' },
-            { key: 'montantTotal', label: 'Montant Total (CHF)', align: 'right' },
-            { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
-        ]}
-        renderRow={(regie) => (
-            <tr key={regie.id} className="border-t hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-blue-600">{regie.numero}</td>
-                <td className="px-4 py-3">{regie.fournisseur}</td>
-                <td className="px-4 py-3">{regie.designation}</td>
-                <td className="px-4 py-3 text-xs">{regie.lots?.join(', ') || '-'}</td>
-                <td className="px-4 py-3 text-center text-sm">
-                    {regie.dateDebut ? new Date(regie.dateDebut).toLocaleDateString('fr-CH') : '-'}
-                </td>
-                <td className="px-4 py-3 text-center text-sm">
-                    {regie.dateFin ? new Date(regie.dateFin).toLocaleDateString('fr-CH') : '-'}
-                </td>
-                <td className="px-4 py-3 text-right font-medium">
-                    {(regie.montantTotal || 0).toLocaleString('fr-CH')} CHF
-                </td>
-                <td className="px-4 py-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                        <button 
-                            onClick={() => {
-                                setEditingRegie(regie);
-                                setShowRegieModal(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-800"
-                            title="Modifier"
-                        >
-                            <Edit2 size={16} />
-                        </button>
-                        <button 
-                            onClick={() => {
-                                if (confirm(`Supprimer la régie ${regie.numero} ?`)) {
-                                    const updated = regies.filter(r => r.id !== regie.id);
-                                    setRegies(updated);
-                                    window.saveData('regies', updated);
-                                    alert('✅ Régie supprimée');
-                                }
-                            }}
-                            className="text-red-600 hover:text-red-800"
-                            title="Supprimer"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        )}
-        emptyMessage="Aucune régie"
-        actions={
-            <>
-                <h2 className="text-xl font-bold">⏱️ Régies</h2>
-                <button
-                    onClick={() => {
-                        setEditingRegie(null);
-                        setShowRegieModal(true);
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                >
-                    <Plus size={20} />
-                    Nouvelle régie
-                </button>
-            </>
-        }
-    />
-)}
-{/* Factures avec SmartTable */}
-{activeTab === 'factures' && (
-    <window.SmartTable
-        data={factures}
-        columns={[
-            { key: 'numero', label: 'N° Facture', align: 'left' },
-            { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
-            { key: 'commandeNumero', label: 'Commande', align: 'left' },  // 🆕 NOUVEAU
-            { key: 'numeroSituation', label: 'Situation', align: 'center' },  // 🆕 NOUVEAU
-            { key: 'dateFacture', label: 'Date', align: 'center' },
-            { key: 'dateEcheance', label: 'Échéance', align: 'center' },
-            { key: 'montantHT', label: 'Montant HT', align: 'right' },
-            { key: 'pourcentageCommande', label: '% Cmd', align: 'center' },  // 🆕 NOUVEAU
-            { key: 'montantTTC', label: 'Montant TTC', align: 'right' },
-            { key: 'statut', label: 'Statut', align: 'center' },
-            { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
-        ]}
-        renderRow={(facture) => {
-            // Calculer les infos de commande
-            const commande = facture.commandeId ? commandes.find(c => c.id === facture.commandeId) : null;
-            const pourcentage = commande 
-                ? ((facture.montantHT / (commande.montant || commande.calculatedMontant || 1)) * 100).toFixed(1) 
-                : null;
+                    {activeTab === 'regies' && (
+                        <window.SmartTable
+                            data={regies}
+                            columns={[
+                                { key: 'numero', label: 'N° Régie', align: 'left' },
+                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+                                { key: 'designation', label: 'Désignation', align: 'left' },
+                                { key: 'lots', label: 'Lots', align: 'left' },
+                                { key: 'dateDebut', label: 'Date début', align: 'center' },
+                                { key: 'dateFin', label: 'Date fin', align: 'center' },
+                                { key: 'montantTotal', label: 'Montant Total (CHF)', align: 'right' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
+                            ]}
+                            renderRow={(regie) => (
+                                <tr key={regie.id} className="border-t hover:bg-gray-50">
+                                    <td className="px-4 py-3 font-medium text-blue-600">{regie.numero}</td>
+                                    <td className="px-4 py-3">{regie.fournisseur}</td>
+                                    <td className="px-4 py-3">{regie.designation}</td>
+                                    <td className="px-4 py-3 text-xs">{regie.lots?.join(', ') || '-'}</td>
+                                    <td className="px-4 py-3 text-center text-sm">
+                                        {regie.dateDebut ? new Date(regie.dateDebut).toLocaleDateString('fr-CH') : '-'}
+                                    </td>
+                                    <td className="px-4 py-3 text-center text-sm">
+                                        {regie.dateFin ? new Date(regie.dateFin).toLocaleDateString('fr-CH') : '-'}
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium">
+                                        {(regie.montantTotal || 0).toLocaleString('fr-CH')} CHF
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <button 
+                                                onClick={() => {
+                                                    setEditingRegie(regie);
+                                                    setShowRegieModal(true);
+                                                }}
+                                                className="text-blue-600 hover:text-blue-800"
+                                                title="Modifier"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button 
+                                                onClick={() => {
+                                                    if (confirm(`Supprimer la régie ${regie.numero} ?`)) {
+                                                        const updated = regies.filter(r => r.id !== regie.id);
+                                                        setRegies(updated);
+                                                        window.saveData('regies', updated);
+                                                        alert('✅ Régie supprimée');
+                                                    }
+                                                }}
+                                                className="text-red-600 hover:text-red-800"
+                                                title="Supprimer"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                            emptyMessage="Aucune régie"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">⏱️ Régies</h2>
+                                    <button
+                                        onClick={() => {
+                                            setEditingRegie(null);
+                                            setShowRegieModal(true);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Plus size={20} />
+                                        Nouvelle régie
+                                    </button>
+                                </>
+                            }
+                        />
+                    )}
 
-            return (
-                <tr key={facture.id} className="border-t hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-blue-600">{facture.numero}</td>
-                    <td className="px-4 py-3">{facture.fournisseur}</td>
-                    <td className="px-4 py-3 text-sm">
-                        {commande ? (
-                            <span className="text-blue-600">{commande.numero}</span>
-                        ) : (
-                            <span className="text-gray-400">-</span>
-                        )}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                        {facture.numeroSituation ? (
-                            <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded font-semibold text-sm">
-                                {facture.numeroSituation}
-                            </span>
-                        ) : (
-                            <span className="text-gray-400">-</span>
-                        )}
-                    </td>
-                    <td className="px-4 py-3 text-center text-sm">
-                        {new Date(facture.dateFacture).toLocaleDateString('fr-CH')}
-                    </td>
-                    <td className="px-4 py-3 text-center text-sm">
-                        {facture.dateEcheance ? new Date(facture.dateEcheance).toLocaleDateString('fr-CH') : '-'}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium">
-                        {(facture.montantHT || 0).toLocaleString('fr-CH')} CHF
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                        {pourcentage ? (
-                            <span className="text-xs text-blue-600 font-semibold">{pourcentage}%</span>
-                        ) : (
-                            <span className="text-gray-400">-</span>
-                        )}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium">
-                        {(facture.montantTTC || 0).toLocaleString('fr-CH')} CHF
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                        <span className={`px-2 py-1 rounded text-xs ${
-                            facture.statut === 'Payée' ? 'bg-green-100 text-green-800' :
-                            facture.statut === 'En attente' ? 'bg-yellow-100 text-yellow-800' :
-                            facture.statut === 'En retard' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
-                        }`}>
-                            {facture.statut}
-                        </span>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                            <button 
-                                onClick={() => {
-                                    setEditingFacture(facture);
-                                    setShowFactureModal(true);
-                                }}
-                                className="text-blue-600 hover:text-blue-800"
-                                title="Modifier"
-                            >
-                                <Edit2 size={16} />
-                            </button>
-                            <button 
-                                onClick={() => {
-                                    if (confirm(`Supprimer la facture ${facture.numero} ?`)) {
-                                        const updated = factures.filter(f => f.id !== facture.id);
-                                        setFactures(updated);
-                                        window.saveData('factures', updated);
-                                        alert('✅ Facture supprimée');
-                                    }
-                                }}
-                                className="text-red-600 hover:text-red-800"
-                                title="Supprimer"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            );
-        }}
-        emptyMessage="Aucune facture"
-        actions={
-            <>
-                <h2 className="text-xl font-bold">💰 Factures</h2>
-                <button
-                    onClick={() => {
-                        setEditingFacture(null);
-                        setShowFactureModal(true);
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                >
-                    <Plus size={20} />
-                    Nouvelle facture
-                </button>
-            </>
-        }
-    />
-)}
+                    {/* Factures avec SmartTable */}
+                    {activeTab === 'factures' && (
+                        <window.SmartTable
+                            data={factures}
+                            columns={[
+                                { key: 'numero', label: 'N° Facture', align: 'left' },
+                                { key: 'fournisseur', label: 'Fournisseur', align: 'left' },
+                                { key: 'commandeNumero', label: 'Commande', align: 'left' },
+                                { key: 'numeroSituation', label: 'Situation', align: 'center' },
+                                { key: 'dateFacture', label: 'Date', align: 'center' },
+                                { key: 'dateEcheance', label: 'Échéance', align: 'center' },
+                                { key: 'montantHT', label: 'Montant HT', align: 'right' },
+                                { key: 'pourcentageCommande', label: '% Cmd', align: 'center' },
+                                { key: 'montantTTC', label: 'Montant TTC', align: 'right' },
+                                { key: 'statut', label: 'Statut', align: 'center' },
+                                { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
+                            ]}
+                            renderRow={(facture) => {
+                                const commande = facture.commandeId ? commandes.find(c => c.id === facture.commandeId) : null;
+                                const pourcentage = commande 
+                                    ? ((facture.montantHT / (commande.montant || commande.calculatedMontant || 1)) * 100).toFixed(1) 
+                                    : null;
+
+                                return (
+                                    <tr key={facture.id} className="border-t hover:bg-gray-50">
+                                        <td className="px-4 py-3 font-medium text-blue-600">{facture.numero}</td>
+                                        <td className="px-4 py-3">{facture.fournisseur}</td>
+                                        <td className="px-4 py-3 text-sm">
+                                            {commande ? (
+                                                <span className="text-blue-600">{commande.numero}</span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            {facture.numeroSituation ? (
+                                                <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded font-semibold text-sm">
+                                                    {facture.numeroSituation}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-center text-sm">
+                                            {new Date(facture.dateFacture).toLocaleDateString('fr-CH')}
+                                        </td>
+                                        <td className="px-4 py-3 text-center text-sm">
+                                            {facture.dateEcheance ? new Date(facture.dateEcheance).toLocaleDateString('fr-CH') : '-'}
+                                        </td>
+                                        <td className="px-4 py-3 text-right font-medium">
+                                            {(facture.montantHT || 0).toLocaleString('fr-CH')} CHF
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            {pourcentage ? (
+                                                <span className="text-xs text-blue-600 font-semibold">{pourcentage}%</span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-right font-medium">
+                                            {(facture.montantTTC || 0).toLocaleString('fr-CH')} CHF
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <span className={`px-2 py-1 rounded text-xs ${
+                                                facture.statut === 'Payée' ? 'bg-green-100 text-green-800' :
+                                                facture.statut === 'En attente' ? 'bg-yellow-100 text-yellow-800' :
+                                                facture.statut === 'En retard' ? 'bg-red-100 text-red-800' :
+                                                'bg-gray-100 text-gray-800'
+                                            }`}>
+                                                {facture.statut}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <div className="flex items-center justify-center gap-2">
+                                                <button 
+                                                    onClick={() => {
+                                                        setEditingFacture(facture);
+                                                        setShowFactureModal(true);
+                                                    }}
+                                                    className="text-blue-600 hover:text-blue-800"
+                                                    title="Modifier"
+                                                >
+                                                    <Edit2 size={16} />
+                                                </button>
+                                                <button 
+                                                    onClick={() => {
+                                                        if (confirm(`Supprimer la facture ${facture.numero} ?`)) {
+                                                            const updated = factures.filter(f => f.id !== facture.id);
+                                                            setFactures(updated);
+                                                            window.saveData('factures', updated);
+                                                            alert('✅ Facture supprimée');
+                                                        }
+                                                    }}
+                                                    className="text-red-600 hover:text-red-800"
+                                                    title="Supprimer"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            }}
+                            emptyMessage="Aucune facture"
+                            actions={
+                                <>
+                                    <h2 className="text-xl font-bold">💰 Factures</h2>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => {
+                                                setEditingFacture(null);
+                                                setShowFactureModal(true);
+                                            }}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                        >
+                                            <Plus size={20} />
+                                            Nouvelle facture
+                                        </button>
+                                        {/* 🆕 AJOUT DU MENU D'IMPORT DANS L'ONGLET FACTURES */}
+                                        <ImportMenu />
+                                    </div>
+                                </>
+                            }
+                        />
+                    )}
 
                     {/* Alignement Budgétaire */}
                     {activeTab === 'alignement' && (
@@ -1040,7 +1317,7 @@ const handleSaveEstimation = (estimation) => {
                 </div>
             </div>
 
-                     {/* ======================================== */}
+{/* ======================================== */}
             {/* MODALS */}
             {/* ======================================== */}
 
@@ -1053,41 +1330,24 @@ const handleSaveEstimation = (estimation) => {
                 />
             )}
 
-                     {/* Modal Import */}
-            {showImportModal && (
-                <window.ImportModal
-                    onClose={() => setShowImportModal(false)}
-                    onImport={loadAllData}
-                    onSessionRestore={handleSessionNameChange}
+            {/* 🆕 Modal Export */}
+            {showExportModal && (
+                <window.ExportModal
+                    onClose={() => setShowExportModal(false)}
+                    data={{
+                        estimations,
+                        offres,
+                        commandes,
+                        offresComplementaires,
+                        regies,
+                        factures,
+                        appelOffres
+                    }}
+                    sessionName={sessionName}
                 />
             )}
-                     {/* Modal Import */}
-{showImportModal && (
-    <window.ImportModal
-        onClose={() => setShowImportModal(false)}
-        onImport={loadAllData}
-        onSessionRestore={handleSessionNameChange}
-    />
-)}
 
-{/* 🆕 AJOUTER CE MODAL EXPORT */}
-{showExportModal && (
-    <window.ExportModal
-        onClose={() => setShowExportModal(false)}
-        data={{
-            estimations,
-            offres,
-            commandes,
-            offresComplementaires,
-            regies,
-            factures,
-            appelOffres
-        }}
-        sessionName={sessionName}
-    />
-)}
-
-            {/* 🆕 AJOUTEZ CE MODAL SESSION MANAGER */}
+            {/* 🆕 Session Manager */}
             <window.SessionManager
                 sessionName={sessionName}
                 onSessionNameChange={handleSessionNameChange}
@@ -1161,7 +1421,7 @@ const handleSaveEstimation = (estimation) => {
                     commandes={commandes}
                     regies={regies}
                     estimations={estimations}
-                    factures={factures}  // 🆕 AJOUTER CETTE LIGNE
+                    factures={factures}
                 />
             )}
 
@@ -1178,17 +1438,17 @@ const handleSaveEstimation = (estimation) => {
                 />
             )}
 
-{/* Modal Estimation Builder */}
-{showEstimationBuilder && (
-    <window.EstimationBuilder
-        initialData={editingEstimation}
-        onClose={() => {
-            setShowEstimationBuilder(false);
-            setEditingEstimation(null);
-        }}
-        onSave={handleSaveEstimation}
-    />
-)}
+            {/* Modal Estimation Builder */}
+            {showEstimationBuilder && (
+                <window.EstimationBuilder
+                    initialData={editingEstimation}
+                    onClose={() => {
+                        setShowEstimationBuilder(false);
+                        setEditingEstimation(null);
+                    }}
+                    onSave={handleSaveEstimation}
+                />
+            )}
 
             {/* Vue détaillée Appel d'Offres */}
             {showAppelOffreDetail && selectedAppelOffre && (
