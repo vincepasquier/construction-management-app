@@ -798,7 +798,7 @@ const ImportMenu = () => {
                 type="file"
                 accept=".json"
                 onChange={handleImportJSON}
-                className="hidden"
+                style={{position: 'absolute', left: '0', top: '500px'}}
             />
             
             <input
@@ -806,7 +806,7 @@ const ImportMenu = () => {
                 type="file"
                 accept=".csv"
                 onChange={(e) => handleImportCSV(e, selectedCSVType)}
-                className="hidden"
+                style={{position: 'absolute', left: '0', top: '550px'}}
             />
         </div>
     );
