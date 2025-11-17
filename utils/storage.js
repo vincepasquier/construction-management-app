@@ -33,7 +33,7 @@ window.loadData = async () => {
         offresComplementaires: storage.get('offresComplementaires')?.value || [],
         regies: storage.get('regies')?.value || [],
         factures: storage.get('factures')?.value || [],
-        appelOffres: storage.get('appelOffres')?.value || []  // ✅ AJOUTÉ
+        appelOffres: storage.get('appelOffres')?.value || [] // ✅ AJOUTÉ
     };
 };
 
