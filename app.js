@@ -1539,7 +1539,33 @@ const ImportMenu = () => {
                                 </tr>
                             );
                         }}
-
+                        emptyMessage="Aucune commande"
+                        actions={
+                            <>
+                                <h2 className="text-xl font-bold">📦 Commandes</h2>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => window.exportCommandesCSV(commandes)}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                        title="Exporter les commandes en CSV"
+                                    >
+                                        📤 Exporter CSV
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setEditingCommande(null);
+                                            setShowCommandeModal(true);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Plus size={20} />
+                                        Nouvelle commande
+                                    </button>
+                                </div>
+                            </>
+                        }
+                    />
+                )}
 {/* Régies avec SmartTable */}
                     {activeTab === 'regies' && (
                         <window.SmartTable
