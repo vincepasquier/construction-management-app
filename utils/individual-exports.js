@@ -14,14 +14,15 @@ window.exportEstimationsCSV = (estimations) => {
     // Format compatible avec l'import
     const csvData = estimations.map(est => ({
         'ID': est.id || '',
-        'Lot': est.lot || '',
-        'Position Niv. 0': est.position0 || '',
-        'Position Niv. 1': est.position1 || '',
+        'Lot': Array.isArray(est.lots) ? est.lots.join(',') : est.lots || est.lot || '',
+        'Position Niv. 0': Array.isArray(est.positions0) ? est.positions0.join(',') : est.positions0 || est.position0 || '',
+        'Position Niv. 1': Array.isArray(est.positions1) ? est.positions1.join(',') : est.positions1 || est.position1 || '',
+        'Étape': est.etape || '',
         'Désignation': est.designation || '',
         'Quantité': est.quantite || '',
         'Unité': est.unite || '',
         'Prix Unitaire': est.prixUnitaire || '',
-        'Montant': est.montant || '',
+        'Montant': est.montant || est.montantTotal || '',
         'Remarque': est.remarque || ''
     }));
     
@@ -73,10 +74,11 @@ window.exportOffresCSV = (offres) => {
         'ID': offre.id || '',
         'Numéro': offre.numero || '',
         'Fournisseur': offre.fournisseur || '',
-        'Date': offre.date || '',
+        'Date': offre.date || offre.dateOffre || '',
         'Lot': Array.isArray(offre.lots) ? offre.lots.join(',') : offre.lots || '',
         'Position 0': Array.isArray(offre.positions0) ? offre.positions0.join(',') : offre.positions0 || '',
         'Position 1': Array.isArray(offre.positions1) ? offre.positions1.join(',') : offre.positions1 || '',
+        'Étape': offre.etape || '',
         'Désignation': offre.designation || '',
         'Montant': offre.montant || '',
         'Validité': offre.validite || '',
@@ -103,16 +105,18 @@ window.exportOffresComplementairesCSV = (offresComplementaires) => {
     // Format compatible avec l'import
     const csvData = offresComplementaires.map(oc => ({
         'ID': oc.id || '',
-        'Numéro OC': oc.numeroOC || '',
+        'Numéro OC': oc.numero || oc.numeroOC || '',
         'Commande Liée': oc.commandeId || '',
         'N° Commande': oc.numeroCommande || '',
         'Fournisseur': oc.fournisseur || '',
-        'Date': oc.date || '',
+        'Date': oc.date || oc.dateOC || '',
         'Lot': Array.isArray(oc.lots) ? oc.lots.join(',') : oc.lots || '',
         'Position 0': Array.isArray(oc.positions0) ? oc.positions0.join(',') : oc.positions0 || '',
         'Position 1': Array.isArray(oc.positions1) ? oc.positions1.join(',') : oc.positions1 || '',
+        'Étape': oc.etape || '',
         'Désignation': oc.designation || '',
         'Montant': oc.montant || '',
+        'Statut': oc.statut || '',
         'Remarque': oc.remarque || ''
     }));
     
@@ -132,16 +136,19 @@ window.exportCommandesCSV = (commandes) => {
     // Format compatible avec l'import
     const csvData = commandes.map(cmd => ({
         'ID': cmd.id || '',
-        'N° Commande': cmd.numeroCommande || '',
+        'N° Commande': cmd.numero || cmd.numeroCommande || '',
         'Offre Liée': cmd.offreId || '',
         'N° Offre': cmd.numeroOffre || '',
         'Fournisseur': cmd.fournisseur || '',
-        'Date': cmd.date || '',
+        'Date Commande': cmd.dateCommande || cmd.date || '',
         'Lot': Array.isArray(cmd.lots) ? cmd.lots.join(',') : cmd.lots || '',
         'Position 0': Array.isArray(cmd.positions0) ? cmd.positions0.join(',') : cmd.positions0 || '',
         'Position 1': Array.isArray(cmd.positions1) ? cmd.positions1.join(',') : cmd.positions1 || '',
+        'Étape': cmd.etape || '',
         'Désignation': cmd.designation || '',
-        'Montant': cmd.montant || '',
+        'Montant': cmd.montant || cmd.calculatedMontant || '',
+        'Statut': cmd.statut || '',
+        'Source': cmd.source || '',
         'Remarque': cmd.remarque || ''
     }));
     
@@ -161,18 +168,21 @@ window.exportRegiesCSV = (regies) => {
     // Format compatible avec l'import
     const csvData = regies.map(regie => ({
         'ID': regie.id || '',
-        'N° Régie': regie.numeroRegie || '',
+        'N° Régie': regie.numero || regie.numeroRegie || '',
         'Commande Liée': regie.commandeId || '',
         'N° Commande': regie.numeroCommande || '',
         'Fournisseur': regie.fournisseur || '',
-        'Date': regie.date || '',
+        'Date Début': regie.dateDebut || '',
+        'Date Fin': regie.dateFin || '',
         'Lot': Array.isArray(regie.lots) ? regie.lots.join(',') : regie.lots || '',
         'Position 0': Array.isArray(regie.positions0) ? regie.positions0.join(',') : regie.positions0 || '',
         'Position 1': Array.isArray(regie.positions1) ? regie.positions1.join(',') : regie.positions1 || '',
+        'Étape': regie.etape || '',
         'Désignation': regie.designation || '',
         'Heures': regie.heures || '',
         'Taux Horaire': regie.tauxHoraire || '',
-        'Montant': regie.montant || '',
+        'Montant Total': regie.montantTotal || '',
+        'Statut': regie.statut || '',
         'Remarque': regie.remarque || ''
     }));
     
@@ -189,21 +199,26 @@ window.exportFacturesCSV = (factures) => {
         return;
     }
     
-    // Format compatible avec l'import
+    // Format compatible avec l'import - STRUCTURE COMPLÈTE
     const csvData = factures.map(facture => ({
         'ID': facture.id || '',
-        'N° Facture': facture.numeroFacture || '',
+        'N° Facture': facture.numero || facture.numeroFacture || '',
         'Commande Liée': facture.commandeId || '',
         'N° Commande': facture.numeroCommande || '',
         'Fournisseur': facture.fournisseur || '',
-        'Date': facture.date || '',
+        'Date Facture': facture.dateFacture || facture.date || '',
+        'Date Échéance': facture.dateEcheance || '',
         'Lot': Array.isArray(facture.lots) ? facture.lots.join(',') : facture.lots || '',
         'Position 0': Array.isArray(facture.positions0) ? facture.positions0.join(',') : facture.positions0 || '',
         'Position 1': Array.isArray(facture.positions1) ? facture.positions1.join(',') : facture.positions1 || '',
-        'Désignation': facture.designation || '',
-        'Montant': facture.montant || '',
+        'Désignation': facture.designation || facture.description || '',
+        'Montant HT': facture.montantHT || '',
+        'Taux TVA': facture.tauxTVA || '',
+        'Montant TVA': facture.montantTVA || '',
+        'Montant TTC': facture.montantTTC || '',
         'N° Situation': facture.numeroSituation || '',
         'Pourcentage': facture.pourcentage || '',
+        'Statut': facture.statut || '',
         'Remarque': facture.remarque || ''
     }));
     
