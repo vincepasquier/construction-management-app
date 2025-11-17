@@ -115,6 +115,7 @@ window.Dashboard = ({ estimations, offres, commandes, offresComplementaires, reg
     const totalFacture = filteredFactures.reduce((sum, f) => sum + (f.montantTTC || 0), 0);
 
 // Calculer le budget engagé total
+// Calculer le budget engagé total
 const budgetEngage = commandes.reduce((sum, cmd) => {
     const montantBase = cmd.calculatedMontant || cmd.montant || 0;
     const budgetRegie = cmd.budgetRegie || 0;
@@ -139,6 +140,12 @@ const budgetEngage = commandes.reduce((sum, cmd) => {
         return sum + montantBase + montantOC + montantRegies;
     }
 }, 0);
+
+// 🆕 AJOUTER CES LIGNES ICI
+const ecartBudget = totalEstimations - budgetEngage;
+const pourcentageUtilise = totalEstimations > 0 
+    ? ((budgetEngage / totalEstimations) * 100).toFixed(1) 
+    : 0;
 
     // ========================================
     // DÉTAILS COMMANDE (NON FILTRÉ)
