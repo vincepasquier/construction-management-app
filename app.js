@@ -16,6 +16,7 @@
     const [factures, setFactures] = useState([]);
     const [appelOffres, setAppelOffres] = useState([]);
     const [sessionName, setSessionName] = useState('Projet_Sans_Nom');
+    const [ajustements, setAjustements] = useState([]);
     
     // ========================================
     // ÉTATS UI
@@ -60,6 +61,7 @@
     // ========================================
     useEffect(() => {
         loadAllData();
+        setAjustements(window.loadData('ajustements') || []);
     }, []);
 
     useEffect(() => {
@@ -120,7 +122,13 @@
         
         alert('✅ Session complète exportée avec succès');
     };
-
+const handleSaveAjustement = (ajustement) => {
+    const updated = [...ajustements, ajustement];
+    setAjustements(updated);
+    window.saveData('ajustements', updated);
+    alert('✅ Ajustement créé');
+};
+        
   // Import JSON Session complète - VERSION DEBUG
 const handleImportJSON = (event) => {
     console.log('🔵 handleImportJSON appelé'); // TEST 1
@@ -476,6 +484,7 @@ const handleImportCSV = (event, type) => {
     setOffresComplementaires([]);
     setRegies([]);
     setFactures([]);
+    setAjustements([]);
     
     window.saveData('estimations', []);
     window.saveData('appelOffres', []);
@@ -484,6 +493,7 @@ const handleImportCSV = (event, type) => {
     window.saveData('offresComplementaires', []);
     window.saveData('regies', []);
     window.saveData('factures', []);
+    window.saveData('ajustements', []);
     
     // Reset le nom de session
     setSessionName('Projet_Sans_Nom');
