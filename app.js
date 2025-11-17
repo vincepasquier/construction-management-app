@@ -696,6 +696,7 @@ const ImportMenu = () => {
                                 console.log('🔵 Ref:', importJSONRef.current);
                                 if (importJSONRef.current) {
                                     console.log('🔵 Click sur input');
+                                    importJSONRef.current.value = '';  // 🆕 RÉINITIALISER
                                     importJSONRef.current.click();
                                 } else {
                                     console.log('❌ Ref est null !');
