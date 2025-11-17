@@ -1541,11 +1541,22 @@ const ImportMenu = () => {
                                 { key: 'montantTotal', label: 'Montant Total (CHF)', align: 'right' },
                                 { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
                             ]}
-                            renderRow={(regie) => (
+                        renderRow={(regie) => {
+                            // Trouver la commande liée
+                            const commande = commandes.find(c => c.id === regie.commandeId);
+                            
+                            // Construire le numéro affiché
+                            const numeroAffiche = commande 
+                                ? `${commande.numero} > REG-${regie.numeroIncrement || '?'}` 
+                                : regie.numero;
+                            
+                            return (
                                 <tr key={regie.id} className="border-t hover:bg-gray-50">
-                                    <td className="px-4 py-3 font-medium text-blue-600">{regie.numero}</td>
+                                    <td className="px-4 py-3 font-medium text-blue-600">
+                                        {numeroAffiche}
+                                    </td>
                                     <td className="px-4 py-3">{regie.fournisseur}</td>
-                                    <td className="px-4 py-3">{regie.designation}</td>
+                                    <td className="px-4 py-3">{regie.designation || '-'}</td>
                                     <td className="px-4 py-3 text-xs">{regie.lots?.join(', ') || '-'}</td>
                                     <td className="px-4 py-3 text-center text-sm">
                                         {regie.dateDebut ? new Date(regie.dateDebut).toLocaleDateString('fr-CH') : '-'}
@@ -1570,7 +1581,7 @@ const ImportMenu = () => {
                                             </button>
                                             <button 
                                                 onClick={() => {
-                                                    if (confirm(`Supprimer la régie ${regie.numero} ?`)) {
+                                                    if (confirm(`Supprimer la régie ${numeroAffiche} ?`)) {
                                                         const updated = regies.filter(r => r.id !== regie.id);
                                                         setRegies(updated);
                                                         window.saveData('regies', updated);
@@ -1585,34 +1596,8 @@ const ImportMenu = () => {
                                         </div>
                                     </td>
                                 </tr>
-                            )}
-                            emptyMessage="Aucune régie"
-                            actions={
-                                <>
-                                    <h2 className="text-xl font-bold">⏱️ Régies</h2>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => window.exportRegiesCSV(regies)}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-                                            title="Exporter les régies en CSV"
-                                        >
-                                            📤 Exporter CSV
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setEditingRegie(null);
-                                                setShowRegieModal(true);
-                                            }}
-                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                        >
-                                            <Plus size={20} />
-                                            Nouvelle régie
-                                        </button>
-                                    </div>
-                                </>
-                            }
-                        />
-                    )}
+                            );
+                        }}
 
                     {/* Factures avec SmartTable */}
                     {activeTab === 'factures' && (
