@@ -1,5 +1,5 @@
 // Modal de gestion des régies - VERSION SIMPLIFIÉE avec liaison commandes
-const { useState, useEffect } = React;
+const { useState } = React;
 
 window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = [], estimations = [] }) => {
     const [formData, setFormData] = useState(initialData || {
@@ -18,21 +18,21 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
         description: ''
     });
 
-    // Calculer le numéro incrémental automatiquement
-    useEffect(() => {
-        if (formData.commandeId && !initialData) {
-            // Compter les régies existantes pour cette commande
-            const regiesCommande = regies.filter(r => r.commandeId === formData.commandeId);
-            const nextIncrement = regiesCommande.length + 1;
-            setFormData(prev => ({
-                ...prev,
-                numeroIncrement: nextIncrement.toString()
-            }));
-        }
-    }, [formData.commandeId, regies, initialData]);
-
     // Pré-remplir depuis une commande
     const handleCommandeChange = (commandeId) => {
+        if (!commandeId) {
+            setFormData({
+                ...formData,
+                commandeId: '',
+                numeroIncrement: '',
+                fournisseur: '',
+                lots: [],
+                positions0: [],
+                positions1: []
+            });
+            return;
+        }
+
         const commande = commandes.find(c => c.id === commandeId);
         if (commande) {
             // Calculer le prochain numéro incrémental
@@ -48,16 +48,6 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                 positions0: commande.positions0 || [],
                 positions1: commande.positions1 || [],
                 etape: commande.etape || ''
-            });
-        } else {
-            setFormData({
-                ...formData,
-                commandeId: commandeId,
-                numeroIncrement: '',
-                fournisseur: '',
-                lots: [],
-                positions0: [],
-                positions1: []
             });
         }
     };
@@ -130,7 +120,6 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                                 value={formData.commandeId}
                                 onChange={(e) => handleCommandeChange(e.target.value)}
                                 className="w-full px-3 py-2 border rounded-lg"
-                                disabled={initialData?.commandeId} // Ne pas changer si déjà lié
                             >
                                 <option value="">-- Sélectionner une commande --</option>
                                 {commandes
@@ -165,7 +154,7 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                             onChange={(e) => setFormData({...formData, fournisseur: e.target.value})}
                             className="w-full px-3 py-2 border rounded-lg"
                             placeholder="Nom du fournisseur"
-                            disabled={formData.commandeId} // Pré-rempli depuis la commande
+                            disabled={formData.commandeId}
                         />
                     </div>
 
@@ -192,7 +181,7 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                         </div>
                     </div>
 
-                    {/* Smart Selector pour Lots/Positions */}
+                    {/* Smart Selector */}
                     <div className="p-4 bg-gray-50 rounded-lg">
                         <h3 className="font-medium mb-3">📦 Classification</h3>
                         <window.SmartSelector
@@ -218,7 +207,7 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                         </select>
                     </div>
 
-                    {/* Montant simplifié */}
+                    {/* Montant */}
                     <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
                         <label className="block text-sm font-medium mb-1">
                             Montant (CHF) <span className="text-red-500">*</span>
@@ -231,9 +220,6 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                             className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-lg font-semibold"
                             placeholder="0.00"
                         />
-                        <p className="text-xs text-gray-600 mt-1">
-                            💡 Entrez directement le montant total de la régie
-                        </p>
                     </div>
 
                     {/* Statut */}
@@ -263,7 +249,7 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                         />
                     </div>
 
-                    {/* Aperçu si commande sélectionnée */}
+                    {/* Résumé */}
                     {formData.commandeId && (
                         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                             <h4 className="font-semibold text-green-800 mb-2">✅ Résumé</h4>
