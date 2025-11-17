@@ -663,6 +663,9 @@ const handleImportCSV = (event, type) => {
     // ========================================
     // 🆕 COMPOSANT MENU D'IMPORT
     // ========================================
+// ========================================
+// 🆕 COMPOSANT MENU D'IMPORT - VERSION FIXÉE
+// ========================================
 const ImportMenu = () => {
     return (
         <div className="relative">
@@ -689,28 +692,18 @@ const ImportMenu = () => {
                     />
                     
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                        {/* Session JSON */}
-                        <button
-                            onClick={() => {
-                                console.log('🔵 Bouton cliqué');
-                                console.log('🔵 Ref:', importJSONRef.current);
-                                if (importJSONRef.current) {
-                                    console.log('🔵 Click sur input');
-                                    importJSONRef.current.value = '';  // 🆕 RÉINITIALISER
-                                    importJSONRef.current.click();
-                                } else {
-                                    console.log('❌ Ref est null !');
-                                }
-                                setShowImportMenu(false);
-                            }}
-                            className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b"
+                        {/* Session JSON - AVEC LABEL */}
+                        <label
+                            htmlFor="importJSON"
+                            className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b cursor-pointer"
+                            onClick={() => setShowImportMenu(false)}
                         >
                             <span className="text-2xl">📄</span>
                             <div>
                                 <div className="font-semibold text-gray-800">Session complète</div>
                                 <div className="text-xs text-gray-500">Fichier JSON (toutes les données)</div>
                             </div>
-                        </button>
+                        </label>
                         
                         {/* CSV avec sous-menu */}
                         <div className="relative">
@@ -731,61 +724,61 @@ const ImportMenu = () => {
                             {/* Sous-menu types CSV */}
                             {showCSVTypeMenu && (
                                 <div className="absolute left-full top-0 ml-1 w-56 bg-white rounded-lg shadow-xl border border-gray-200">
-                                    <button
+                                    <label
+                                        htmlFor="importCSV-factures"
                                         onClick={() => {
                                             setSelectedCSVType('factures');
-                                            importCSVRef.current?.click();
                                             setShowImportMenu(false);
                                             setShowCSVTypeMenu(false);
                                         }}
-                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm"
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm cursor-pointer block"
                                     >
                                         💰 Factures
-                                    </button>
-                                    <button
+                                    </label>
+                                    <label
+                                        htmlFor="importCSV-commandes"
                                         onClick={() => {
                                             setSelectedCSVType('commandes');
-                                            importCSVRef.current?.click();
                                             setShowImportMenu(false);
                                             setShowCSVTypeMenu(false);
                                         }}
-                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm"
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm cursor-pointer block"
                                     >
                                         📦 Commandes
-                                    </button>
-                                    <button
+                                    </label>
+                                    <label
+                                        htmlFor="importCSV-offres"
                                         onClick={() => {
                                             setSelectedCSVType('offres');
-                                            importCSVRef.current?.click();
                                             setShowImportMenu(false);
                                             setShowCSVTypeMenu(false);
                                         }}
-                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm"
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm cursor-pointer block"
                                     >
                                         💼 Offres
-                                    </button>
-                                    <button
+                                    </label>
+                                    <label
+                                        htmlFor="importCSV-offresComplementaires"
                                         onClick={() => {
                                             setSelectedCSVType('offresComplementaires');
-                                            importCSVRef.current?.click();
                                             setShowImportMenu(false);
                                             setShowCSVTypeMenu(false);
                                         }}
-                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm"
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm cursor-pointer block"
                                     >
                                         ➕ Offres Complémentaires
-                                    </button>
-                                    <button
+                                    </label>
+                                    <label
+                                        htmlFor="importCSV-regies"
                                         onClick={() => {
                                             setSelectedCSVType('regies');
-                                            importCSVRef.current?.click();
                                             setShowImportMenu(false);
                                             setShowCSVTypeMenu(false);
                                         }}
-                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm"
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm cursor-pointer block"
                                     >
                                         ⏱️ Régies
-                                    </button>
+                                    </label>
                                 </div>
                             )}
                         </div>
@@ -793,41 +786,51 @@ const ImportMenu = () => {
                 </>
             )}
             
+            {/* Input JSON - caché mais accessible via label */}
             <input
-                    ref={importJSONRef}
-                    type="file"
-                    accept=".json"
-                    onChange={handleImportJSON}
-                    style={{
-                        position: 'absolute',
-                        width: '1px',
-                        height: '1px',
-                        padding: '0',
-                        margin: '-1px',
-                        overflow: 'hidden',
-                        clip: 'rect(0,0,0,0)',
-                        whiteSpace: 'nowrap',
-                        border: '0'
-                    }}
-                />
-                
-                <input
-                    ref={importCSVRef}
-                    type="file"
-                    accept=".csv"
-                    onChange={(e) => handleImportCSV(e, selectedCSVType)}
-                    style={{
-                        position: 'absolute',
-                        width: '1px',
-                        height: '1px',
-                        padding: '0',
-                        margin: '-1px',
-                        overflow: 'hidden',
-                        clip: 'rect(0,0,0,0)',
-                        whiteSpace: 'nowrap',
-                        border: '0'
-                    }}
-                />
+                id="importJSON"
+                type="file"
+                accept=".json"
+                onChange={handleImportJSON}
+                style={{ display: 'none' }}
+            />
+            
+            {/* Inputs CSV - un par type */}
+            <input
+                id="importCSV-factures"
+                type="file"
+                accept=".csv"
+                onChange={(e) => handleImportCSV(e, 'factures')}
+                style={{ display: 'none' }}
+            />
+            <input
+                id="importCSV-commandes"
+                type="file"
+                accept=".csv"
+                onChange={(e) => handleImportCSV(e, 'commandes')}
+                style={{ display: 'none' }}
+            />
+            <input
+                id="importCSV-offres"
+                type="file"
+                accept=".csv"
+                onChange={(e) => handleImportCSV(e, 'offres')}
+                style={{ display: 'none' }}
+            />
+            <input
+                id="importCSV-offresComplementaires"
+                type="file"
+                accept=".csv"
+                onChange={(e) => handleImportCSV(e, 'offresComplementaires')}
+                style={{ display: 'none' }}
+            />
+            <input
+                id="importCSV-regies"
+                type="file"
+                accept=".csv"
+                onChange={(e) => handleImportCSV(e, 'regies')}
+                style={{ display: 'none' }}
+            />
         </div>
     );
 };
