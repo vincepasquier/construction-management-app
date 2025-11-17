@@ -104,7 +104,7 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                                 {offres && offres.length > 0 ? (
                                     offres.map(offre => (
                                         <option key={offre.id} value={offre.id}>
-                                            {offre.numero} - {offre.fournisseur} - {offre.statut} ({(offre.montant || 0).toLocaleString('fr-CH')} CHF)
+                                            {offre.numero} - {offre.fournisseur} - [{offre.statut}] ({(offre.montant || 0).toLocaleString('fr-CH')} CHF)
                                         </option>
                                     ))
                                 ) : (
