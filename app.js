@@ -120,94 +120,115 @@
         alert('✅ Session complète exportée avec succès');
     };
 
-    // Import JSON Session complète
-    const handleImportJSON = (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
+  // Import JSON Session complète - VERSION DEBUG
+const handleImportJSON = (event) => {
+    console.log('🔵 handleImportJSON appelé'); // TEST 1
+    
+    const file = event.target.files[0];
+    console.log('🔵 Fichier sélectionné:', file); // TEST 2
+    
+    if (!file) {
+        console.log('⚠️ Aucun fichier');
+        return;
+    }
+    
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        console.log('🔵 Fichier chargé'); // TEST 3
         
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const sessionData = JSON.parse(e.target.result);
-                
-                if (!sessionData.data) {
-                    throw new Error('Format de fichier invalide');
-                }
-                
-               const stats = `• ${sessionData.data.estimations?.length || 0} estimation(s)
-                - ${sessionData.data.appelOffres?.length || 0} appel(s) d'offres
-                - ${sessionData.data.offres?.length || 0} offre(s)
-                - ${sessionData.data.commandes?.length || 0} commande(s)
-                - ${sessionData.data.offresComplementaires?.length || 0} offre(s) complémentaire(s)
-                - ${sessionData.data.regies?.length || 0} régie(s)
-                - ${sessionData.data.factures?.length || 0} facture(s)`;
-                
-                const confirmation = confirm(
-                    `⚠️ ATTENTION !\n\n` +
-                    `Cette action va REMPLACER toutes vos données actuelles par :\n\n` +
-                    stats + `\n\n` +
-                    `Session : ${sessionData.sessionName || 'Sans nom'}\n` +
-                    `Exporté le : ${new Date(sessionData.exportDate).toLocaleString('fr-CH')}\n\n` +
-                    `Voulez-vous continuer ?`
-                );
-                
-                if (!confirmation) {
-                    event.target.value = '';
-                    return;
-                }
-                
-                // Restaurer toutes les données
-                if (sessionData.data.estimations) {
-                    setEstimations(sessionData.data.estimations);
-                    window.saveData('estimations', sessionData.data.estimations);
-                }
-                
-                if (sessionData.data.appelOffres) {
-                    setAppelOffres(sessionData.data.appelOffres);
-                    window.saveData('appelOffres', sessionData.data.appelOffres);
-                }
-                
-                if (sessionData.data.offres) {
-                    setOffres(sessionData.data.offres);
-                    window.saveData('offres', sessionData.data.offres);
-                }
-                
-                if (sessionData.data.commandes) {
-                    setCommandes(sessionData.data.commandes);
-                    window.saveData('commandes', sessionData.data.commandes);
-                }
-                
-                if (sessionData.data.offresComplementaires) {
-                    setOffresComplementaires(sessionData.data.offresComplementaires);
-                    window.saveData('offresComplementaires', sessionData.data.offresComplementaires);
-                }
-                
-                if (sessionData.data.regies) {
-                    setRegies(sessionData.data.regies);
-                    window.saveData('regies', sessionData.data.regies);
-                }
-                
-                if (sessionData.data.factures) {
-                    setFactures(sessionData.data.factures);
-                    window.saveData('factures', sessionData.data.factures);
-                }
-                
-                // Restaurer le nom de session
-                if (sessionData.sessionName) {
-                    handleSessionNameChange(sessionData.sessionName);
-                }
-                
-                alert(`✅ Session complète restaurée !\n\n` + stats);
-                event.target.value = '';
-                
-            } catch (error) {
-                console.error('Erreur import JSON:', error);
-                alert('❌ Erreur lors de l\'import : ' + error.message);
+        try {
+            const sessionData = JSON.parse(e.target.result);
+            console.log('🔵 Données parsées:', sessionData); // TEST 4
+            
+            if (!sessionData.data) {
+                throw new Error('Format de fichier invalide');
             }
-        };
-        
-        reader.readAsText(file, 'UTF-8');
+            
+            const stats = `• ${sessionData.data.estimations?.length || 0} estimation(s)
+• ${sessionData.data.appelOffres?.length || 0} appel(s) d'offres
+• ${sessionData.data.offres?.length || 0} offre(s)
+• ${sessionData.data.commandes?.length || 0} commande(s)
+• ${sessionData.data.offresComplementaires?.length || 0} offre(s) complémentaire(s)
+• ${sessionData.data.regies?.length || 0} régie(s)
+• ${sessionData.data.factures?.length || 0} facture(s)`;
+            
+            console.log('🔵 Stats:', stats); // TEST 5
+            
+            const confirmation = confirm(
+                `⚠️ ATTENTION !\n\n` +
+                `Cette action va REMPLACER toutes vos données actuelles par :\n\n` +
+                stats + `\n\n` +
+                `Session : ${sessionData.sessionName || 'Sans nom'}\n` +
+                `Exporté le : ${new Date(sessionData.exportDate).toLocaleString('fr-CH')}\n\n` +
+                `Voulez-vous continuer ?`
+            );
+            
+            console.log('🔵 Confirmation:', confirmation); // TEST 6
+            
+            if (!confirmation) {
+                event.target.value = '';
+                return;
+            }
+            
+            // Restaurer toutes les données
+            if (sessionData.data.estimations) {
+                setEstimations(sessionData.data.estimations);
+                window.saveData('estimations', sessionData.data.estimations);
+            }
+            
+            if (sessionData.data.appelOffres) {
+                setAppelOffres(sessionData.data.appelOffres);
+                window.saveData('appelOffres', sessionData.data.appelOffres);
+            }
+            
+            if (sessionData.data.offres) {
+                setOffres(sessionData.data.offres);
+                window.saveData('offres', sessionData.data.offres);
+            }
+            
+            if (sessionData.data.commandes) {
+                setCommandes(sessionData.data.commandes);
+                window.saveData('commandes', sessionData.data.commandes);
+            }
+            
+            if (sessionData.data.offresComplementaires) {
+                setOffresComplementaires(sessionData.data.offresComplementaires);
+                window.saveData('offresComplementaires', sessionData.data.offresComplementaires);
+            }
+            
+            if (sessionData.data.regies) {
+                setRegies(sessionData.data.regies);
+                window.saveData('regies', sessionData.data.regies);
+            }
+            
+            if (sessionData.data.factures) {
+                setFactures(sessionData.data.factures);
+                window.saveData('factures', sessionData.data.factures);
+            }
+            
+            // Restaurer le nom de session
+            if (sessionData.sessionName) {
+                handleSessionNameChange(sessionData.sessionName);
+            }
+            
+            console.log('✅ Import terminé'); // TEST 7
+            alert(`✅ Session complète restaurée !\n\n` + stats);
+            event.target.value = '';
+            
+        } catch (error) {
+            console.error('❌ Erreur import JSON:', error);
+            alert('❌ Erreur lors de l\'import : ' + error.message);
+        }
     };
+    
+    reader.onerror = (error) => {
+        console.error('❌ Erreur lecture fichier:', error);
+    };
+    
+    console.log('🔵 Début lecture fichier'); // TEST 8
+    reader.readAsText(file, 'UTF-8');
+};
 
    // Import CSV universel
 const handleImportCSV = (event, type) => {
