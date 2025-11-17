@@ -258,28 +258,66 @@ const handleImportCSV = (event, type) => {
                 
                 // Créer l'objet selon le type
                 switch(type) {
-                    case 'factures':
-                        item = {
-                            id: `facture-${Date.now()}-${i}`,
-                            numero: row['Numéro'] || row['Numero'] || '',
-                            fournisseur: row['Fournisseur'] || '',
-                            commandeId: row['Commande'] ? 
-                                commandes.find(c => c.numero === row['Commande'])?.id || '' : '',
-                            statut: row['Statut'] || 'En attente',
-                            montantHT: parseFloat(row['Montant HT'] || row['Montant']) || 0,
-                            dateFacture: row['Date'] || new Date().toISOString().split('T')[0],
-                            dateEcheance: row['Echeance'] || '',
-                            tauxTVA: 8.1,
-                            numeroSituation: row['Situation'] ? parseInt(row['Situation']) : null,
-                            description: row['Description'] || '',
-                            lots: [],
-                            positions0: [],
-                            positions1: [],
-                            dateCreation: new Date().toISOString()
-                        };
+                   // ========================================
+                // 🔧 CODE À COPIER-COLLER DANS app.js
+                // ========================================
+                // Remplacer le case 'factures': dans handleImportCSV
+
+                case 'factures':
+                    item = {
+                        // === IDs ===
+                        id: row['ID'] || `facture-${Date.now()}-${i}`,
+                        
+                        // === Informations principales ===
+                        numero: row['N° Facture'] || row['Numéro'] || row['Numero'] || '',
+                        numeroFacture: row['N° Facture'] || row['Numéro'] || row['Numero'] || '',
+                        fournisseur: row['Fournisseur'] || '',
+                        
+                        // === Liens avec commandes ===
+                        commandeId: row['Commande Liée'] || row['Commande'] || '',
+                        numeroCommande: row['N° Commande'] || '',
+                        
+                        // === Dates ===
+                        dateFacture: row['Date Facture'] || row['Date'] || new Date().toISOString().split('T')[0],
+                        dateEcheance: row['Date Échéance'] || row['Echeance'] || '',
+                        
+                        // === Lots et positions ===
+                        lots: row['Lot'] ? (Array.isArray(row['Lot']) ? row['Lot'] : [row['Lot']]) : [],
+                        positions0: row['Position 0'] ? (Array.isArray(row['Position 0']) ? row['Position 0'] : [row['Position 0']]) : [],
+                        positions1: row['Position 1'] ? (Array.isArray(row['Position 1']) ? row['Position 1'] : [row['Position 1']]) : [],
+                        
+                        // === Désignation ===
+                        designation: row['Désignation'] || row['Description'] || '',
+                        description: row['Désignation'] || row['Description'] || '',
+                        
+                        // === Montants ===
+                        montantHT: parseFloat(row['Montant HT'] || row['Montant']) || 0,
+                        tauxTVA: parseFloat(row['Taux TVA']) || 8.1,
+                        montantTVA: parseFloat(row['Montant TVA']) || 0,
+                        montantTTC: parseFloat(row['Montant TTC']) || 0,
+                        
+                        // === Situation ===
+                        numeroSituation: row['N° Situation'] ? parseInt(row['N° Situation']) : null,
+                        pourcentage: row['Pourcentage'] || '',
+                        
+                        // === Statut ===
+                        statut: row['Statut'] || 'En attente',
+                        
+                        // === Remarque ===
+                        remarque: row['Remarque'] || '',
+                        
+                        // === Metadata ===
+                        dateCreation: new Date().toISOString()
+                    };
+                    
+                    // Recalculer TVA et TTC si manquants
+                    if (!item.montantTVA && item.montantHT && item.tauxTVA) {
                         item.montantTVA = (item.montantHT * item.tauxTVA) / 100;
-                        item.montantTTC = item.montantHT + item.montantTVA;
-                        break;
+                    }
+                    if (!item.montantTTC && item.montantHT) {
+                        item.montantTTC = item.montantHT + (item.montantTVA || 0);
+                    }
+                    break;
                         
                     case 'commandes':
                         item = {
