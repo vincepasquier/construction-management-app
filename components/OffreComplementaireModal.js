@@ -101,11 +101,15 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                                 className="w-full px-3 py-2 border rounded-lg"
                             >
                                 <option value="">-- Aucune --</option>
-                                {offres.map(offre => (
-                                    <option key={offre.id} value={offre.id}>
-                                        {offre.numero} - {offre.fournisseur}
-                                    </option>
-                                ))}
+                                {offres && offres.length > 0 ? (
+                                    offres.map(offre => (
+                                        <option key={offre.id} value={offre.id}>
+                                            {offre.numero} - {offre.fournisseur} - {offre.statut} ({(offre.montant || 0).toLocaleString('fr-CH')} CHF)
+                                        </option>
+                                    ))
+                                ) : (
+                                    <option disabled>Aucune offre disponible</option>
+                                )}
                             </select>
                             <p className="text-xs text-gray-500 mt-1">
                                 Sélectionner pour pré-remplir les informations
