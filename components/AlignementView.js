@@ -668,5 +668,5 @@ window.AlignementView = ({
             availableLots: availableFilters.lots,
             availablePos0: availableFilters.positions0
         })
-    ;
+    );
 };
