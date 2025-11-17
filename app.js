@@ -1085,17 +1085,24 @@ const ImportMenu = () => {
                             }}
                             emptyMessage="Aucune estimation - Créez votre première estimation !"
                             actions={
-                                <>
-                                    <h2 className="text-xl font-bold">📋 Estimations</h2>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => setShowImportModal(true)}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
-                                        >
-                                            <window.Icons.Upload size={20} />
-                                            Importer CSV
-                                        </button>
-                                        <button
+                                    <>
+                                        <h2 className="text-xl font-bold">📋 Estimations</h2>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => window.exportEstimationsCSV(estimations)}
+                                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                                title="Exporter les estimations en CSV"
+                                            >
+                                                📤 Exporter CSV
+                                            </button>
+                                            <button
+                                                onClick={() => setShowImportModal(true)}
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                            >
+                                                <window.Icons.Upload size={20} />
+                                                Importer CSV
+                                            </button>
+                                            <button
                                             onClick={() => {
                                                 setEditingEstimation(null);
                                                 setShowEstimationBuilder(true);
@@ -1184,16 +1191,25 @@ const ImportMenu = () => {
                             actions={
                                 <>
                                     <h2 className="text-xl font-bold">🎯 Appels d'Offres</h2>
-                                    <button
-                                        onClick={() => { 
-                                            setEditingAppelOffre(null); 
-                                            setShowAppelOffreModal(true); 
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                    >
-                                        <Plus size={20} />
-                                        Nouvel AO
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => window.exportAppelOffresCSV(appelOffres)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                            title="Exporter les appels d'offres en CSV"
+                                        >
+                                            📤 Exporter CSV
+                                        </button>
+                                        <button
+                                            onClick={() => { 
+                                                setEditingAppelOffre(null); 
+                                                setShowAppelOffreModal(true); 
+                                            }}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                        >
+                                            <Plus size={20} />
+                                            Nouvel AO
+                                        </button>
+                                    </div>
                                 </>
                             }
                         />
@@ -1266,19 +1282,28 @@ const ImportMenu = () => {
                                 </tr>
                             )}
                             emptyMessage="Aucune offre"
-                            actions={
+                                actions={
                                 <>
                                     <h2 className="text-xl font-bold">💼 Offres</h2>
-                                    <button
-                                        onClick={() => {
-                                            setEditingOffre(null);
-                                            setShowOffreModal(true);
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                    >
-                                        <Plus size={20} />
-                                        Nouvelle offre
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => window.exportOffresCSV(offres)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                            title="Exporter les offres en CSV"
+                                        >
+                                            📤 Exporter CSV
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setEditingOffre(null);
+                                                setShowOffreModal(true);
+                                            }}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                        >
+                                            <Plus size={20} />
+                                            Nouvelle offre
+                                        </button>
+                                    </div>
                                 </>
                             }
                         />
@@ -1349,16 +1374,25 @@ const ImportMenu = () => {
                             actions={
                                 <>
                                     <h2 className="text-xl font-bold">➕ Offres Complémentaires</h2>
-                                    <button
-                                        onClick={() => {
-                                            setEditingOffreComp(null);
-                                            setShowOffreCompModal(true);
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                    >
-                                        <Plus size={20} />
-                                        Nouvelle OC
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => window.exportOffresComplementairesCSV(offresComplementaires)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                            title="Exporter les offres complémentaires en CSV"
+                                        >
+                                            📤 Exporter CSV
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setEditingOffreComp(null);
+                                                setShowOffreCompModal(true);
+                                            }}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                        >
+                                            <Plus size={20} />
+                                            Nouvelle OC
+                                        </button>
+                                    </div>
                                 </>
                             }
                         />
@@ -1428,19 +1462,28 @@ const ImportMenu = () => {
                                 </tr>
                             )}
                             emptyMessage="Aucune commande"
-                            actions={
+                                                        actions={
                                 <>
                                     <h2 className="text-xl font-bold">📦 Commandes</h2>
-                                    <button
-                                        onClick={() => {
-                                            setEditingCommande(null);
-                                            setShowCommandeModal(true);
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                    >
-                                        <Plus size={20} />
-                                        Nouvelle commande
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => window.exportCommandesCSV(commandes)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                            title="Exporter les commandes en CSV"
+                                        >
+                                            📤 Exporter CSV
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setEditingCommande(null);
+                                                setShowCommandeModal(true);
+                                            }}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                        >
+                                            <Plus size={20} />
+                                            Nouvelle commande
+                                        </button>
+                                    </div>
                                 </>
                             }
                         />
@@ -1509,16 +1552,25 @@ const ImportMenu = () => {
                             actions={
                                 <>
                                     <h2 className="text-xl font-bold">⏱️ Régies</h2>
-                                    <button
-                                        onClick={() => {
-                                            setEditingRegie(null);
-                                            setShowRegieModal(true);
-                                        }}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
-                                    >
-                                        <Plus size={20} />
-                                        Nouvelle régie
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => window.exportRegiesCSV(regies)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                            title="Exporter les régies en CSV"
+                                        >
+                                            📤 Exporter CSV
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setEditingRegie(null);
+                                                setShowRegieModal(true);
+                                            }}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                        >
+                                            <Plus size={20} />
+                                            Nouvelle régie
+                                        </button>
+                                    </div>
                                 </>
                             }
                         />
@@ -1633,6 +1685,13 @@ const ImportMenu = () => {
                                     <h2 className="text-xl font-bold">💰 Factures</h2>
                                     <div className="flex gap-2">
                                         <button
+                                            onClick={() => window.exportFacturesCSV(factures)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                            title="Exporter les factures en CSV"
+                                        >
+                                            📤 Exporter CSV
+                                        </button>
+                                        <button
                                             onClick={() => {
                                                 setEditingFacture(null);
                                                 setShowFactureModal(true);
@@ -1642,7 +1701,6 @@ const ImportMenu = () => {
                                             <Plus size={20} />
                                             Nouvelle facture
                                         </button>
-                                        {/* 🆕 AJOUT DU MENU D'IMPORT DANS L'ONGLET FACTURES */}
                                         <ImportMenu />
                                     </div>
                                 </>
