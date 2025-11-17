@@ -32,7 +32,10 @@ const ConstructionManagement = () => {
     const [showAppelOffreDetail, setShowAppelOffreDetail] = useState(false);
     const [showEstimationBuilder, setShowEstimationBuilder] = useState(false);
     const [editingEstimation, setEditingEstimation] = useState(null);
-    const [showImportMenu, setShowImportMenu] = useState(false);  // 🆕 AJOUTÉ
+    const [showImportMenu, setShowImportMenu] = useState(false);
+    const [showCSVTypeMenu, setShowCSVTypeMenu] = useState(false);  // 🆕 NOUVEAU
+    const [selectedCSVType, setSelectedCSVType] = useState(null);    // 🆕 NOUVEAU
+
 
     // ========================================
     // ÉTATS D'ÉDITION
@@ -49,7 +52,7 @@ const ConstructionManagement = () => {
     // REFS POUR LES IMPORTS
     // ========================================
     const importJSONRef = useRef(null);
-    const importFacturesCSVRef = useRef(null);
+    const importCSVRef = useRef(null);
 
     // ========================================
     // CHARGEMENT INITIAL
@@ -206,79 +209,231 @@ const ConstructionManagement = () => {
         reader.readAsText(file, 'UTF-8');
     };
 
-    // Import CSV Factures
-    const handleImportFacturesCSV = (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
+   // Import CSV universel
+const handleImportCSV = (event, type) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const csvContent = e.target.result;
-                const lines = csvContent.split('\n');
-                const header = lines[0].replace(/^\uFEFF/, '').split(';').map(h => h.trim());
-                const facturesImportees = [];
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const csvContent = e.target.result;
+            const lines = csvContent.split('\n');
+            const header = lines[0].replace(/^\uFEFF/, '').split(';').map(h => h.trim());
+            const itemsImported = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
                 
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-                    
-                    const values = line.split(';');
-                    const row = {};
-                    header.forEach((col, idx) => {
-                        row[col] = values[idx] ? values[idx].trim() : '';
-                    });
-                    
-                    const facture = {
-                        id: `facture-${Date.now()}-${i}`,
-                        numero: row['Numéro Facture'] || '',
-                        fournisseur: row['Fournisseur'] || '',
-                        commandeId: row['Numéro Commande'] ? 
-                            commandes.find(c => c.numero === row['Numéro Commande'])?.id || '' : '',
-                        statut: row['Statut'] || 'En attente',
-                        montantHT: parseFloat(row['Montant HT']) || 0,
-                        dateFacture: new Date().toISOString().split('T')[0],
-                        dateEcheance: '',
-                        tauxTVA: 8.1,
-                        numeroSituation: null,
-                        description: '',
-                        lots: [],
-                        positions0: [],
-                        positions1: [],
-                        dateCreation: new Date().toISOString()
-                    };
-                    
-                    facture.montantTVA = (facture.montantHT * facture.tauxTVA) / 100;
-                    facture.montantTTC = facture.montantHT + facture.montantTVA;
-                    facturesImportees.push(facture);
+                const values = line.split(';');
+                const row = {};
+                header.forEach((col, idx) => {
+                    row[col] = values[idx] ? values[idx].trim() : '';
+                });
+                
+                let item = null;
+                
+                // Créer l'objet selon le type
+                switch(type) {
+                    case 'factures':
+                        item = {
+                            id: `facture-${Date.now()}-${i}`,
+                            numero: row['Numéro'] || row['Numero'] || '',
+                            fournisseur: row['Fournisseur'] || '',
+                            commandeId: row['Commande'] ? 
+                                commandes.find(c => c.numero === row['Commande'])?.id || '' : '',
+                            statut: row['Statut'] || 'En attente',
+                            montantHT: parseFloat(row['Montant HT'] || row['Montant']) || 0,
+                            dateFacture: row['Date'] || new Date().toISOString().split('T')[0],
+                            dateEcheance: row['Echeance'] || '',
+                            tauxTVA: 8.1,
+                            numeroSituation: row['Situation'] ? parseInt(row['Situation']) : null,
+                            description: row['Description'] || '',
+                            lots: [],
+                            positions0: [],
+                            positions1: [],
+                            dateCreation: new Date().toISOString()
+                        };
+                        item.montantTVA = (item.montantHT * item.tauxTVA) / 100;
+                        item.montantTTC = item.montantHT + item.montantTVA;
+                        break;
+                        
+                    case 'commandes':
+                        item = {
+                            id: `commande-${Date.now()}-${i}`,
+                            numero: row['Numéro'] || row['Numero'] || '',
+                            fournisseur: row['Fournisseur'] || '',
+                            montant: parseFloat(row['Montant']) || 0,
+                            dateCommande: row['Date'] || new Date().toISOString().split('T')[0],
+                            statut: row['Statut'] || 'En cours',
+                            lots: row['Lots'] ? row['Lots'].split(',').map(l => l.trim()) : [],
+                            positions0: [],
+                            positions1: [],
+                            etape: row['Etape'] || '',
+                            dateCreation: new Date().toISOString()
+                        };
+                        break;
+                        
+                    case 'offres':
+                        item = {
+                            id: `offre-${Date.now()}-${i}`,
+                            numero: row['Numéro'] || row['Numero'] || '',
+                            fournisseur: row['Fournisseur'] || '',
+                            montant: parseFloat(row['Montant']) || 0,
+                            statut: row['Statut'] || 'En attente',
+                            lots: row['Lots'] ? row['Lots'].split(',').map(l => l.trim()) : [],
+                            positions0: [],
+                            positions1: [],
+                            etape: row['Etape'] || '',
+                            dateCreation: new Date().toISOString()
+                        };
+                        break;
+                        
+                    case 'offresComplementaires':
+                        item = {
+                            id: `oc-${Date.now()}-${i}`,
+                            numero: row['Numéro'] || row['Numero'] || '',
+                            fournisseur: row['Fournisseur'] || '',
+                            designation: row['Designation'] || row['Désignation'] || '',
+                            montant: parseFloat(row['Montant']) || 0,
+                            statut: row['Statut'] || 'En attente',
+                            lots: row['Lots'] ? row['Lots'].split(',').map(l => l.trim()) : [],
+                            positions0: [],
+                            positions1: [],
+                            dateCreation: new Date().toISOString()
+                        };
+                        break;
+                        
+                    case 'regies':
+                        item = {
+                            id: `regie-${Date.now()}-${i}`,
+                            numero: row['Numéro'] || row['Numero'] || '',
+                            fournisseur: row['Fournisseur'] || '',
+                            designation: row['Designation'] || row['Désignation'] || '',
+                            montantTotal: parseFloat(row['Montant']) || 0,
+                            dateDebut: row['Date Debut'] || row['Date Début'] || '',
+                            dateFin: row['Date Fin'] || '',
+                            lots: row['Lots'] ? row['Lots'].split(',').map(l => l.trim()) : [],
+                            positions0: [],
+                            positions1: [],
+                            dateCreation: new Date().toISOString()
+                        };
+                        break;
                 }
                 
-                if (facturesImportees.length > 0) {
-                    const confirmation = confirm(
-                        `Importer ${facturesImportees.length} facture(s) ?\n\n` +
-                        `⚠️ Cela REMPLACERA toutes les factures existantes.`
-                    );
-                    
-                    if (confirmation) {
-                        setFactures(facturesImportees);
-                        window.saveData('factures', facturesImportees);
-                        alert(`✅ ${facturesImportees.length} facture(s) importée(s)`);
-                    }
-                } else {
-                    alert('⚠️ Aucune facture valide trouvée');
-                }
-                
-                event.target.value = '';
-                
-            } catch (error) {
-                console.error('Erreur:', error);
-                alert('❌ Erreur: ' + error.message);
+                if (item) itemsImported.push(item);
             }
-        };
-        
-        reader.readAsText(file, 'UTF-8');
+            
+            if (itemsImported.length > 0) {
+                const typeNames = {
+                    factures: 'facture',
+                    commandes: 'commande',
+                    offres: 'offre',
+                    offresComplementaires: 'offre complémentaire',
+                    regies: 'régie'
+                };
+                
+                const confirmation = confirm(
+                    `Importer ${itemsImported.length} ${typeNames[type]}(s) ?\n\n` +
+                    `⚠️ Cela REMPLACERA toutes les ${typeNames[type]}s existantes.`
+                );
+                
+                if (confirmation) {
+                    // Mettre à jour le state correspondant
+                    switch(type) {
+                        case 'factures':
+                            setFactures(itemsImported);
+                            window.saveData('factures', itemsImported);
+                            break;
+                        case 'commandes':
+                            setCommandes(itemsImported);
+                            window.saveData('commandes', itemsImported);
+                            break;
+                        case 'offres':
+                            setOffres(itemsImported);
+                            window.saveData('offres', itemsImported);
+                            break;
+                        case 'offresComplementaires':
+                            setOffresComplementaires(itemsImported);
+                            window.saveData('offresComplementaires', itemsImported);
+                            break;
+                        case 'regies':
+                            setRegies(itemsImported);
+                            window.saveData('regies', itemsImported);
+                            break;
+                    }
+                    
+                    alert(`✅ ${itemsImported.length} ${typeNames[type]}(s) importée(s)`);
+                }
+            } else {
+                alert('⚠️ Aucune donnée valide trouvée');
+            }
+            
+            event.target.value = '';
+            
+        } catch (error) {
+            console.error('Erreur:', error);
+            alert('❌ Erreur: ' + error.message);
+        }
     };
-
+    
+    reader.readAsText(file, 'UTF-8');
+};
+    / Reset complet de la session
+    const handleResetSession = () => {
+    const confirmation = confirm(
+        `⚠️ ATTENTION - SUPPRESSION TOTALE !\n\n` +
+        `Cette action va SUPPRIMER DÉFINITIVEMENT :\n\n` +
+        `• Toutes les estimations\n` +
+        `• Tous les appels d'offres\n` +
+        `• Toutes les offres\n` +
+        `• Toutes les commandes\n` +
+        `• Toutes les offres complémentaires\n` +
+        `• Toutes les régies\n` +
+        `• Toutes les factures\n\n` +
+        `Cette action est IRRÉVERSIBLE.\n\n` +
+        `Voulez-vous vraiment continuer ?`
+    );
+    
+    if (!confirmation) return;
+    
+    // Double confirmation
+    const doubleCheck = confirm(
+        `⚠️ DERNIÈRE CONFIRMATION\n\n` +
+        `Êtes-vous ABSOLUMENT SÛR de vouloir tout supprimer ?\n\n` +
+        `Cette action ne peut pas être annulée !`
+    );
+    
+    if (!doubleCheck) return;
+    
+    // Tout supprimer
+    setEstimations([]);
+    setAppelOffres([]);
+    setOffres([]);
+    setCommandes([]);
+    setOffresComplementaires([]);
+    setRegies([]);
+    setFactures([]);
+    
+    window.saveData('estimations', []);
+    window.saveData('appelOffres', []);
+    window.saveData('offres', []);
+    window.saveData('commandes', []);
+    window.saveData('offresComplementaires', []);
+    window.saveData('regies', []);
+    window.saveData('factures', []);
+    
+    // Reset le nom de session
+    setSessionName('Projet_Sans_Nom');
+    localStorage.setItem('sessionName', 'Projet_Sans_Nom');
+    
+    // Retour au dashboard
+    setActiveTab('dashboard');
+    
+    alert('✅ Session complètement réinitialisée !');
+};
+    
     // ========================================
     // HANDLERS DE SAUVEGARDE
     // ========================================
@@ -491,7 +646,10 @@ const ImportMenu = () => {
     return (
         <div className="relative">
             <button
-                onClick={() => setShowImportMenu(!showImportMenu)}
+                onClick={() => {
+                    setShowImportMenu(!showImportMenu);
+                    setShowCSVTypeMenu(false);
+                }}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
             >
                 <Upload size={20} />
@@ -503,7 +661,10 @@ const ImportMenu = () => {
                 <>
                     <div 
                         className="fixed inset-0 z-40"
-                        onClick={() => setShowImportMenu(false)}
+                        onClick={() => {
+                            setShowImportMenu(false);
+                            setShowCSVTypeMenu(false);
+                        }}
                     />
                     
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
@@ -522,20 +683,83 @@ const ImportMenu = () => {
                             </div>
                         </button>
                         
-                        {/* Factures CSV */}
-                        <button
-                            onClick={() => {
-                                importFacturesCSVRef.current?.click();
-                                setShowImportMenu(false);
-                            }}
-                            className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3"
-                        >
-                            <span className="text-2xl">📊</span>
-                            <div>
-                                <div className="font-semibold text-gray-800">Factures CSV</div>
-                                <div className="text-xs text-gray-500">Import depuis Excel/CSV</div>
-                            </div>
-                        </button>
+                        {/* CSV avec sous-menu */}
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowCSVTypeMenu(!showCSVTypeMenu)}
+                                className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center justify-between"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <span className="text-2xl">📊</span>
+                                    <div>
+                                        <div className="font-semibold text-gray-800">Import CSV</div>
+                                        <div className="text-xs text-gray-500">Choisir le type de données</div>
+                                    </div>
+                                </div>
+                                <span className="text-gray-400">›</span>
+                            </button>
+                            
+                            {/* Sous-menu types CSV */}
+                            {showCSVTypeMenu && (
+                                <div className="absolute left-full top-0 ml-1 w-56 bg-white rounded-lg shadow-xl border border-gray-200">
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCSVType('factures');
+                                            importCSVRef.current?.click();
+                                            setShowImportMenu(false);
+                                            setShowCSVTypeMenu(false);
+                                        }}
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm"
+                                    >
+                                        💰 Factures
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCSVType('commandes');
+                                            importCSVRef.current?.click();
+                                            setShowImportMenu(false);
+                                            setShowCSVTypeMenu(false);
+                                        }}
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm"
+                                    >
+                                        📦 Commandes
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCSVType('offres');
+                                            importCSVRef.current?.click();
+                                            setShowImportMenu(false);
+                                            setShowCSVTypeMenu(false);
+                                        }}
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm"
+                                    >
+                                        💼 Offres
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCSVType('offresComplementaires');
+                                            importCSVRef.current?.click();
+                                            setShowImportMenu(false);
+                                            setShowCSVTypeMenu(false);
+                                        }}
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b text-sm"
+                                    >
+                                        ➕ Offres Complémentaires
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCSVType('regies');
+                                            importCSVRef.current?.click();
+                                            setShowImportMenu(false);
+                                            setShowCSVTypeMenu(false);
+                                        }}
+                                        className="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm"
+                                    >
+                                        ⏱️ Régies
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </>
             )}
@@ -549,10 +773,10 @@ const ImportMenu = () => {
             />
             
             <input
-                ref={importFacturesCSVRef}
+                ref={importCSVRef}
                 type="file"
                 accept=".csv"
-                onChange={handleImportFacturesCSV}
+                onChange={(e) => handleImportCSV(e, selectedCSVType)}
                 className="hidden"
             />
         </div>
@@ -585,6 +809,15 @@ const ImportMenu = () => {
                             >
                                 <Download size={20} />
                                 Exporter Session
+                            </button>
+                            {/* 🆕 BOUTON RESET */}
+                            <button
+                                onClick={handleResetSession}
+                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
+                                title="Réinitialiser complètement la session"
+                            >
+                                <Trash2 size={20} />
+                                Reset
                             </button>
                         </div>
                     </div>
