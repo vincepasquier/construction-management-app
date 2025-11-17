@@ -3,14 +3,29 @@ const { useState } = React;
 
 window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = [], estimations = [] }) => {
     
-    // 🔍 DEBUG - À RETIRER APRÈS
+    // 🔍 DEBUG
     console.log('RegieModal props:', {
         commandes: commandes?.length || 0,
         regies: regies?.length || 0,
         estimations: estimations?.length || 0
     });
-
-const [formData, setFormData] = useState(initialData || {
+    
+    // ✅ useState DOIT ÊTRE ICI - PAS PLUS BAS
+    const [formData, setFormData] = useState(initialData || {
+        numero: '',
+        commandeId: '',
+        numeroIncrement: '',
+        fournisseur: '',
+        dateDebut: new Date().toISOString().split('T')[0],
+        dateFin: '',
+        lots: [],
+        positions0: [],
+        positions1: [],
+        etape: '',
+        montantTotal: '',
+        statut: 'En cours',
+        description: ''
+    });
     
     // Pré-remplir depuis une commande
     const handleCommandeChange = (commandeId) => {
