@@ -1,9 +1,11 @@
-// Modal de gestion des régies
-const { useState } = React;
+// Modal de gestion des régies - VERSION SIMPLIFIÉE avec liaison commandes
+const { useState, useEffect } = React;
 
-window.RegieModal = ({ initialData, onClose, onSave, estimations = [] }) => {
+window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = [], estimations = [] }) => {
     const [formData, setFormData] = useState(initialData || {
         numero: '',
+        commandeId: '',
+        numeroIncrement: '',
         fournisseur: '',
         dateDebut: new Date().toISOString().split('T')[0],
         dateFin: '',
@@ -11,12 +13,54 @@ window.RegieModal = ({ initialData, onClose, onSave, estimations = [] }) => {
         positions0: [],
         positions1: [],
         etape: '',
-        heures: '',
-        tauxHoraire: '',
-        montantTotal: '',
+        montant: '',
         statut: 'En cours',
         description: ''
     });
+
+    // Calculer le numéro incrémental automatiquement
+    useEffect(() => {
+        if (formData.commandeId && !initialData) {
+            // Compter les régies existantes pour cette commande
+            const regiesCommande = regies.filter(r => r.commandeId === formData.commandeId);
+            const nextIncrement = regiesCommande.length + 1;
+            setFormData(prev => ({
+                ...prev,
+                numeroIncrement: nextIncrement.toString()
+            }));
+        }
+    }, [formData.commandeId, regies, initialData]);
+
+    // Pré-remplir depuis une commande
+    const handleCommandeChange = (commandeId) => {
+        const commande = commandes.find(c => c.id === commandeId);
+        if (commande) {
+            // Calculer le prochain numéro incrémental
+            const regiesCommande = regies.filter(r => r.commandeId === commandeId);
+            const nextIncrement = regiesCommande.length + 1;
+
+            setFormData({
+                ...formData,
+                commandeId: commandeId,
+                numeroIncrement: nextIncrement.toString(),
+                fournisseur: commande.fournisseur,
+                lots: commande.lots || [],
+                positions0: commande.positions0 || [],
+                positions1: commande.positions1 || [],
+                etape: commande.etape || ''
+            });
+        } else {
+            setFormData({
+                ...formData,
+                commandeId: commandeId,
+                numeroIncrement: '',
+                fournisseur: '',
+                lots: [],
+                positions0: [],
+                positions1: []
+            });
+        }
+    };
 
     // Handler pour le SmartSelector
     const handleSelectionChange = ({ lots, positions0, positions1 }) => {
@@ -28,28 +72,22 @@ window.RegieModal = ({ initialData, onClose, onSave, estimations = [] }) => {
         });
     };
 
-    // Calculer automatiquement le montant total
-    const calculerMontantTotal = () => {
-        const heures = parseFloat(formData.heures) || 0;
-        const taux = parseFloat(formData.tauxHoraire) || 0;
-        return heures * taux;
-    };
-
     const handleSubmit = () => {
-        if (!formData.numero || !formData.fournisseur) {
-            alert('⚠️ Veuillez remplir tous les champs obligatoires (N°, Fournisseur)');
+        if (!formData.numero || !formData.fournisseur || !formData.montant) {
+            alert('⚠️ Veuillez remplir tous les champs obligatoires (N°, Fournisseur, Montant)');
             return;
         }
 
-        const montantCalcule = calculerMontantTotal();
+        if (!formData.commandeId) {
+            alert('⚠️ Veuillez sélectionner une commande');
+            return;
+        }
 
         const regie = {
             ...formData,
             id: initialData?.id || `REG-${Date.now()}`,
             dateCreation: initialData?.dateCreation || new Date().toISOString(),
-            heures: parseFloat(formData.heures) || 0,
-            tauxHoraire: parseFloat(formData.tauxHoraire) || 0,
-            montantTotal: montantCalcule
+            montant: parseFloat(formData.montant) || 0
         };
 
         onSave(regie);
@@ -86,16 +124,49 @@ window.RegieModal = ({ initialData, onClose, onSave, estimations = [] }) => {
 
                         <div>
                             <label className="block text-sm font-medium mb-1">
-                                Fournisseur <span className="text-red-500">*</span>
+                                Commande <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="text"
-                                value={formData.fournisseur}
-                                onChange={(e) => setFormData({...formData, fournisseur: e.target.value})}
+                            <select
+                                value={formData.commandeId}
+                                onChange={(e) => handleCommandeChange(e.target.value)}
                                 className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="Nom du fournisseur"
-                            />
+                                disabled={initialData?.commandeId} // Ne pas changer si déjà lié
+                            >
+                                <option value="">-- Sélectionner une commande --</option>
+                                {commandes
+                                    .filter(c => c.statut !== 'Annulée')
+                                    .map(commande => {
+                                        const regiesCount = regies.filter(r => r.commandeId === commande.id).length;
+                                        return (
+                                            <option key={commande.id} value={commande.id}>
+                                                {commande.numero} - {commande.fournisseur} 
+                                                {regiesCount > 0 ? ` (${regiesCount} régie${regiesCount > 1 ? 's' : ''})` : ''}
+                                            </option>
+                                        );
+                                    })
+                                }
+                            </select>
+                            {formData.commandeId && formData.numeroIncrement && (
+                                <p className="text-xs text-blue-600 mt-1">
+                                    📋 Cette régie sera le n° <strong>REG-{formData.numeroIncrement}</strong> pour cette commande
+                                </p>
+                            )}
                         </div>
+                    </div>
+
+                    {/* Fournisseur */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">
+                            Fournisseur <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.fournisseur}
+                            onChange={(e) => setFormData({...formData, fournisseur: e.target.value})}
+                            className="w-full px-3 py-2 border rounded-lg"
+                            placeholder="Nom du fournisseur"
+                            disabled={formData.commandeId} // Pré-rempli depuis la commande
+                        />
                     </div>
 
                     {/* Dates */}
@@ -127,9 +198,9 @@ window.RegieModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                         <window.SmartSelector
                             estimations={estimations}
                             selectedLots={formData.lots}
-                            selectedPos0={formData.positions0}
-                            selectedPos1={formData.positions1}
-                            onChange={handleSelectionChange}
+                            selectedPositions0={formData.positions0}
+                            selectedPositions1={formData.positions1}
+                            onSelectionChange={handleSelectionChange}
                         />
                     </div>
 
@@ -147,41 +218,22 @@ window.RegieModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                         </select>
                     </div>
 
-                    {/* Heures et taux */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Heures</label>
-                            <input
-                                type="number"
-                                step="0.5"
-                                value={formData.heures}
-                                onChange={(e) => setFormData({...formData, heures: e.target.value})}
-                                className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="0"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Taux horaire (CHF)</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={formData.tauxHoraire}
-                                onChange={(e) => setFormData({...formData, tauxHoraire: e.target.value})}
-                                className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="0.00"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Montant total (CHF)</label>
-                            <input
-                                type="text"
-                                value={calculerMontantTotal().toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                                disabled
-                                className="w-full px-3 py-2 border rounded-lg bg-gray-100 font-semibold"
-                            />
-                        </div>
+                    {/* Montant simplifié */}
+                    <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                        <label className="block text-sm font-medium mb-1">
+                            Montant (CHF) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type="number"
+                            step="0.01"
+                            value={formData.montant}
+                            onChange={(e) => setFormData({...formData, montant: e.target.value})}
+                            className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-lg font-semibold"
+                            placeholder="0.00"
+                        />
+                        <p className="text-xs text-gray-600 mt-1">
+                            💡 Entrez directement le montant total de la régie
+                        </p>
                     </div>
 
                     {/* Statut */}
@@ -210,6 +262,23 @@ window.RegieModal = ({ initialData, onClose, onSave, estimations = [] }) => {
                             placeholder="Détails des travaux en régie..."
                         />
                     </div>
+
+                    {/* Aperçu si commande sélectionnée */}
+                    {formData.commandeId && (
+                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <h4 className="font-semibold text-green-800 mb-2">✅ Résumé</h4>
+                            <div className="text-sm space-y-1">
+                                <p><strong>Commande :</strong> {commandes.find(c => c.id === formData.commandeId)?.numero}</p>
+                                <p><strong>Fournisseur :</strong> {formData.fournisseur}</p>
+                                <p><strong>Régie n° :</strong> REG-{formData.numeroIncrement}</p>
+                                {formData.montant && (
+                                    <p className="text-lg font-bold text-green-700 mt-2">
+                                        Montant : {parseFloat(formData.montant).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Boutons */}
