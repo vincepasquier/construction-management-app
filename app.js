@@ -1,7 +1,7 @@
 // ========================================
 // APPLICATION PRINCIPALE - AVEC SMARTTABLE
 // ========================================
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 const { Plus, Trash2, Edit2, Upload, Download } = window.Icons;  // 🆕 MODIFIÉ
 
 const ConstructionManagement = () => {
@@ -48,8 +48,8 @@ const ConstructionManagement = () => {
     // ========================================
     // REFS POUR LES IMPORTS
     // ========================================
-    const importJSONRef = React.useRef(null);  // 🆕 AJOUTÉ
-    const importFacturesCSVRef = React.useRef(null);  // 🆕 AJOUTÉ
+    const importJSONRef = useRef(null);
+    const importFacturesCSVRef = useRef(null);
 
     // ========================================
     // CHARGEMENT INITIAL
