@@ -696,7 +696,6 @@ const ImportMenu = () => {
                         <label
                             htmlFor="importJSON"
                             className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b cursor-pointer"
-                            onClick={() => setShowImportMenu(false)}
                         >
                             <span className="text-2xl">📄</span>
                             <div>
