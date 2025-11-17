@@ -1597,8 +1597,36 @@ const ImportMenu = () => {
                                     </td>
                                 </tr>
                             );
-                        }}
+                       }}
+                        emptyMessage="Aucune régie"
+                        actions={
+                            <>
+                                <h2 className="text-xl font-bold">⏱️ Régies</h2>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => window.exportRegiesCSV(regies)}
+                                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                                        title="Exporter les régies en CSV"
+                                    >
+                                        📤 Exporter CSV
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setEditingRegie(null);
+                                            setShowRegieModal(true);
+                                        }}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700"
+                                    >
+                                        <Plus size={20} />
+                                        Nouvelle régie
+                                    </button>
+                                </div>
+                            </>
+                        }
+                    />
+                )}
 
+                {/* Factures avec SmartTable */}
                     {/* Factures avec SmartTable */}
                     {activeTab === 'factures' && (
                         <window.SmartTable
@@ -1706,7 +1734,7 @@ const ImportMenu = () => {
                             actions={
                                 <>
                                     <h2 className="text-xl font-bold">💰 Factures</h2>
-                                    <div className="flex gap-2">
+                                        <div className="flex gap-2">
                                         <button
                                             onClick={() => window.exportFacturesCSV(factures)}
                                             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
@@ -1730,7 +1758,7 @@ const ImportMenu = () => {
                             }
                         />
                     )}
-
+    
                     {/* Alignement Budgétaire */}
                     {activeTab === 'alignement' && (
                         <window.AlignementBudgetaire
