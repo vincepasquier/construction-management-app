@@ -114,65 +114,100 @@ window.Dashboard = ({ estimations, offres, commandes, offresComplementaires, reg
 
     const totalFacture = filteredFactures.reduce((sum, f) => sum + (f.montantTTC || 0), 0);
 
-    const budgetEngage = totalCommandes + totalOCAcceptees + totalRegies;
-
-    const ecartBudget = totalEstimations - budgetEngage;
-    const pourcentageUtilise = totalEstimations > 0 
-        ? ((budgetEngage / totalEstimations) * 100).toFixed(1) 
-        : 0;
+// Calculer le budget engagé total
+const budgetEngage = commandes.reduce((sum, cmd) => {
+    const montantBase = cmd.calculatedMontant || cmd.montant || 0;
+    const budgetRegie = cmd.budgetRegie || 0;
+    
+    // OC liées
+    const ocLiees = offresComplementaires.filter(oc => 
+        oc.commandeId === cmd.id && oc.statut === 'Acceptée'
+    );
+    const montantOC = ocLiees.reduce((s, oc) => s + (oc.montant || 0), 0);
+    
+    // Régies liées
+    const regiesLiees = regies.filter(r => r.commandeId === cmd.id);
+    const montantRegies = regiesLiees.reduce((s, r) => s + (r.montantTotal || 0), 0);
+    
+    // Calcul selon la présence d'un budget régie
+    if (budgetRegie > 0) {
+        // Budget régie inclus, ajouter seulement le dépassement
+        const depassement = Math.max(0, montantRegies - budgetRegie);
+        return sum + montantBase + montantOC + depassement;
+    } else {
+        // Pas de budget régie, tout s'ajoute
+        return sum + montantBase + montantOC + montantRegies;
+    }
+}, 0);
 
     // ========================================
     // DÉTAILS COMMANDE (NON FILTRÉ)
     // ========================================
     const getCommandeDetails = (commandeId) => {
-        const commande = commandes.find(c => c.id === commandeId);
-        if (!commande) return null;
+    const commande = commandes.find(c => c.id === commandeId);
+    if (!commande) return null;
 
-        const montantBase = commande.calculatedMontant || commande.montant || 0;
+    // Montant de base de la commande
+    const montantBase = commande.calculatedMontant || commande.montant || 0;
 
-        const ocLiees = offresComplementaires.filter(oc => 
-            oc.commandeId === commandeId && oc.statut === 'Acceptée'
-        );
-        const montantOC = ocLiees.reduce((sum, oc) => sum + (oc.montant || 0), 0);
+    // OC liées à cette commande
+    const ocLiees = offresComplementaires.filter(oc => 
+        oc.commandeId === commandeId && oc.statut === 'Acceptée'
+    );
+    const montantOC = ocLiees.reduce((sum, oc) => sum + (oc.montant || 0), 0);
 
-        const regiesLiees = regies.filter(r => r.commandeId === commandeId);
-        const montantRegies = regiesLiees.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
+    // Régies liées à cette commande
+    const regiesLiees = regies.filter(r => r.commandeId === commandeId);
+    const montantRegies = regiesLiees.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
 
-        const montantTotalEngage = montantBase + montantOC + montantRegies;
+    // 🆕 Budget régie
+    const budgetRegie = commande.budgetRegie || 0;
+    const regieConsommee = montantRegies;
+    const resteRegie = budgetRegie - regieConsommee;
+    const pourcentageRegie = budgetRegie > 0 ? ((regieConsommee / budgetRegie) * 100).toFixed(1) : 0;
 
-        const facturesLiees = factures.filter(f => f.commandeId === commandeId);
-        const montantFacture = facturesLiees.reduce((sum, f) => sum + (f.montantHT || 0), 0);
-        const montantFactureTTC = facturesLiees.reduce((sum, f) => sum + (f.montantTTC || 0), 0);
+    // 🆕 LOGIQUE MODIFIÉE : Montant total engagé
+    let montantTotalEngage;
+    if (budgetRegie > 0) {
+        // Si budget régie défini : il est INCLUS dans le montant de base
+        // On ajoute seulement le dépassement éventuel
+        const depassementRegie = Math.max(0, montantRegies - budgetRegie);
+        montantTotalEngage = montantBase + montantOC + depassementRegie;
+    } else {
+        // Si pas de budget régie : les régies s'ajoutent au montant
+        montantTotalEngage = montantBase + montantOC + montantRegies;
+    }
 
-        const resteAFacturer = montantTotalEngage - montantFacture;
-        const pourcentageFacture = montantTotalEngage > 0 
-            ? ((montantFacture / montantTotalEngage) * 100).toFixed(1) 
-            : 0;
+    // Factures liées à cette commande
+    const facturesLiees = factures.filter(f => f.commandeId === commandeId);
+    const montantFacture = facturesLiees.reduce((sum, f) => sum + (f.montantHT || 0), 0);
+    const montantFactureTTC = facturesLiees.reduce((sum, f) => sum + (f.montantTTC || 0), 0);
 
-        const budgetRegie = commande.budgetRegie || 0;
-        const regieConsommee = montantRegies;
-        const resteRegie = budgetRegie - regieConsommee;
-        const pourcentageRegie = budgetRegie > 0 ? ((regieConsommee / budgetRegie) * 100).toFixed(1) : 0;
+    // Reste à facturer
+    const resteAFacturer = montantTotalEngage - montantFacture;
+    const pourcentageFacture = montantTotalEngage > 0 
+        ? ((montantFacture / montantTotalEngage) * 100).toFixed(1) 
+        : 0;
 
-        return {
-            commande,
-            montantBase,
-            ocLiees,
-            montantOC,
-            regiesLiees,
-            montantRegies,
-            montantTotalEngage,
-            facturesLiees,
-            montantFacture,
-            montantFactureTTC,
-            resteAFacturer,
-            pourcentageFacture,
-            budgetRegie,
-            regieConsommee,
-            resteRegie,
-            pourcentageRegie
-        };
+    return {
+        commande,
+        montantBase,
+        ocLiees,
+        montantOC,
+        regiesLiees,
+        montantRegies,
+        montantTotalEngage,
+        facturesLiees,
+        montantFacture,
+        montantFactureTTC,
+        resteAFacturer,
+        pourcentageFacture,
+        budgetRegie,
+        regieConsommee,
+        resteRegie,
+        pourcentageRegie
     };
+};
 
     const commandeDetails = selectedCommandeId ? getCommandeDetails(selectedCommandeId) : null;
 
@@ -514,10 +549,14 @@ window.Dashboard = ({ estimations, offres, commandes, offresComplementaires, reg
                                             {commandeDetails.montantBase.toLocaleString('fr-CH')} CHF
                                         </td>
                                         <td className="px-4 py-3 text-center text-sm text-gray-600">
-                                            Montant initial
+                                            {commandeDetails.budgetRegie > 0 && (
+                                                <span className="text-xs">
+                                                    (inclut {commandeDetails.budgetRegie.toLocaleString('fr-CH')} CHF de réserve régie)
+                                                </span>
+                                            )}
                                         </td>
                                     </tr>
-
+                                
                                     {/* Offres complémentaires */}
                                     {commandeDetails.ocLiees.length > 0 && (
                                         <>
@@ -545,25 +584,47 @@ window.Dashboard = ({ estimations, offres, commandes, offresComplementaires, reg
                                             </tr>
                                         </>
                                     )}
-
-                                    {/* Régies */}
+                                
+                                    {/* 🆕 Section Régies - LOGIQUE MODIFIÉE */}
                                     {commandeDetails.regiesLiees.length > 0 && (
                                         <>
+                                            {commandeDetails.budgetRegie > 0 && (
+                                                <tr className="border-t bg-orange-50">
+                                                    <td className="px-4 py-3 font-semibold text-orange-900">
+                                                        ⏱️ Budget Régie (inclus dans commande)
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right font-bold text-orange-900">
+                                                        {commandeDetails.budgetRegie.toLocaleString('fr-CH')} CHF
+                                                    </td>
+                                                    <td className="px-4 py-3 text-center text-xs text-orange-700">
+                                                        Réserve initiale
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            
                                             {commandeDetails.regiesLiees.map(regie => (
                                                 <tr key={regie.id} className="border-t">
                                                     <td className="px-4 py-3 pl-8 text-sm">
                                                         ⏱️ REG-{regie.numeroIncrement} - {regie.designation || 'Régie'}
                                                     </td>
                                                     <td className="px-4 py-3 text-right text-orange-700 font-semibold">
-                                                        +{(regie.montantTotal || 0).toLocaleString('fr-CH')} CHF
+                                                        {(regie.montantTotal || 0).toLocaleString('fr-CH')} CHF
                                                     </td>
                                                     <td className="px-4 py-3 text-center text-xs text-gray-500">
                                                         {regie.dateDebut ? new Date(regie.dateDebut).toLocaleDateString('fr-CH') : '-'}
                                                     </td>
                                                 </tr>
                                             ))}
+                                            
                                             <tr className="border-t bg-orange-50">
-                                                <td className="px-4 py-2 font-semibold">Total Régies</td>
+                                                <td className="px-4 py-2">
+                                                    <span className="font-semibold">Régies consommées</span>
+                                                    {commandeDetails.budgetRegie > 0 && (
+                                                        <span className="text-xs ml-2">
+                                                            ({commandeDetails.pourcentageRegie}% du budget)
+                                                        </span>
+                                                    )}
+                                                </td>
                                                 <td className="px-4 py-2 text-right font-bold text-orange-800">
                                                     {commandeDetails.montantRegies.toLocaleString('fr-CH')} CHF
                                                 </td>
@@ -571,45 +632,39 @@ window.Dashboard = ({ estimations, offres, commandes, offresComplementaires, reg
                                                     {commandeDetails.regiesLiees.length} régie(s)
                                                 </td>
                                             </tr>
-
-                                            {/* Budget Régie */}
-                                            {commandeDetails.budgetRegie > 0 && (
-                                                <tr className={`border-t ${
-                                                    commandeDetails.resteRegie < 0 ? 'bg-red-50' : 'bg-gray-50'
-                                                }`}>
-                                                    <td className="px-4 py-2 pl-8">
-                                                        <span className="font-semibold text-sm">Budget Régie</span>
-                                                        <span className="text-xs text-gray-600 ml-2">
-                                                            ({commandeDetails.pourcentageRegie}% utilisé)
-                                                        </span>
+                                            
+                                            {/* Dépassement du budget régie */}
+                                            {commandeDetails.budgetRegie > 0 && commandeDetails.resteRegie < 0 && (
+                                                <tr className="border-t bg-red-50">
+                                                    <td className="px-4 py-2 font-semibold text-red-800">
+                                                        ⚠️ Dépassement budget régie
                                                     </td>
-                                                    <td className="px-4 py-2 text-right">
-                                                        <div className="text-xs text-gray-600">
-                                                            {commandeDetails.budgetRegie.toLocaleString('fr-CH')} CHF alloué
-                                                        </div>
-                                                        <div className={`font-semibold text-sm ${
-                                                            commandeDetails.resteRegie < 0 ? 'text-red-700' : 'text-green-700'
-                                                        }`}>
-                                                            {commandeDetails.resteRegie.toLocaleString('fr-CH')} CHF restant
-                                                        </div>
+                                                    <td className="px-4 py-2 text-right font-bold text-red-800">
+                                                        +{Math.abs(commandeDetails.resteRegie).toLocaleString('fr-CH')} CHF
                                                     </td>
-                                                    <td className="px-4 py-2 text-center">
-                                                        <div className="w-20 bg-gray-200 rounded-full h-2 mx-auto">
-                                                            <div 
-                                                                className={`h-2 rounded-full ${
-                                                                    commandeDetails.resteRegie < 0 ? 'bg-red-600' : 
-                                                                    commandeDetails.pourcentageRegie > 80 ? 'bg-orange-500' : 
-                                                                    'bg-green-500'
-                                                                }`}
-                                                                style={{ width: `${Math.min(commandeDetails.pourcentageRegie, 100)}%` }}
-                                                            />
-                                                        </div>
+                                                    <td className="px-4 py-2 text-center text-xs text-red-600">
+                                                        S'ajoute au total
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            
+                                            {/* Reste disponible dans budget régie */}
+                                            {commandeDetails.budgetRegie > 0 && commandeDetails.resteRegie >= 0 && (
+                                                <tr className="border-t bg-green-50">
+                                                    <td className="px-4 py-2 font-semibold text-green-800">
+                                                        ✅ Reste budget régie
+                                                    </td>
+                                                    <td className="px-4 py-2 text-right font-bold text-green-800">
+                                                        {commandeDetails.resteRegie.toLocaleString('fr-CH')} CHF
+                                                    </td>
+                                                    <td className="px-4 py-2 text-center text-xs text-green-600">
+                                                        Disponible
                                                     </td>
                                                 </tr>
                                             )}
                                         </>
                                     )}
-
+                                
                                     {/* Total engagé */}
                                     <tr className="border-t-2 border-gray-300 bg-purple-50">
                                         <td className="px-4 py-3 font-bold text-purple-900">💼 Total Engagé</td>
@@ -617,10 +672,16 @@ window.Dashboard = ({ estimations, offres, commandes, offresComplementaires, reg
                                             {commandeDetails.montantTotalEngage.toLocaleString('fr-CH')} CHF
                                         </td>
                                         <td className="px-4 py-3 text-center text-xs text-purple-700">
-                                            Commande + OC + Régies
+                                            {commandeDetails.budgetRegie > 0 ? (
+                                                commandeDetails.resteRegie < 0 ? 
+                                                    'Commande + OC + Dépassement régie' :
+                                                    'Commande + OC (régie incluse)'
+                                            ) : (
+                                                'Commande + OC + Régies'
+                                            )}
                                         </td>
                                     </tr>
-
+                                
                                     {/* Facturé */}
                                     <tr className="border-t bg-yellow-50">
                                         <td className="px-4 py-3 font-semibold text-yellow-900">
@@ -633,7 +694,7 @@ window.Dashboard = ({ estimations, offres, commandes, offresComplementaires, reg
                                             {commandeDetails.facturesLiees.length} facture(s)
                                         </td>
                                     </tr>
-
+                                
                                     {/* Reste à facturer */}
                                     <tr className="border-t-2 border-gray-300 bg-gray-50">
                                         <td className="px-4 py-3 font-bold text-gray-900">📊 Reste à facturer</td>
