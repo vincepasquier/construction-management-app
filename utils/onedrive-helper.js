@@ -1,13 +1,38 @@
 // ========================================
-// ONEDRIVE PICKER - HELPER FUNCTIONS
+// ONEDRIVE PICKER - CONFIGURATION DYNAMIQUE
 // ========================================
 
-// ⚠️ REMPLACE PAR TON CLIENT ID
-const ONEDRIVE_CLIENT_ID = "TON_CLIENT_ID_ICI";
+// Récupérer le Client ID depuis le localStorage
+window.getOneDriveClientId = () => {
+    return localStorage.getItem('onedrive_client_id') || null;
+};
+
+// Sauvegarder le Client ID
+window.setOneDriveClientId = (clientId) => {
+    localStorage.setItem('onedrive_client_id', clientId);
+};
+
+// Supprimer le Client ID
+window.clearOneDriveClientId = () => {
+    localStorage.removeItem('onedrive_client_id');
+};
+
+// Vérifier si OneDrive est configuré
+window.isOneDriveConfigured = () => {
+    const clientId = window.getOneDriveClientId();
+    return clientId && clientId.length > 0;
+};
 
 // Sauvegarder sur OneDrive
 window.saveToOneDrive = (sessionName, sessionData) => {
     return new Promise((resolve, reject) => {
+        const clientId = window.getOneDriveClientId();
+        
+        if (!clientId) {
+            reject(new Error("OneDrive non configuré. Veuillez entrer votre Client ID."));
+            return;
+        }
+        
         try {
             // Créer le contenu JSON
             const jsonString = JSON.stringify(sessionData, null, 2);
@@ -18,7 +43,7 @@ window.saveToOneDrive = (sessionName, sessionData) => {
             
             // Options OneDrive
             const saveOptions = {
-                clientId: ONEDRIVE_CLIENT_ID,
+                clientId: clientId,
                 action: "save",
                 sourceInputElementId: null,
                 sourceUri: null,
@@ -74,9 +99,16 @@ window.saveToOneDrive = (sessionName, sessionData) => {
 // Charger depuis OneDrive
 window.loadFromOneDrive = () => {
     return new Promise((resolve, reject) => {
+        const clientId = window.getOneDriveClientId();
+        
+        if (!clientId) {
+            reject(new Error("OneDrive non configuré. Veuillez entrer votre Client ID."));
+            return;
+        }
+        
         try {
             const openOptions = {
-                clientId: ONEDRIVE_CLIENT_ID,
+                clientId: clientId,
                 action: "download",
                 multiSelect: false,
                 advanced: {
