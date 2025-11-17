@@ -10,6 +10,8 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
         estimations: estimations?.length || 0
     });
 
+const [formData, setFormData] = useState(initialData || {
+    
     // Pré-remplir depuis une commande
     const handleCommandeChange = (commandeId) => {
         if (!commandeId) {
