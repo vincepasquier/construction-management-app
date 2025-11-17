@@ -1,570 +1,397 @@
-// Dashboard Avancé - Vue d'ensemble avec graphiques temporels et projections
-const { useState, useMemo } = React;
+// Dashboard avec statistiques et suivi des commandes
+const { useState } = React;
 
-window.Dashboard = ({ estimations, offres, offresComplementaires, commandes, regies, factures }) => {
-    const [filters, setFilters] = useState({
-        lot: '',
-        position0: '',
-        position1: '',
-        fournisseur: ''
-    });
+window.Dashboard = ({ estimations, offres, commandes, offresComplementaires, regies, factures }) => {
+    const [selectedCommandeId, setSelectedCommandeId] = useState(null);
 
-    const [timeView, setTimeView] = useState('cumulative'); // 'cumulative' ou 'monthly'
+    // Calculer le total des estimations
+    const totalEstimations = estimations.reduce((sum, est) => {
+        return sum + (est.montantTotal || est.montant || 0);
+    }, 0);
 
-    // Listes pour les filtres - CORRECTION pour gérer les deux formats
-    const allLots = useMemo(() => {
-        const lots = new Set();
-        estimations.forEach(est => {
-            // Format hiérarchique (nouveau)
-            if (est.lots && Array.isArray(est.lots) && est.lots.length > 0 && typeof est.lots[0] === 'object') {
-                est.lots.forEach(lot => {
-                    if (lot.numero) lots.add(lot.numero);
-                });
-            }
-            // Format plat (ancien/import CSV)
-            else if (est.lots && Array.isArray(est.lots)) {
-                est.lots.forEach(lot => lots.add(String(lot)));
-            }
-        });
-        return [...lots].sort();
-    }, [estimations]);
+    // Calculer le total des offres acceptées
+    const totalOffresAcceptees = offres
+        .filter(o => o.statut === 'Acceptée')
+        .reduce((sum, o) => sum + (o.montant || 0), 0);
 
-    const allPos0 = useMemo(() => {
-        const positions = new Set();
-        estimations.forEach(est => {
-            // Format hiérarchique (nouveau)
-            if (est.lots && Array.isArray(est.lots) && est.lots.length > 0 && typeof est.lots[0] === 'object') {
-                est.lots.forEach(lot => {
-                    if (lot.positions0 && Array.isArray(lot.positions0)) {
-                        lot.positions0.forEach(pos0 => {
-                            if (pos0.nom) positions.add(pos0.nom);
-                        });
-                    }
-                });
-            }
-            // Format plat (ancien/import CSV)
-            else if (est.positions0 && Array.isArray(est.positions0)) {
-                est.positions0.forEach(pos => positions.add(String(pos)));
-            }
-        });
-        return [...positions].sort();
-    }, [estimations]);
+    // Calculer le total des commandes
+    const totalCommandes = commandes.reduce((sum, c) => {
+        return sum + (c.calculatedMontant || c.montant || 0);
+    }, 0);
 
-    const allPos1 = useMemo(() => {
-        const positions = new Set();
-        estimations.forEach(est => {
-            // Format hiérarchique (nouveau)
-            if (est.lots && Array.isArray(est.lots) && est.lots.length > 0 && typeof est.lots[0] === 'object') {
-                est.lots.forEach(lot => {
-                    if (lot.positions0 && Array.isArray(lot.positions0)) {
-                        lot.positions0.forEach(pos0 => {
-                            if (pos0.positions1 && Array.isArray(pos0.positions1)) {
-                                pos0.positions1.forEach(pos1 => {
-                                    if (pos1.nom) positions.add(pos1.nom);
-                                });
-                            }
-                        });
-                    }
-                });
-            }
-            // Format plat (ancien/import CSV)
-            else if (est.positions1 && Array.isArray(est.positions1)) {
-                est.positions1.forEach(pos => positions.add(String(pos)));
-            }
-        });
-        return [...positions].sort();
-    }, [estimations]);
+    // Calculer le total des offres complémentaires acceptées
+    const totalOCAcceptees = offresComplementaires
+        .filter(oc => oc.statut === 'Acceptée')
+        .reduce((sum, oc) => sum + (oc.montant || 0), 0);
 
-    const allFournisseurs = useMemo(() => {
-        const fournisseurs = new Set();
-        [...offres, ...commandes, ...factures].forEach(item => {
-            if (item.fournisseur) fournisseurs.add(item.fournisseur);
-        });
-        return [...fournisseurs].sort();
-    }, [offres, commandes, factures]);
+    // Calculer le total des régies
+    const totalRegies = regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
 
-    // Données filtrées
-    const filteredData = useMemo(() => {
-        // Fonction de filtrage
-        const applyFilters = (item) => {
-            // Pour les estimations hiérarchiques, vérifier dans la structure
-            if (item.lots && Array.isArray(item.lots) && item.lots.length > 0 && typeof item.lots[0] === 'object') {
-                // C'est une estimation hiérarchique - filtrage plus complexe
-                if (filters.lot) {
-                    const hasLot = item.lots.some(lot => String(lot.numero) === String(filters.lot));
-                    if (!hasLot) return false;
-                }
-                if (filters.position0) {
-                    const hasPos0 = item.lots.some(lot => 
-                        lot.positions0?.some(pos0 => pos0.nom === filters.position0)
-                    );
-                    if (!hasPos0) return false;
-                }
-                if (filters.position1) {
-                    const hasPos1 = item.lots.some(lot => 
-                        lot.positions0?.some(pos0 => 
-                            pos0.positions1?.some(pos1 => pos1.nom === filters.position1)
-                        )
-                    );
-                    if (!hasPos1) return false;
-                }
-                // Pas de fournisseur dans les estimations
-                return true;
-            }
-            
-            // Filtrage classique pour les autres items
-            if (filters.lot && !item.lots?.includes(filters.lot)) return false;
-            if (filters.position0 && !item.positions0?.includes(filters.position0)) return false;
-            if (filters.position1 && !item.positions1?.includes(filters.position1)) return false;
-            if (filters.fournisseur && item.fournisseur !== filters.fournisseur) return false;
-            return true;
-        };
-        
-        return {
-            estimations: estimations.filter(applyFilters),
-            offres: offres.filter(applyFilters),
-            offresComplementaires: offresComplementaires.filter(applyFilters),
-            commandes: commandes.filter(applyFilters),
-            regies: regies.filter(applyFilters),
-            factures: factures.filter(applyFilters)
-        };
-    }, [estimations, offres, offresComplementaires, commandes, regies, factures, filters]);
+    // Calculer le total facturé
+    const totalFacture = factures.reduce((sum, f) => sum + (f.montantTTC || 0), 0);
 
-    // Statistiques globales
-    const stats = useMemo(() => {
-        // ✅ CORRECTION : Gérer les deux formats d'estimation
-        const totalEstimation = filteredData.estimations.reduce((sum, e) => {
-            // Format hiérarchique (nouveau)
-            if (e.montantTotal !== undefined) {
-                return sum + (e.montantTotal || 0);
-            }
-            // Format plat (ancien/import CSV)
-            return sum + (e.montant || 0);
-        }, 0);
-        
-        const totalOffres = filteredData.offres
-            .filter(o => o.isFavorite === true || !o.appelOffreId)
-            .reduce((sum, o) => sum + (o.montant || 0), 0);
-            
-        const totalOffresComp = filteredData.offresComplementaires.reduce((sum, oc) => sum + (oc.montant || 0), 0);
-        const totalCommandes = filteredData.commandes.reduce((sum, c) => sum + (c.montant || 0), 0);
-        const totalRegies = filteredData.regies.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
-        const totalFactures = filteredData.factures.reduce((sum, f) => sum + (f.montantHT || 0), 0);
-        const totalFacturesPayees = filteredData.factures
-            .filter(f => f.statut === 'Payée')
-            .reduce((sum, f) => sum + (f.montantHT || 0), 0);
-        const totalDepenses = totalCommandes + totalRegies;
-        const ecart = totalEstimation - totalDepenses;
-        const tauxEngagement = totalEstimation > 0 ? (totalDepenses / totalEstimation * 100) : 0;
+    // Calculer le budget engagé total (commandes + OC + régies)
+    const budgetEngage = totalCommandes + totalOCAcceptees + totalRegies;
+
+    // Écart estimation vs engagé
+    const ecartBudget = totalEstimations - budgetEngage;
+    const pourcentageUtilise = totalEstimations > 0 
+        ? ((budgetEngage / totalEstimations) * 100).toFixed(1) 
+        : 0;
+
+    // Calculer les détails d'une commande spécifique
+    const getCommandeDetails = (commandeId) => {
+        const commande = commandes.find(c => c.id === commandeId);
+        if (!commande) return null;
+
+        // Montant de base de la commande
+        const montantBase = commande.calculatedMontant || commande.montant || 0;
+
+        // OC liées à cette commande
+        const ocLiees = offresComplementaires.filter(oc => 
+            oc.commandeId === commandeId && oc.statut === 'Acceptée'
+        );
+        const montantOC = ocLiees.reduce((sum, oc) => sum + (oc.montant || 0), 0);
+
+        // Régies liées à cette commande
+        const regiesLiees = regies.filter(r => r.commandeId === commandeId);
+        const montantRegies = regiesLiees.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
+
+        // Montant total engagé
+        const montantTotalEngage = montantBase + montantOC + montantRegies;
+
+        // Factures liées à cette commande
+        const facturesLiees = factures.filter(f => f.commandeId === commandeId);
+        const montantFacture = facturesLiees.reduce((sum, f) => sum + (f.montantHT || 0), 0);
+        const montantFactureTTC = facturesLiees.reduce((sum, f) => sum + (f.montantTTC || 0), 0);
+
+        // Reste à facturer
+        const resteAFacturer = montantTotalEngage - montantFacture;
+        const pourcentageFacture = montantTotalEngage > 0 
+            ? ((montantFacture / montantTotalEngage) * 100).toFixed(1) 
+            : 0;
 
         return {
-            totalEstimation,
-            totalOffres,
-            totalOffresComp,
-            totalCommandes,
-            totalRegies,
-            totalFactures,
-            totalFacturesPayees,
-            totalDepenses,
-            ecart,
-            tauxEngagement
+            commande,
+            montantBase,
+            ocLiees,
+            montantOC,
+            regiesLiees,
+            montantRegies,
+            montantTotalEngage,
+            facturesLiees,
+            montantFacture,
+            montantFactureTTC,
+            resteAFacturer,
+            pourcentageFacture
         };
-    }, [filteredData]);
-
-    // Données temporelles pour le graphique
-    const timelineData = useMemo(() => {
-        const events = [];
-
-        // Ajouter les commandes
-        filteredData.commandes.forEach(cmd => {
-            if (cmd.dateCommande) {
-                events.push({
-                    date: new Date(cmd.dateCommande),
-                    type: 'commande',
-                    montant: cmd.montant || 0,
-                    description: `Commande ${cmd.numero} - ${cmd.fournisseur}`
-                });
-            }
-        });
-
-        // Ajouter les factures
-        filteredData.factures.forEach(fact => {
-            if (fact.dateFacture) {
-                events.push({
-                    date: new Date(fact.dateFacture),
-                    type: 'facture',
-                    montant: fact.montantHT || 0,
-                    description: `Facture ${fact.numero}`
-                });
-            }
-        });
-
-        // Trier par date
-        events.sort((a, b) => a.date - b.date);
-
-        // Calculer les cumuls
-        let cumulCommandes = 0;
-        let cumulFactures = 0;
-
-        const timeline = events.map(event => {
-            if (event.type === 'commande') {
-                cumulCommandes += event.montant;
-            } else if (event.type === 'facture') {
-                cumulFactures += event.montant;
-            }
-
-            return {
-                date: event.date.toLocaleDateString('fr-CH'),
-                dateObj: event.date,
-                type: event.type,
-                montant: event.montant,
-                cumulCommandes,
-                cumulFactures,
-                description: event.description
-            };
-        });
-
-        return timeline;
-    }, [filteredData]);
-
-    // Graphique cumulatif simple (style barre ASCII)
-    const renderSimpleChart = () => {
-        if (timelineData.length === 0) {
-            return <p className="text-gray-500 text-center py-8">Aucune donnée temporelle disponible</p>;
-        }
-
-        const maxCumul = Math.max(
-            ...timelineData.map(d => Math.max(d.cumulCommandes, d.cumulFactures))
-        );
-
-        // Prendre des points échantillonnés (max 10 pour la lisibilité)
-        const sampledData = timelineData.filter((_, idx) => 
-            idx === 0 || 
-            idx === timelineData.length - 1 || 
-            idx % Math.ceil(timelineData.length / 8) === 0
-        );
-
-        return (
-            <div className="space-y-2">
-                {sampledData.map((point, idx) => {
-                    const barWidthCommandes = (point.cumulCommandes / maxCumul) * 100;
-                    const barWidthFactures = (point.cumulFactures / maxCumul) * 100;
-
-                    return (
-                        <div key={idx} className="space-y-1">
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                                <span className="w-24">{point.date}</span>
-                                <span className="text-gray-400">|</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="w-24 text-xs text-blue-600">Commandes</span>
-                                <div className="flex-1 bg-gray-100 rounded h-6 relative overflow-hidden">
-                                    <div 
-                                        className="bg-blue-500 h-full transition-all duration-300 flex items-center justify-end pr-2"
-                                        style={{ width: `${barWidthCommandes}%` }}
-                                    >
-                                        <span className="text-xs text-white font-semibold">
-                                            {point.cumulCommandes.toLocaleString('fr-CH', {maximumFractionDigits: 0})}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <span className="w-24 text-xs text-purple-600">Factures</span>
-                                <div className="flex-1 bg-gray-100 rounded h-6 relative overflow-hidden">
-                                    <div 
-                                        className="bg-purple-500 h-full transition-all duration-300 flex items-center justify-end pr-2"
-                                        style={{ width: `${barWidthFactures}%` }}
-                                    >
-                                        <span className="text-xs text-white font-semibold">
-                                            {point.cumulFactures.toLocaleString('fr-CH', {maximumFractionDigits: 0})}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        );
     };
 
-    // Projection future
-    const projection = useMemo(() => {
-        const commandesRestantes = filteredData.commandes
-            .filter(c => c.statut !== 'Validée' && c.statut !== 'Annulée')
-            .reduce((sum, c) => sum + (c.montant || 0), 0);
-
-        const facturesEnAttente = filteredData.factures
-            .filter(f => f.statut !== 'Payée')
-            .reduce((sum, f) => sum + (f.montantHT || 0), 0);
-
-        const projeteFinal = stats.totalDepenses + commandesRestantes;
-        const ecartProjete = stats.totalEstimation - projeteFinal;
-
-        return {
-            commandesRestantes,
-            facturesEnAttente,
-            projeteFinal,
-            ecartProjete
-        };
-    }, [filteredData, stats]);
-
-    const resetFilters = () => {
-        setFilters({ lot: '', position0: '', position1: '', fournisseur: '' });
-    };
-
-    const hasActiveFilters = Object.values(filters).some(v => v !== '');
+    const commandeDetails = selectedCommandeId ? getCommandeDetails(selectedCommandeId) : null;
 
     return (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-6">📊 Tableau de Bord</h2>
-
-            {/* Filtres */}
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                <div className="flex justify-between items-center mb-3">
-                    <h3 className="font-semibold">🔍 Filtres</h3>
-                    {hasActiveFilters && (
-                        <button
-                            onClick={resetFilters}
-                            className="text-sm text-blue-600 hover:underline"
-                        >
-                            ✖ Réinitialiser
-                        </button>
-                    )}
-                </div>
-                <div className="grid grid-cols-4 gap-3">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Lot</label>
-                        <select
-                            value={filters.lot}
-                            onChange={(e) => setFilters({...filters, lot: e.target.value})}
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                        >
-                            <option value="">Tous</option>
-                            {allLots.map(lot => (
-                                <option key={lot} value={lot}>{lot}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Position Niv. 0</label>
-                        <select
-                            value={filters.position0}
-                            onChange={(e) => setFilters({...filters, position0: e.target.value})}
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                        >
-                            <option value="">Toutes</option>
-                            {allPos0.map(pos => (
-                                <option key={pos} value={pos}>{pos}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Position Niv. 1</label>
-                        <select
-                            value={filters.position1}
-                            onChange={(e) => setFilters({...filters, position1: e.target.value})}
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                        >
-                            <option value="">Toutes</option>
-                            {allPos1.map(pos => (
-                                <option key={pos} value={pos}>{pos}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Fournisseur</label>
-                        <select
-                            value={filters.fournisseur}
-                            onChange={(e) => setFilters({...filters, fournisseur: e.target.value})}
-                            className="w-full px-3 py-2 border rounded-lg text-sm"
-                        >
-                            <option value="">Tous</option>
-                            {allFournisseurs.map(f => (
-                                <option key={f} value={f}>{f}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
+        <div className="space-y-6">
+            {/* Titre */}
+            <div>
+                <h2 className="text-2xl font-bold text-gray-900">📊 Dashboard</h2>
+                <p className="text-gray-600 mt-1">Vue d'ensemble du projet</p>
             </div>
 
-            {/* Statistiques principales */}
-            <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="p-4 bg-blue-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Budget Initial</p>
-                    <p className="text-2xl font-bold text-blue-600">
-                        {stats.totalEstimation.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                    </p>
-                    <p className="text-xs text-gray-500">CHF</p>
-                </div>
-
-                <div className="p-4 bg-green-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Engagé</p>
-                    <p className="text-2xl font-bold text-green-600">
-                        {stats.totalDepenses.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                        {stats.tauxEngagement.toFixed(1)}% du budget
-                    </p>
-                </div>
-
-                <div className={`p-4 rounded-lg ${stats.ecart >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-                    <p className="text-sm text-gray-600">Écart Budget</p>
-                    <p className={`text-2xl font-bold ${stats.ecart >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {stats.ecart.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                    </p>
-                    <p className="text-xs text-gray-500">CHF</p>
-                </div>
-
-                <div className="p-4 bg-purple-50 rounded-lg">
-                    <p className="text-sm text-gray-600">Factures Payées</p>
-                    <p className="text-2xl font-bold text-purple-600">
-                        {stats.totalFacturesPayees.toLocaleString('fr-CH', {minimumFractionDigits: 2})}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                        {stats.totalFactures > 0 
-                            ? `${(stats.totalFacturesPayees / stats.totalFactures * 100).toFixed(0)}%`
-                            : '0%'
-                        } du total
-                    </p>
-                </div>
-            </div>
-
-            {/* Graphique temporel */}
-            <div className="mb-6 p-4 border rounded-lg">
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-semibold text-lg">📈 Évolution Temporelle (Cumulée)</h3>
-                    <div className="flex gap-2 text-xs">
-                        <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                            <span>Commandes</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <div className="w-3 h-3 bg-purple-500 rounded"></div>
-                            <span>Factures</span>
-                        </div>
+            {/* Cartes statistiques principales */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Estimation */}
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-blue-700">Budget Estimé</span>
+                        <span className="text-2xl">📋</span>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-900">
+                        {totalEstimations.toLocaleString('fr-CH')} CHF
+                    </div>
+                    <div className="text-xs text-blue-600 mt-1">
+                        {estimations.length} estimation(s)
                     </div>
                 </div>
-                {renderSimpleChart()}
-            </div>
 
-            {/* Projection */}
-            <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                <h3 className="font-semibold text-lg mb-3">🔮 Projection Future</h3>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <p className="text-sm text-gray-600">Commandes en cours</p>
-                        <p className="text-xl font-bold text-orange-600">
-                            {projection.commandesRestantes.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                        </p>
+                {/* Budget engagé */}
+                <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-purple-700">Budget Engagé</span>
+                        <span className="text-2xl">📦</span>
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-600">Factures en attente</p>
-                        <p className="text-xl font-bold text-orange-600">
-                            {projection.facturesEnAttente.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                        </p>
+                    <div className="text-2xl font-bold text-purple-900">
+                        {budgetEngage.toLocaleString('fr-CH')} CHF
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-600">Coût final projeté</p>
-                        <p className="text-xl font-bold text-orange-600">
-                            {projection.projeteFinal.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                        </p>
+                    <div className="text-xs text-purple-600 mt-1">
+                        {pourcentageUtilise}% du budget
                     </div>
-                    <div>
-                        <p className="text-sm text-gray-600">Écart projeté</p>
-                        <p className={`text-xl font-bold ${projection.ecartProjete >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {projection.ecartProjete.toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                        </p>
+                </div>
+
+                {/* Écart */}
+                <div className={`${ecartBudget >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border-2 rounded-lg p-4`}>
+                    <div className="flex items-center justify-between mb-2">
+                        <span className={`text-sm font-medium ${ecartBudget >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                            Écart Budget
+                        </span>
+                        <span className="text-2xl">{ecartBudget >= 0 ? '✅' : '⚠️'}</span>
+                    </div>
+                    <div className={`text-2xl font-bold ${ecartBudget >= 0 ? 'text-green-900' : 'text-red-900'}`}>
+                        {ecartBudget.toLocaleString('fr-CH')} CHF
+                    </div>
+                    <div className={`text-xs mt-1 ${ecartBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {ecartBudget >= 0 ? 'Dans le budget' : 'Dépassement'}
+                    </div>
+                </div>
+
+                {/* Facturé */}
+                <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-yellow-700">Total Facturé</span>
+                        <span className="text-2xl">💰</span>
+                    </div>
+                    <div className="text-2xl font-bold text-yellow-900">
+                        {totalFacture.toLocaleString('fr-CH')} CHF
+                    </div>
+                    <div className="text-xs text-yellow-600 mt-1">
+                        {factures.length} facture(s)
                     </div>
                 </div>
             </div>
 
             {/* Répartition détaillée */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-4 border rounded-lg">
-                    <h3 className="font-semibold mb-3">💰 Répartition Budget</h3>
-                    <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                            <span>Offres:</span>
-                            <span className="font-medium">{stats.totalOffres.toLocaleString('fr-CH')} CHF</span>
+            <div className="bg-white rounded-lg border p-6">
+                <h3 className="text-lg font-bold mb-4">📈 Répartition détaillée</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-3 bg-gray-50 rounded">
+                        <div className="text-sm text-gray-600">Commandes</div>
+                        <div className="text-xl font-bold text-gray-900">
+                            {totalCommandes.toLocaleString('fr-CH')} CHF
                         </div>
-                        <div className="flex justify-between">
-                            <span>Offres Complémentaires:</span>
-                            <span className="font-medium">{stats.totalOffresComp.toLocaleString('fr-CH')} CHF</span>
+                        <div className="text-xs text-gray-500">{commandes.length} commande(s)</div>
+                    </div>
+                    <div className="text-center p-3 bg-gray-50 rounded">
+                        <div className="text-sm text-gray-600">Offres Comp.</div>
+                        <div className="text-xl font-bold text-gray-900">
+                            {totalOCAcceptees.toLocaleString('fr-CH')} CHF
                         </div>
-                        <div className="flex justify-between">
-                            <span>Commandes:</span>
-                            <span className="font-medium">{stats.totalCommandes.toLocaleString('fr-CH')} CHF</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Régies:</span>
-                            <span className="font-medium">{stats.totalRegies.toLocaleString('fr-CH')} CHF</span>
-                        </div>
-                        <div className="flex justify-between border-t pt-2 font-semibold">
-                            <span>Total Factures:</span>
-                            <span className="text-purple-600">{stats.totalFactures.toLocaleString('fr-CH')} CHF</span>
+                        <div className="text-xs text-gray-500">
+                            {offresComplementaires.filter(oc => oc.statut === 'Acceptée').length} acceptée(s)
                         </div>
                     </div>
-                </div>
-
-                <div className="p-4 border rounded-lg">
-                    <h3 className="font-semibold mb-3">📋 Compteurs</h3>
-                    <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                            <span>Estimations:</span>
-                            <span className="font-medium">{filteredData.estimations.length} / {estimations.length}</span>
+                    <div className="text-center p-3 bg-gray-50 rounded">
+                        <div className="text-sm text-gray-600">Régies</div>
+                        <div className="text-xl font-bold text-gray-900">
+                            {totalRegies.toLocaleString('fr-CH')} CHF
                         </div>
-                        <div className="flex justify-between">
-                            <span>Offres:</span>
-                            <span className="font-medium">{filteredData.offres.length} / {offres.length}</span>
+                        <div className="text-xs text-gray-500">{regies.length} régie(s)</div>
+                    </div>
+                    <div className="text-center p-3 bg-gray-50 rounded">
+                        <div className="text-sm text-gray-600">Offres</div>
+                        <div className="text-xl font-bold text-gray-900">
+                            {totalOffresAcceptees.toLocaleString('fr-CH')} CHF
                         </div>
-                        <div className="flex justify-between">
-                            <span>Offres Complémentaires:</span>
-                            <span className="font-medium">{filteredData.offresComplementaires.length} / {offresComplementaires.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Commandes:</span>
-                            <span className="font-medium">{filteredData.commandes.length} / {commandes.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Régies:</span>
-                            <span className="font-medium">{filteredData.regies.length} / {regies.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Factures:</span>
-                            <span className="font-medium">{filteredData.factures.length} / {factures.length}</span>
+                        <div className="text-xs text-gray-500">
+                            {offres.filter(o => o.statut === 'Acceptée').length} acceptée(s)
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Alertes */}
-            <div className="space-y-3">
-                {stats.ecart < 0 && (
-                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-red-800 font-semibold">⚠️ Dépassement de budget</p>
-                        <p className="text-sm text-red-700">
-                            Le budget est dépassé de {Math.abs(stats.ecart).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
-                        </p>
+            {/* 🆕 NOUVELLE SECTION : Suivi par commande */}
+            <div className="bg-white rounded-lg border p-6">
+                <h3 className="text-lg font-bold mb-4">🔍 Suivi détaillé par commande</h3>
+                
+                {/* Sélecteur de commande */}
+                <div className="mb-6">
+                    <label className="block text-sm font-medium mb-2">Sélectionner une commande :</label>
+                    <select
+                        value={selectedCommandeId || ''}
+                        onChange={(e) => setSelectedCommandeId(e.target.value)}
+                        className="w-full md:w-96 px-3 py-2 border rounded-lg"
+                    >
+                        <option value="">-- Choisir une commande --</option>
+                        {commandes.map(cmd => (
+                            <option key={cmd.id} value={cmd.id}>
+                                {cmd.numero} - {cmd.fournisseur} ({(cmd.calculatedMontant || cmd.montant || 0).toLocaleString('fr-CH')} CHF)
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Détails de la commande sélectionnée */}
+                {commandeDetails && (
+                    <div className="space-y-4">
+                        {/* En-tête */}
+                        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                            <h4 className="font-bold text-blue-900 text-lg mb-2">
+                                {commandeDetails.commande.numero} - {commandeDetails.commande.fournisseur}
+                            </h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <span className="text-blue-600">Date :</span>
+                                    <div className="font-semibold">
+                                        {new Date(commandeDetails.commande.dateCommande).toLocaleDateString('fr-CH')}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-blue-600">Statut :</span>
+                                    <div className="font-semibold">{commandeDetails.commande.statut}</div>
+                                </div>
+                                <div>
+                                    <span className="text-blue-600">Lots :</span>
+                                    <div className="font-semibold text-xs">
+                                        {commandeDetails.commande.lots?.join(', ') || '-'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span className="text-blue-600">Étape :</span>
+                                    <div className="font-semibold">{commandeDetails.commande.etape || '-'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tableau de synthèse */}
+                        <div className="border rounded-lg overflow-hidden">
+                            <table className="w-full">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Poste</th>
+                                        <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">Montant HT</th>
+                                        <th className="px-4 py-3 text-center text-sm font-medium text-gray-600">Détails</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {/* Commande de base */}
+                                    <tr className="border-t bg-blue-50">
+                                        <td className="px-4 py-3 font-semibold">📦 Commande de base</td>
+                                        <td className="px-4 py-3 text-right font-bold text-blue-900">
+                                            {commandeDetails.montantBase.toLocaleString('fr-CH')} CHF
+                                        </td>
+                                        <td className="px-4 py-3 text-center text-sm text-gray-600">
+                                            Montant initial
+                                        </td>
+                                    </tr>
+
+                                    {/* Offres complémentaires */}
+                                    {commandeDetails.ocLiees.length > 0 && (
+                                        <>
+                                            {commandeDetails.ocLiees.map(oc => (
+                                                <tr key={oc.id} className="border-t">
+                                                    <td className="px-4 py-3 pl-8 text-sm">
+                                                        ➕ {oc.numero} - {oc.motif || 'OC'}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right text-green-700 font-semibold">
+                                                        +{(oc.montant || 0).toLocaleString('fr-CH')} CHF
+                                                    </td>
+                                                    <td className="px-4 py-3 text-center text-xs text-gray-500">
+                                                        {oc.description || '-'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            <tr className="border-t bg-green-50">
+                                                <td className="px-4 py-2 font-semibold">Total OC</td>
+                                                <td className="px-4 py-2 text-right font-bold text-green-800">
+                                                    {commandeDetails.montantOC.toLocaleString('fr-CH')} CHF
+                                                </td>
+                                                <td className="px-4 py-2 text-center text-xs">
+                                                    {commandeDetails.ocLiees.length} OC
+                                                </td>
+                                            </tr>
+                                        </>
+                                    )}
+
+                                    {/* Régies */}
+                                    {commandeDetails.regiesLiees.length > 0 && (
+                                        <>
+                                            {commandeDetails.regiesLiees.map(regie => (
+                                                <tr key={regie.id} className="border-t">
+                                                    <td className="px-4 py-3 pl-8 text-sm">
+                                                        ⏱️ REG-{regie.numeroIncrement} - {regie.designation || 'Régie'}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right text-orange-700 font-semibold">
+                                                        +{(regie.montantTotal || 0).toLocaleString('fr-CH')} CHF
+                                                    </td>
+                                                    <td className="px-4 py-3 text-center text-xs text-gray-500">
+                                                        {regie.dateDebut ? new Date(regie.dateDebut).toLocaleDateString('fr-CH') : '-'}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            <tr className="border-t bg-orange-50">
+                                                <td className="px-4 py-2 font-semibold">Total Régies</td>
+                                                <td className="px-4 py-2 text-right font-bold text-orange-800">
+                                                    {commandeDetails.montantRegies.toLocaleString('fr-CH')} CHF
+                                                </td>
+                                                <td className="px-4 py-2 text-center text-xs">
+                                                    {commandeDetails.regiesLiees.length} régie(s)
+                                                </td>
+                                            </tr>
+                                        </>
+                                    )}
+
+                                    {/* Total engagé */}
+                                    <tr className="border-t-2 border-gray-300 bg-purple-50">
+                                        <td className="px-4 py-3 font-bold text-purple-900">💼 Total Engagé</td>
+                                        <td className="px-4 py-3 text-right font-bold text-purple-900 text-lg">
+                                            {commandeDetails.montantTotalEngage.toLocaleString('fr-CH')} CHF
+                                        </td>
+                                        <td className="px-4 py-3 text-center text-xs text-purple-700">
+                                            Commande + OC + Régies
+                                        </td>
+                                    </tr>
+
+                                    {/* Facturé */}
+                                    <tr className="border-t bg-yellow-50">
+                                        <td className="px-4 py-3 font-semibold text-yellow-900">
+                                            💰 Déjà facturé ({commandeDetails.pourcentageFacture}%)
+                                        </td>
+                                        <td className="px-4 py-3 text-right font-bold text-yellow-900">
+                                            {commandeDetails.montantFacture.toLocaleString('fr-CH')} CHF
+                                        </td>
+                                        <td className="px-4 py-3 text-center text-xs text-yellow-700">
+                                            {commandeDetails.facturesLiees.length} facture(s)
+                                        </td>
+                                    </tr>
+
+                                    {/* Reste à facturer */}
+                                    <tr className="border-t-2 border-gray-300 bg-gray-50">
+                                        <td className="px-4 py-3 font-bold text-gray-900">📊 Reste à facturer</td>
+                                        <td className={`px-4 py-3 text-right font-bold text-lg ${
+                                            commandeDetails.resteAFacturer > 0 ? 'text-blue-900' : 'text-green-900'
+                                        }`}>
+                                            {commandeDetails.resteAFacturer.toLocaleString('fr-CH')} CHF
+                                        </td>
+                                        <td className="px-4 py-3 text-center text-xs">
+                                            {commandeDetails.resteAFacturer === 0 ? '✅ Complet' : '⏳ En cours'}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Barre de progression */}
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="flex justify-between text-sm mb-2">
+                                <span className="font-medium">Progression de facturation</span>
+                                <span className="font-bold">{commandeDetails.pourcentageFacture}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-4">
+                                <div 
+                                    className={`h-4 rounded-full ${
+                                        parseFloat(commandeDetails.pourcentageFacture) === 100 
+                                            ? 'bg-green-600' 
+                                            : 'bg-blue-600'
+                                    }`}
+                                    style={{ width: `${Math.min(parseFloat(commandeDetails.pourcentageFacture), 100)}%` }}
+                                />
+                            </div>
+                        </div>
                     </div>
                 )}
 
-                {projection.ecartProjete < 0 && stats.ecart >= 0 && (
-                    <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                        <p className="text-orange-800 font-semibold">⚠️ Dépassement projeté</p>
-                        <p className="text-sm text-orange-700">
-                            Le budget sera dépassé de {Math.abs(projection.ecartProjete).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF si toutes les commandes sont validées
-                        </p>
-                    </div>
-                )}
-
-                {stats.tauxEngagement > 90 && stats.ecart >= 0 && (
-                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-yellow-800 font-semibold">⚠️ Budget presque épuisé</p>
-                        <p className="text-sm text-yellow-700">
-                            {stats.tauxEngagement.toFixed(1)}% du budget est engagé
-                        </p>
+                {!selectedCommandeId && (
+                    <div className="text-center py-12 text-gray-400">
+                        <div className="text-6xl mb-4">🔍</div>
+                        <p>Sélectionnez une commande pour voir les détails</p>
                     </div>
                 )}
             </div>
