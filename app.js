@@ -692,7 +692,14 @@ const ImportMenu = () => {
                         {/* Session JSON */}
                         <button
                             onClick={() => {
-                                importJSONRef.current?.click();
+                                console.log('🔵 Bouton cliqué');
+                                console.log('🔵 Ref:', importJSONRef.current);
+                                if (importJSONRef.current) {
+                                    console.log('🔵 Click sur input');
+                                    importJSONRef.current.click();
+                                } else {
+                                    console.log('❌ Ref est null !');
+                                }
                                 setShowImportMenu(false);
                             }}
                             className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b"
