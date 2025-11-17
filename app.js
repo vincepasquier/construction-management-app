@@ -1,10 +1,10 @@
-// ========================================
-// APPLICATION PRINCIPALE - AVEC SMARTTABLE
-// ========================================
-const { useState, useEffect, useRef } = React;
-const { Plus, Trash2, Edit2, Upload, Download } = window.Icons;  // 🆕 MODIFIÉ
-
-const ConstructionManagement = () => {
+    // ========================================
+    // APPLICATION PRINCIPALE - AVEC SMARTTABLE
+    // ========================================
+    const { useState, useEffect, useRef } = React;
+    const { Plus, Trash2, Edit2, Upload, Download } = window.Icons;  // 🆕 MODIFIÉ
+    
+    const ConstructionManagement = () => {
     // ========================================
     // ÉTATS PRINCIPAUX
     // ========================================
@@ -380,7 +380,7 @@ const handleImportCSV = (event, type) => {
     
     reader.readAsText(file, 'UTF-8');
 };
-    / Reset complet de la session
+    // Reset complet de la session
     const handleResetSession = () => {
     const confirmation = confirm(
         `⚠️ ATTENTION - SUPPRESSION TOTALE !\n\n` +
