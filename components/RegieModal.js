@@ -2,21 +2,21 @@
 const { useState } = React;
 
 window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = [], estimations = [] }) => {
-    const [formData, setFormData] = useState(initialData || {
-        numero: '',
-        commandeId: '',
-        numeroIncrement: '',
-        fournisseur: '',
-        dateDebut: new Date().toISOString().split('T')[0],
-        dateFin: '',
-        lots: [],
-        positions0: [],
-        positions1: [],
-        etape: '',
-        montant: '',
-        statut: 'En cours',
-        description: ''
-    });
+            const [formData, setFormData] = useState(initialData || {
+            numero: '',
+            commandeId: '',
+            numeroIncrement: '',
+            fournisseur: '',
+            dateDebut: new Date().toISOString().split('T')[0],
+            dateFin: '',
+            lots: [],
+            positions0: [],
+            positions1: [],
+            etape: '',
+            montantTotal: '',  // ← CHANGÉ de montant à montantTotal
+            statut: 'En cours',
+            description: ''
+        });
 
     // Pré-remplir depuis une commande
     const handleCommandeChange = (commandeId) => {
@@ -63,7 +63,7 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
     };
 
     const handleSubmit = () => {
-        if (!formData.numero || !formData.fournisseur || !formData.montant) {
+        if (!formData.numero || !formData.fournisseur || !formData.montantTotal) {
             alert('⚠️ Veuillez remplir tous les champs obligatoires (N°, Fournisseur, Montant)');
             return;
         }
@@ -77,7 +77,7 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
             ...formData,
             id: initialData?.id || `REG-${Date.now()}`,
             dateCreation: initialData?.dateCreation || new Date().toISOString(),
-            montant: parseFloat(formData.montant) || 0
+            montantTotal: parseFloat(formData.montantTotal) || 0  // ← CHANGÉ
         };
 
         onSave(regie);
@@ -207,7 +207,7 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                         </select>
                     </div>
 
-                    {/* Montant */}
+                    {/* montantTotal */}
                     <div className="p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
                         <label className="block text-sm font-medium mb-1">
                             Montant (CHF) <span className="text-red-500">*</span>
@@ -215,8 +215,8 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                         <input
                             type="number"
                             step="0.01"
-                            value={formData.montant}
-                            onChange={(e) => setFormData({...formData, montant: e.target.value})}
+                            value={formData.montantTotal}
+                            onChange={(e) => setFormData({...formData, montantTotal: e.target.value})}
                             className="w-full px-3 py-2 border-2 border-blue-300 rounded-lg text-lg font-semibold"
                             placeholder="0.00"
                         />
@@ -257,9 +257,9 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                                 <p><strong>Commande :</strong> {commandes.find(c => c.id === formData.commandeId)?.numero}</p>
                                 <p><strong>Fournisseur :</strong> {formData.fournisseur}</p>
                                 <p><strong>Régie n° :</strong> REG-{formData.numeroIncrement}</p>
-                                {formData.montant && (
+                                {formData.montantTotal && (
                                     <p className="text-lg font-bold text-green-700 mt-2">
-                                        Montant : {parseFloat(formData.montant).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                                        montantTotal : {parseFloat(formData.montantTotal).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
                                     </p>
                                 )}
                             </div>
