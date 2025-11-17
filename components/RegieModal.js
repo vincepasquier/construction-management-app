@@ -270,12 +270,84 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                                 <p><strong>Régie n° :</strong> REG-{formData.numeroIncrement}</p>
                                 {formData.montantTotal && (
                                     <p className="text-lg font-bold text-green-700 mt-2">
-                                        montantTotal : {parseFloat(formData.montantTotal).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
+                                        Montant : {parseFloat(formData.montantTotal).toLocaleString('fr-CH', {minimumFractionDigits: 2})} CHF
                                     </p>
                                 )}
                             </div>
                         </div>
                     )}
+
+                    {/* 🆕 Alerte budget régie */}
+                    {formData.commandeId && (() => {
+                        const commande = commandes.find(c => c.id === formData.commandeId);
+                        if (!commande || !commande.budgetRegie) return null;
+                        
+                        const regiesExistantes = regies.filter(r => r.commandeId === formData.commandeId);
+                        const regieConsommee = regiesExistantes.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
+                        const montantActuel = parseFloat(formData.montantTotal) || 0;
+                        const totalAvecNouvelle = regieConsommee + montantActuel;
+                        const budgetRegie = commande.budgetRegie;
+                        const resteRegie = budgetRegie - totalAvecNouvelle;
+                        const pourcentage = ((totalAvecNouvelle / budgetRegie) * 100).toFixed(0);
+                        
+                        return (
+                            <div className={`p-4 border-2 rounded-lg ${
+                                resteRegie < 0 ? 'bg-red-50 border-red-300' : 
+                                pourcentage > 80 ? 'bg-orange-50 border-orange-300' : 
+                                'bg-blue-50 border-blue-300'
+                            }`}>
+                                <h4 className={`font-semibold mb-2 ${
+                                    resteRegie < 0 ? 'text-red-800' : 
+                                    pourcentage > 80 ? 'text-orange-800' : 
+                                    'text-blue-800'
+                                }`}>
+                                    {resteRegie < 0 ? '⚠️ Dépassement du budget régie !' : 
+                                     pourcentage > 80 ? '⚠️ Budget régie bientôt épuisé' : 
+                                     'ℹ️ Budget régie'}
+                                </h4>
+                                <div className="text-sm space-y-1">
+                                    <div className="flex justify-between">
+                                        <span>Budget régie alloué :</span>
+                                        <span className="font-semibold">{budgetRegie.toLocaleString('fr-CH')} CHF</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Déjà consommé :</span>
+                                        <span className="font-semibold">{regieConsommee.toLocaleString('fr-CH')} CHF</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Cette régie :</span>
+                                        <span className="font-semibold">+{montantActuel.toLocaleString('fr-CH')} CHF</span>
+                                    </div>
+                                    <div className="border-t pt-1 mt-1"></div>
+                                    <div className="flex justify-between font-bold">
+                                        <span>Total après création :</span>
+                                        <span>{totalAvecNouvelle.toLocaleString('fr-CH')} CHF</span>
+                                    </div>
+                                    <div className={`flex justify-between font-bold text-lg ${
+                                        resteRegie < 0 ? 'text-red-700' : 'text-green-700'
+                                    }`}>
+                                        <span>Reste disponible :</span>
+                                        <span>{resteRegie.toLocaleString('fr-CH')} CHF</span>
+                                    </div>
+                                    
+                                    {/* Barre de progression */}
+                                    <div className="mt-2">
+                                        <div className="w-full bg-gray-200 rounded-full h-3">
+                                            <div 
+                                                className={`h-3 rounded-full ${
+                                                    resteRegie < 0 ? 'bg-red-600' : 
+                                                    pourcentage > 80 ? 'bg-orange-500' : 
+                                                    'bg-green-500'
+                                                }`}
+                                                style={{ width: `${Math.min(pourcentage, 100)}%` }}
+                                            />
+                                        </div>
+                                        <div className="text-xs text-center mt-1">{pourcentage}% du budget régie</div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {/* Boutons */}
