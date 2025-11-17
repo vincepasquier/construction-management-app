@@ -794,20 +794,40 @@ const ImportMenu = () => {
             )}
             
             <input
-                ref={importJSONRef}
-                type="file"
-                accept=".json"
-                onChange={handleImportJSON}
-                style={{position: 'absolute', left: '0', top: '500px'}}
-            />
-            
-            <input
-                ref={importCSVRef}
-                type="file"
-                accept=".csv"
-                onChange={(e) => handleImportCSV(e, selectedCSVType)}
-                style={{position: 'absolute', left: '0', top: '550px'}}
-            />
+                    ref={importJSONRef}
+                    type="file"
+                    accept=".json"
+                    onChange={handleImportJSON}
+                    style={{
+                        position: 'absolute',
+                        width: '1px',
+                        height: '1px',
+                        padding: '0',
+                        margin: '-1px',
+                        overflow: 'hidden',
+                        clip: 'rect(0,0,0,0)',
+                        whiteSpace: 'nowrap',
+                        border: '0'
+                    }}
+                />
+                
+                <input
+                    ref={importCSVRef}
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => handleImportCSV(e, selectedCSVType)}
+                    style={{
+                        position: 'absolute',
+                        width: '1px',
+                        height: '1px',
+                        padding: '0',
+                        margin: '-1px',
+                        overflow: 'hidden',
+                        clip: 'rect(0,0,0,0)',
+                        whiteSpace: 'nowrap',
+                        border: '0'
+                    }}
+                />
         </div>
     );
 };
