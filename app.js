@@ -104,7 +104,8 @@
                 commandes: commandes,
                 offresComplementaires: offresComplementaires,
                 regies: regies,
-                factures: factures
+                factures: factures,
+                ajustements: ajustements
             }
         };
         
@@ -1959,6 +1960,8 @@ const ImportMenu = () => {
                             offresComplementaires={offresComplementaires}
                             regies={regies}
                             factures={factures}
+                            ajustements={ajustements}
+                            onSaveAjustement={handleSaveAjustement}
                         />
                     )}
                 </div>
