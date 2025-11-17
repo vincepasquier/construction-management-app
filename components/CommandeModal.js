@@ -14,6 +14,7 @@ window.CommandeModal = ({ initialData, onClose, onSave, estimations = [], offres
         positions1: [],
         etape: '',
         montant: '',
+        budgetRegie: '',
         statut: 'En cours',
         source: 'Manuel',
         description: ''
@@ -63,6 +64,7 @@ window.CommandeModal = ({ initialData, onClose, onSave, estimations = [], offres
             id: initialData?.id || `CMD-${Date.now()}`,
             dateCreation: initialData?.dateCreation || new Date().toISOString(),
             montant: parseFloat(formData.montant) || 0,
+            budgetRegie: parseFloat(formData.budgetRegie) || 0,
             calculatedMontant: parseFloat(formData.montant) || 0
         };
 
@@ -188,6 +190,25 @@ window.CommandeModal = ({ initialData, onClose, onSave, estimations = [], offres
                                 className="w-full px-3 py-2 border rounded-lg"
                                 placeholder="0.00"
                             />
+                        </div>
+                        
+                        {/* 🆕 Budget Régie */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1">
+                                Budget Régie (CHF)
+                                <span className="text-xs text-gray-500 ml-2">(optionnel)</span>
+                            </label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={formData.budgetRegie || ''}
+                                onChange={(e) => setFormData({...formData, budgetRegie: e.target.value})}
+                                className="w-full px-3 py-2 border border-orange-300 rounded-lg bg-orange-50"
+                                placeholder="0.00"
+                            />
+                            <p className="text-xs text-orange-600 mt-1">
+                                💡 Budget prévu pour les régies ({formData.budgetRegie ? parseFloat(formData.budgetRegie).toLocaleString('fr-CH') : '0'} CHF)
+                            </p>
                         </div>
 
                         <div>
