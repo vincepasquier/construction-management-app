@@ -1840,17 +1840,19 @@ const ImportMenu = () => {
             )}
 
             {/* Modal Régie */}
-            {showRegieModal && (
-                <window.RegieModal
-                    initialData={editingRegie}
-                    onClose={() => {
-                        setShowRegieModal(false);
-                        setEditingRegie(null);
-                    }}
-                    onSave={handleSaveRegie}
-                    estimations={estimations}
-                />
-            )}
+                {showRegieModal && (
+                    <window.RegieModal
+                        initialData={editingRegie}
+                        onClose={() => {
+                            setShowRegieModal(false);
+                            setEditingRegie(null);
+                        }}
+                        onSave={handleSaveRegie}
+                        commandes={commandes}      // ✅ AJOUTER
+                        regies={regies}            // ✅ AJOUTER
+                        estimations={estimations}
+                    />
+                )}
 
             {/* Modal Facture */}
             {showFactureModal && (
