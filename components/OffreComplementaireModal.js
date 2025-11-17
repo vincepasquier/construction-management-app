@@ -1,10 +1,10 @@
 // Modal de gestion des offres complémentaires
 const { useState } = React;
 
-window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations = [], offres = [] }) => {
+window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations = [], commandes = [] }) => {
     const [formData, setFormData] = useState(initialData || {
         numero: '',
-        offreOriginaleId: '',
+        commandeId: '',  // ✅ CHANGÉ de offreOriginaleId à commandeId
         fournisseur: '',
         dateOffre: new Date().toISOString().split('T')[0],
         lots: [],
@@ -17,23 +17,23 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
         motif: ''
     });
 
-    // Pré-remplir les informations depuis l'offre originale
-    const handleOffreOriginaleChange = (offreId) => {
-        const offre = offres.find(o => o.id === offreId);
-        if (offre) {
+    // Pré-remplir les informations depuis la commande
+    const handleCommandeChange = (commandeId) => {
+        const commande = commandes.find(c => c.id === commandeId);
+        if (commande) {
             setFormData({
                 ...formData,
-                offreOriginaleId: offreId,
-                fournisseur: offre.fournisseur,
-                lots: offre.lots || [],
-                positions0: offre.positions0 || [],
-                positions1: offre.positions1 || [],
-                etape: offre.etape || ''
+                commandeId: commandeId,
+                fournisseur: commande.fournisseur,
+                lots: commande.lots || [],
+                positions0: commande.positions0 || [],
+                positions1: commande.positions1 || [],
+                etape: commande.etape || ''
             });
         } else {
             setFormData({
                 ...formData,
-                offreOriginaleId: offreId
+                commandeId: commandeId
             });
         }
     };
@@ -94,21 +94,25 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-1">Offre originale</label>
+                            <label className="block text-sm font-medium mb-1">
+                                Commande liée
+                            </label>
                             <select
-                                value={formData.offreOriginaleId}
-                                onChange={(e) => handleOffreOriginaleChange(e.target.value)}
+                                value={formData.commandeId}
+                                onChange={(e) => handleCommandeChange(e.target.value)}
                                 className="w-full px-3 py-2 border rounded-lg"
                             >
                                 <option value="">-- Aucune --</option>
-                                {offres && offres.length > 0 ? (
-                                    offres.map(offre => (
-                                        <option key={offre.id} value={offre.id}>
-                                            {offre.numero} - {offre.fournisseur} - [{offre.statut}] ({(offre.montant || 0).toLocaleString('fr-CH')} CHF)
-                                        </option>
-                                    ))
+                                {commandes && commandes.length > 0 ? (
+                                    commandes
+                                        .filter(cmd => cmd.statut !== 'Annulée')
+                                        .map(commande => (
+                                            <option key={commande.id} value={commande.id}>
+                                                {commande.numero} - {commande.fournisseur} ({(commande.montant || commande.calculatedMontant || 0).toLocaleString('fr-CH')} CHF)
+                                            </option>
+                                        ))
                                 ) : (
-                                    <option disabled>Aucune offre disponible</option>
+                                    <option disabled>Aucune commande disponible</option>
                                 )}
                             </select>
                             <p className="text-xs text-gray-500 mt-1">
@@ -230,6 +234,20 @@ window.OffreComplementaireModal = ({ initialData, onClose, onSave, estimations =
                             placeholder="Détails des travaux supplémentaires, justification de l'offre complémentaire..."
                         />
                     </div>
+
+                    {/* Résumé si commande sélectionnée */}
+                    {formData.commandeId && (
+                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 className="font-semibold text-blue-800 mb-2">ℹ️ Informations</h4>
+                            <div className="text-sm space-y-1">
+                                <p><strong>Commande :</strong> {commandes.find(c => c.id === formData.commandeId)?.numero}</p>
+                                <p><strong>Fournisseur :</strong> {formData.fournisseur}</p>
+                                <p className="text-xs text-blue-600 mt-2">
+                                    Cette OC sera automatiquement liée à la commande sélectionnée
+                                </p>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Boutons d'action */}
