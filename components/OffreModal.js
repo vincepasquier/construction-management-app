@@ -12,6 +12,7 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffr
         positions1: [],
         etape: '',
         montant: '',
+        budgetRegie: '',
         description: '',
         statut: 'En attente',
         version: 1,
@@ -41,6 +42,8 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffr
         const offre = {
             ...formData,
             id: initialData?.id || `OFF-${Date.now()}`,
+            montant: parseFloat(formData.montant) || 0,
+            budgetRegie: parseFloat(formData.budgetRegie) || 0,
             dateCreation: initialData?.dateCreation || new Date().toISOString(),
             montant: parseFloat(formData.montant) || 0
         };
@@ -275,7 +278,25 @@ window.OffreModal = ({ initialData, onClose, onSave, estimations = [], appelOffr
                                 placeholder="0.00"
                             />
                         </div>
-
+                        
+                        {/* 🆕 NOUVEAU : Budget Régie */}
+                        <div>
+                            <label className="block text-sm font-medium mb-1">
+                                Budget Régie (CHF)
+                                <span className="text-xs text-gray-500 ml-2">(optionnel)</span>
+                            </label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={formData.budgetRegie || ''}
+                                onChange={(e) => setFormData({...formData, budgetRegie: e.target.value})}
+                                className="w-full px-3 py-2 border border-orange-300 rounded-lg bg-orange-50"
+                                placeholder="0.00"
+                            />
+                            <p className="text-xs text-orange-600 mt-1">
+                                💡 Montant prévu pour les travaux en régie
+                            </p>
+                        </div>
                         <div>
                             <label className="block text-sm font-medium mb-1">Statut</label>
                             <select
