@@ -670,6 +670,9 @@ const handleImportCSV = (event, type) => {
 // ========================================
 // 🆕 COMPOSANT MENU D'IMPORT - VERSION COMPLÈTE ET FIXÉE
 // ========================================
+// ========================================
+// 🆕 COMPOSANT MENU D'IMPORT - VERSION OVERLAY
+// ========================================
 const ImportMenu = () => {
     return (
         <div className="relative">
@@ -702,28 +705,33 @@ const ImportMenu = () => {
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
                         
                         {/* === OPTION 1 : SESSION JSON === */}
-                        <div className="border-b">
-                            <label
-                                htmlFor="input-json-import"
-                                className="w-full px-4 py-3 hover:bg-gray-50 flex items-center gap-3 cursor-pointer"
-                            >
+                        <div className="border-b relative">
+                            <div className="w-full px-4 py-3 hover:bg-gray-50 flex items-center gap-3">
                                 <span className="text-2xl">📄</span>
                                 <div>
                                     <div className="font-semibold text-gray-800">Session complète</div>
                                     <div className="text-xs text-gray-500">Fichier JSON (toutes les données)</div>
                                 </div>
-                            </label>
+                            </div>
                             
-                            {/* Input caché pour JSON */}
+                            {/* Input en overlay transparent */}
                             <input
-                                id="input-json-import"
                                 type="file"
                                 accept=".json"
                                 onChange={(e) => {
+                                    console.log('🔵 JSON sélectionné');
                                     handleImportJSON(e);
                                     setShowImportMenu(false);
                                 }}
-                                style={{ display: 'none' }}
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    opacity: 0,
+                                    cursor: 'pointer'
+                                }}
                             />
                         </div>
                         
@@ -748,107 +756,132 @@ const ImportMenu = () => {
                                 <div className="absolute left-full top-0 ml-1 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
                                     
                                     {/* Factures */}
-                                    <div className="border-b">
-                                        <label
-                                            htmlFor="input-csv-factures"
-                                            className="w-full px-4 py-2 hover:bg-gray-50 text-sm cursor-pointer flex items-center"
-                                        >
+                                    <div className="border-b relative">
+                                        <div className="w-full px-4 py-2 hover:bg-gray-50 text-sm">
                                             💰 Factures
-                                        </label>
+                                        </div>
                                         <input
-                                            id="input-csv-factures"
                                             type="file"
                                             accept=".csv"
                                             onChange={(e) => {
+                                                console.log('🔵 CSV Factures sélectionné');
                                                 handleImportCSV(e, 'factures');
                                                 setShowImportMenu(false);
                                                 setShowCSVTypeMenu(false);
                                             }}
-                                            style={{ display: 'none' }}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100%',
+                                                height: '100%',
+                                                opacity: 0,
+                                                cursor: 'pointer'
+                                            }}
                                         />
                                     </div>
                                     
                                     {/* Commandes */}
-                                    <div className="border-b">
-                                        <label
-                                            htmlFor="input-csv-commandes"
-                                            className="w-full px-4 py-2 hover:bg-gray-50 text-sm cursor-pointer flex items-center"
-                                        >
+                                    <div className="border-b relative">
+                                        <div className="w-full px-4 py-2 hover:bg-gray-50 text-sm">
                                             📦 Commandes
-                                        </label>
+                                        </div>
                                         <input
-                                            id="input-csv-commandes"
                                             type="file"
                                             accept=".csv"
                                             onChange={(e) => {
+                                                console.log('🔵 CSV Commandes sélectionné');
                                                 handleImportCSV(e, 'commandes');
                                                 setShowImportMenu(false);
                                                 setShowCSVTypeMenu(false);
                                             }}
-                                            style={{ display: 'none' }}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100%',
+                                                height: '100%',
+                                                opacity: 0,
+                                                cursor: 'pointer'
+                                            }}
                                         />
                                     </div>
                                     
                                     {/* Offres */}
-                                    <div className="border-b">
-                                        <label
-                                            htmlFor="input-csv-offres"
-                                            className="w-full px-4 py-2 hover:bg-gray-50 text-sm cursor-pointer flex items-center"
-                                        >
+                                    <div className="border-b relative">
+                                        <div className="w-full px-4 py-2 hover:bg-gray-50 text-sm">
                                             💼 Offres
-                                        </label>
+                                        </div>
                                         <input
-                                            id="input-csv-offres"
                                             type="file"
                                             accept=".csv"
                                             onChange={(e) => {
+                                                console.log('🔵 CSV Offres sélectionné');
                                                 handleImportCSV(e, 'offres');
                                                 setShowImportMenu(false);
                                                 setShowCSVTypeMenu(false);
                                             }}
-                                            style={{ display: 'none' }}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100%',
+                                                height: '100%',
+                                                opacity: 0,
+                                                cursor: 'pointer'
+                                            }}
                                         />
                                     </div>
                                     
                                     {/* Offres Complémentaires */}
-                                    <div className="border-b">
-                                        <label
-                                            htmlFor="input-csv-oc"
-                                            className="w-full px-4 py-2 hover:bg-gray-50 text-sm cursor-pointer flex items-center"
-                                        >
+                                    <div className="border-b relative">
+                                        <div className="w-full px-4 py-2 hover:bg-gray-50 text-sm">
                                             ➕ Offres Complémentaires
-                                        </label>
+                                        </div>
                                         <input
-                                            id="input-csv-oc"
                                             type="file"
                                             accept=".csv"
                                             onChange={(e) => {
+                                                console.log('🔵 CSV OC sélectionné');
                                                 handleImportCSV(e, 'offresComplementaires');
                                                 setShowImportMenu(false);
                                                 setShowCSVTypeMenu(false);
                                             }}
-                                            style={{ display: 'none' }}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100%',
+                                                height: '100%',
+                                                opacity: 0,
+                                                cursor: 'pointer'
+                                            }}
                                         />
                                     </div>
                                     
                                     {/* Régies */}
-                                    <div>
-                                        <label
-                                            htmlFor="input-csv-regies"
-                                            className="w-full px-4 py-2 hover:bg-gray-50 text-sm cursor-pointer flex items-center"
-                                        >
+                                    <div className="relative">
+                                        <div className="w-full px-4 py-2 hover:bg-gray-50 text-sm">
                                             ⏱️ Régies
-                                        </label>
+                                        </div>
                                         <input
-                                            id="input-csv-regies"
                                             type="file"
                                             accept=".csv"
                                             onChange={(e) => {
+                                                console.log('🔵 CSV Régies sélectionné');
                                                 handleImportCSV(e, 'regies');
                                                 setShowImportMenu(false);
                                                 setShowCSVTypeMenu(false);
                                             }}
-                                            style={{ display: 'none' }}
+                                            style={{
+                                                position: 'absolute',
+                                                top: 0,
+                                                left: 0,
+                                                width: '100%',
+                                                height: '100%',
+                                                opacity: 0,
+                                                cursor: 'pointer'
+                                            }}
                                         />
                                     </div>
                                     
