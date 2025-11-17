@@ -1,11 +1,9 @@
 // Modal de configuration OneDrive
-const { useState, useEffect } = React;
-
 window.OneDriveConfigModal = ({ onClose }) => {
-    const [clientId, setClientId] = useState('');
-    const [isConfigured, setIsConfigured] = useState(false);
+    const [clientId, setClientId] = React.useState('');
+    const [isConfigured, setIsConfigured] = React.useState(false);
 
-    useEffect(() => {
+    React.useEffect(() => {
         const savedClientId = window.getOneDriveClientId();
         if (savedClientId) {
             setClientId(savedClientId);
@@ -90,10 +88,10 @@ window.OneDriveConfigModal = ({ onClose }) => {
                             target: "_blank",
                             className: "underline font-semibold"
                         }, 'Azure Portal')),
-                        React.createElement('li', null, 'Recherchez "App registrations" (Inscriptions d\'applications)'),
-                        React.createElement('li', null, 'Cliquez sur "New registration" (Nouvelle inscription)'),
-                        React.createElement('li', null, 'Nom : "Construction Management" (ou autre)'),
-                        React.createElement('li', null, 'Account types : Cochez "Accounts in any organizational directory and personal Microsoft accounts"'),
+                        React.createElement('li', null, 'Recherchez "App registrations"'),
+                        React.createElement('li', null, 'Cliquez sur "New registration"'),
+                        React.createElement('li', null, 'Nom : "Construction Management"'),
+                        React.createElement('li', null, 'Account types : "Accounts in any organizational directory and personal Microsoft accounts"'),
                         React.createElement('li', null, 'Cliquez sur "Register"'),
                         React.createElement('li', null, React.createElement('strong', null, 'Copiez le "Application (client) ID"')),
                         React.createElement('li', null, 'Collez-le ci-dessous')
@@ -139,7 +137,7 @@ window.OneDriveConfigModal = ({ onClose }) => {
                             className: "text-xs text-yellow-800"
                         },
                             React.createElement('strong', null, 'Note de sécurité :'),
-                            ' Le Client ID est stocké localement dans votre navigateur. Il n\'est pas envoyé à un serveur externe. OneDrive utilise OAuth pour l\'authentification sécurisée.'
+                            ' Le Client ID est stocké localement dans votre navigateur.'
                         )
                     )
                 )
