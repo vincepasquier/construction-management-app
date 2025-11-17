@@ -29,37 +29,39 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
     
     // Pré-remplir depuis une commande
     const handleCommandeChange = (commandeId) => {
-        if (!commandeId) {
-            setFormData({
-                ...formData,
-                commandeId: '',
-                numeroIncrement: '',
-                fournisseur: '',
-                lots: [],
-                positions0: [],
-                positions1: []
-            });
-            return;
-        }
+    if (!commandeId) {
+        setFormData({
+            ...formData,
+            commandeId: '',
+            numeroIncrement: '',
+            fournisseur: '',
+            lots: [],
+            positions0: [],
+            positions1: []
+        });
+        return;
+    }
 
-        const commande = commandes.find(c => c.id === commandeId);
-        if (commande) {
-            // Calculer le prochain numéro incrémental
-            const regiesCommande = regies.filter(r => r.commandeId === commandeId);
-            const nextIncrement = regiesCommande.length + 1;
+    const commande = commandes && commandes.find(c => c.id === commandeId);
+    if (commande) {
+        // Calculer le prochain numéro incrémental
+        const regiesCommande = regies && Array.isArray(regies) 
+            ? regies.filter(r => r.commandeId === commandeId) 
+            : [];
+        const nextIncrement = regiesCommande.length + 1;
 
-            setFormData({
-                ...formData,
-                commandeId: commandeId,
-                numeroIncrement: nextIncrement.toString(),
-                fournisseur: commande.fournisseur,
-                lots: commande.lots || [],
-                positions0: commande.positions0 || [],
-                positions1: commande.positions1 || [],
-                etape: commande.etape || ''
-            });
-        }
-    };
+        setFormData({
+            ...formData,
+            commandeId: commandeId,
+            numeroIncrement: nextIncrement.toString(),
+            fournisseur: commande.fournisseur,
+            lots: commande.lots || [],
+            positions0: commande.positions0 || [],
+            positions1: commande.positions1 || [],
+            etape: commande.etape || ''
+        });
+    }
+};
 
     // Handler pour le SmartSelector
     const handleSelectionChange = ({ lots, positions0, positions1 }) => {
@@ -125,25 +127,25 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                             <label className="block text-sm font-medium mb-1">
                                 Commande <span className="text-red-500">*</span>
                             </label>
-                            <select
-                                value={formData.commandeId}
-                                onChange={(e) => handleCommandeChange(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-lg"
-                            >
-                                <option value="">-- Sélectionner une commande --</option>
-                                {commandes
-                                    .filter(c => c.statut !== 'Annulée')
-                                    .map(commande => {
-                                        const regiesCount = regies.filter(r => r.commandeId === commande.id).length;
-                                        return (
-                                            <option key={commande.id} value={commande.id}>
-                                                {commande.numero} - {commande.fournisseur} 
-                                                {regiesCount > 0 ? ` (${regiesCount} régie${regiesCount > 1 ? 's' : ''})` : ''}
-                                            </option>
-                                        );
-                                    })
-                                }
-                            </select>
+                                <select
+                                    value={formData.commandeId}
+                                    onChange={(e) => handleCommandeChange(e.target.value)}
+                                    className="w-full px-3 py-2 border rounded-lg"
+                                >
+                                    <option value="">-- Sélectionner une commande --</option>
+                                    {commandes && Array.isArray(commandes) && commandes
+                                        .filter(c => c.statut !== 'Annulée')
+                                        .map(commande => {
+                                            const regiesCount = regies.filter(r => r.commandeId === commande.id).length;
+                                            return (
+                                                <option key={commande.id} value={commande.id}>
+                                                    {commande.numero} - {commande.fournisseur} 
+                                                    {regiesCount > 0 ? ` (${regiesCount} régie${regiesCount > 1 ? 's' : ''})` : ''}
+                                                </option>
+                                            );
+                                        })
+                                    }
+                                </select>
                             {formData.commandeId && formData.numeroIncrement && (
                                 <p className="text-xs text-blue-600 mt-1">
                                     📋 Cette régie sera le n° <strong>REG-{formData.numeroIncrement}</strong> pour cette commande
