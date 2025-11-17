@@ -123,6 +123,7 @@
   // Import JSON Session complète - VERSION DEBUG
 const handleImportJSON = (event) => {
     console.log('🔵 handleImportJSON appelé'); // TEST 1
+     setShowImportMenu(false);  // 🆕 FERMER LE MENU ICI
     
     const file = event.target.files[0];
     console.log('🔵 Fichier sélectionné:', file); // TEST 2
