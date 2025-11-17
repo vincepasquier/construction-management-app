@@ -2,7 +2,7 @@
 // APPLICATION PRINCIPALE - AVEC SMARTTABLE
 // ========================================
 const { useState, useEffect } = React;
-const { Plus, Trash2, Edit2, Upload, Download, FileJson, FileSpreadsheet, ChevronDown } = window.Icons;  // 🆕 MODIFIÉ
+const { Plus, Trash2, Edit2, Upload, Download } = window.Icons;  // 🆕 MODIFIÉ
 
 const ConstructionManagement = () => {
     // ========================================
@@ -487,75 +487,77 @@ const ConstructionManagement = () => {
     // ========================================
     // 🆕 COMPOSANT MENU D'IMPORT
     // ========================================
-    const ImportMenu = () => {
-        return (
-            <div className="relative">
-                <button
-                    onClick={() => setShowImportMenu(!showImportMenu)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
-                >
-                    <Upload size={20} />
-                    Importer
-                    <ChevronDown size={16} />
-                </button>
-                
-                {showImportMenu && (
-                    <>
-                        <div 
-                            className="fixed inset-0 z-40"
-                            onClick={() => setShowImportMenu(false)}
-                        />
+const ImportMenu = () => {
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setShowImportMenu(!showImportMenu)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg flex items-center gap-2 hover:bg-green-700"
+            >
+                <Upload size={20} />
+                Importer
+                <span className="text-xs">▼</span>
+            </button>
+            
+            {showImportMenu && (
+                <>
+                    <div 
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowImportMenu(false)}
+                    />
+                    
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                        {/* Session JSON */}
+                        <button
+                            onClick={() => {
+                                importJSONRef.current?.click();
+                                setShowImportMenu(false);
+                            }}
+                            className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b"
+                        >
+                            <span className="text-2xl">📄</span>
+                            <div>
+                                <div className="font-semibold text-gray-800">Session complète</div>
+                                <div className="text-xs text-gray-500">Fichier JSON (toutes les données)</div>
+                            </div>
+                        </button>
                         
-                        <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                            <button
-                                onClick={() => {
-                                    importJSONRef.current?.click();
-                                    setShowImportMenu(false);
-                                }}
-                                className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b"
-                            >
-                                <FileJson size={20} className="text-purple-600" />
-                                <div>
-                                    <div className="font-semibold text-gray-800">Session complète</div>
-                                    <div className="text-xs text-gray-500">Fichier JSON (toutes les données)</div>
-                                </div>
-                            </button>
-                            
-                            <button
-                                onClick={() => {
-                                    importFacturesCSVRef.current?.click();
-                                    setShowImportMenu(false);
-                                }}
-                                className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3"
-                            >
-                                <FileSpreadsheet size={20} className="text-green-600" />
-                                <div>
-                                    <div className="font-semibold text-gray-800">Factures CSV</div>
-                                    <div className="text-xs text-gray-500">Import depuis Excel/CSV</div>
-                                </div>
-                            </button>
-                        </div>
-                    </>
-                )}
-                
-                <input
-                    ref={importJSONRef}
-                    type="file"
-                    accept=".json"
-                    onChange={handleImportJSON}
-                    className="hidden"
-                />
-                
-                <input
-                    ref={importFacturesCSVRef}
-                    type="file"
-                    accept=".csv"
-                    onChange={handleImportFacturesCSV}
-                    className="hidden"
-                />
-            </div>
-        );
-    };
+                        {/* Factures CSV */}
+                        <button
+                            onClick={() => {
+                                importFacturesCSVRef.current?.click();
+                                setShowImportMenu(false);
+                            }}
+                            className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3"
+                        >
+                            <span className="text-2xl">📊</span>
+                            <div>
+                                <div className="font-semibold text-gray-800">Factures CSV</div>
+                                <div className="text-xs text-gray-500">Import depuis Excel/CSV</div>
+                            </div>
+                        </button>
+                    </div>
+                </>
+            )}
+            
+            <input
+                ref={importJSONRef}
+                type="file"
+                accept=".json"
+                onChange={handleImportJSON}
+                className="hidden"
+            />
+            
+            <input
+                ref={importFacturesCSVRef}
+                type="file"
+                accept=".csv"
+                onChange={handleImportFacturesCSV}
+                className="hidden"
+            />
+        </div>
+    );
+};
 
     // ========================================
     // RENDU PRINCIPAL
