@@ -63,15 +63,15 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
     }
 };
 
-    // Handler pour le SmartSelector
-    const handleSelectionChange = ({ lots, positions0, positions1 }) => {
-        setFormData({
-            ...formData,
-            lots,
-            positions0,
-            positions1
-        });
-    };
+            // Handler pour le SmartSelector
+            const handleSelectionChange = ({ lots, positions0, positions1 }) => {
+                setFormData({
+                    ...formData,
+                    lots: lots || [],
+                    positions0: positions0 || [],
+                    positions1: positions1 || []
+                });
+            };
 
     const handleSubmit = () => {
         if (!formData.numero || !formData.fournisseur || !formData.montantTotal) {
@@ -196,11 +196,11 @@ window.RegieModal = ({ initialData, onClose, onSave, commandes = [], regies = []
                     <div className="p-4 bg-gray-50 rounded-lg">
                         <h3 className="font-medium mb-3">📦 Classification</h3>
                         <window.SmartSelector
-                            estimations={estimations}
-                            selectedLots={formData.lots}
-                            selectedPositions0={formData.positions0}
-                            selectedPositions1={formData.positions1}
-                            onSelectionChange={handleSelectionChange}
+                            estimations={estimations || []}
+                            selectedLots={formData?.lots || []}
+                            selectedPos0={formData?.positions0 || []}
+                            selectedPos1={formData?.positions1 || []}
+                            onChange={handleSelectionChange}
                         />
                     </div>
 
