@@ -1834,7 +1834,7 @@ const ImportMenu = () => {
                     }}
                     onSave={handleSaveOffreComp}
                     estimations={estimations}
-                    offres={offres}
+                    commandes={commandes}  
                 />
             )}
 
