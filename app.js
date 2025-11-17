@@ -131,13 +131,13 @@ const ConstructionManagement = () => {
                     throw new Error('Format de fichier invalide');
                 }
                 
-                const stats = `• ${sessionData.data.estimations?.length || 0} estimation(s)
-- ${sessionData.data.appelOffres?.length || 0} appel(s) d'offres
-- ${sessionData.data.offres?.length || 0} offre(s)
-- ${sessionData.data.commandes?.length || 0} commande(s)
-- ${sessionData.data.offresComplementaires?.length || 0} offre(s) complémentaire(s)
-- ${sessionData.data.regies?.length || 0} régie(s)
-- ${sessionData.data.factures?.length || 0} facture(s)`;
+               const stats = `• ${sessionData.data.estimations?.length || 0} estimation(s)
+                - ${sessionData.data.appelOffres?.length || 0} appel(s) d'offres
+                - ${sessionData.data.offres?.length || 0} offre(s)
+                - ${sessionData.data.commandes?.length || 0} commande(s)
+                - ${sessionData.data.offresComplementaires?.length || 0} offre(s) complémentaire(s)
+                - ${sessionData.data.regies?.length || 0} régie(s)
+                - ${sessionData.data.factures?.length || 0} facture(s)`;
                 
                 const confirmation = confirm(
                     `⚠️ ATTENTION !\n\n` +
