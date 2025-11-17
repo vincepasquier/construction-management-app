@@ -1450,25 +1450,63 @@ const ImportMenu = () => {
                                 { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
                             ]}
                             renderRow={(cmd) => (
-                                <tr key={cmd.id} className="border-t hover:bg-gray-50">
-                                    <td className="px-4 py-3 font-medium text-blue-600">{cmd.numero}</td>
-                                    <td className="px-4 py-3">{cmd.fournisseur}</td>
-                                    <td className="px-4 py-3 text-xs">{cmd.lots?.join(', ') || '-'}</td>
-                                    <td className="px-4 py-3 text-center text-sm">
-                                        {new Date(cmd.dateCommande).toLocaleDateString('fr-CH')}
-                                    </td>
-                                    <td className="px-4 py-3 text-center">
-                                        <span className={`px-2 py-1 rounded text-xs ${
-                                            cmd.statut === 'Terminée' ? 'bg-green-100 text-green-800' :
-                                            cmd.statut === 'Annulée' ? 'bg-red-100 text-red-800' :
-                                            'bg-yellow-100 text-yellow-800'
-                                        }`}>
-                                            {cmd.statut || 'En cours'}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-right font-medium">
-                                        {(cmd.calculatedMontant || cmd.montant || 0).toLocaleString('fr-CH')} CHF
-                                    </td>
+                                    // Calculer le budget régie consommé
+                                    const regiesLiees = regies.filter(r => r.commandeId === cmd.id);
+                                    const regieConsommee = regiesLiees.reduce((sum, r) => sum + (r.montantTotal || 0), 0);
+                                    const budgetRegie = cmd.budgetRegie || 0;
+                                    const resteRegie = budgetRegie - regieConsommee;
+                                    const pourcentageRegie = budgetRegie > 0 ? ((regieConsommee / budgetRegie) * 100).toFixed(0) : 0;
+                                    
+                                    return (
+                                        <tr key={cmd.id} className="border-t hover:bg-gray-50">
+                                            <td className="px-4 py-3 font-medium text-blue-600">{cmd.numero}</td>
+                                            <td className="px-4 py-3">{cmd.fournisseur}</td>
+                                            <td className="px-4 py-3 text-xs">{cmd.lots?.join(', ') || '-'}</td>
+                                            <td className="px-4 py-3 text-center text-sm">
+                                                {new Date(cmd.dateCommande).toLocaleDateString('fr-CH')}
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                <span className={`px-2 py-1 rounded text-xs ${
+                                                    cmd.statut === 'Terminée' ? 'bg-green-100 text-green-800' :
+                                                    cmd.statut === 'Annulée' ? 'bg-red-100 text-red-800' :
+                                                    'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                    {cmd.statut || 'En cours'}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-right font-medium">
+                                                {(cmd.calculatedMontant || cmd.montant || 0).toLocaleString('fr-CH')} CHF
+                                            </td>
+                                            
+                                            {/* 🆕 NOUVELLE COLONNE : Budget Régie */}
+                                            <td className="px-4 py-3 text-center">
+                                                {budgetRegie > 0 ? (
+                                                    <div className="text-xs">
+                                                        <div className={`font-semibold ${
+                                                            resteRegie < 0 ? 'text-red-600' : 
+                                                            pourcentageRegie > 80 ? 'text-orange-600' : 
+                                                            'text-green-600'
+                                                        }`}>
+                                                            {resteRegie.toLocaleString('fr-CH')} CHF
+                                                        </div>
+                                                        <div className="text-gray-500">
+                                                            {pourcentageRegie}% utilisé
+                                                        </div>
+                                                        <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
+                                                            <div 
+                                                                className={`h-1 rounded-full ${
+                                                                    resteRegie < 0 ? 'bg-red-600' : 
+                                                                    pourcentageRegie > 80 ? 'bg-orange-500' : 
+                                                                    'bg-green-500'
+                                                                }`}
+                                                                style={{ width: `${Math.min(pourcentageRegie, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400">-</span>
+                                                )}
+                                            </td>
                                     <td className="px-4 py-3 text-center">
                                         <div className="flex items-center justify-center gap-2">
                                             <button 
@@ -1539,6 +1577,7 @@ const ImportMenu = () => {
                                 { key: 'dateDebut', label: 'Date début', align: 'center' },
                                 { key: 'dateFin', label: 'Date fin', align: 'center' },
                                 { key: 'montantTotal', label: 'Montant Total (CHF)', align: 'right' },
+                                { key: 'budgetRegie', label: 'Budget Régie', align: 'center' },
                                 { key: 'actions', label: 'Actions', sortable: false, filterable: false, align: 'center', width: '120px' }
                             ]}
                         renderRow={(regie) => {
