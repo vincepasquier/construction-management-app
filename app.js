@@ -34,7 +34,8 @@
     const [editingEstimation, setEditingEstimation] = useState(null);
     const [showImportMenu, setShowImportMenu] = useState(false);
     const [showCSVTypeMenu, setShowCSVTypeMenu] = useState(false);  // 🆕 NOUVEAU
-    const [selectedCSVType, setSelectedCSVType] = useState(null);    // 🆕 NOUVEAU
+    const [selectedCSVType, setSelectedCSVType] = useState(null);
+    const [showOneDriveConfig, setShowOneDriveConfig] = useState(false);// 🆕 NOUVEAU
 
 
     // ========================================
@@ -950,26 +951,166 @@ const ImportMenu = () => {
                                 Session: {sessionName}
                             </p>
                         </div>
-                        {/* 🆕 MODIFIÉ - Nouveaux boutons */}
-                        <div className="flex gap-2">
-                            <ImportMenu />
-                            <button
-                                onClick={handleExportJSON}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-                            >
-                                <Download size={20} />
-                                Exporter Session
-                            </button>
-                            {/* 🆕 BOUTON RESET */}
-                            <button
-                                onClick={handleResetSession}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
-                                title="Réinitialiser complètement la session"
-                            >
-                                <Trash2 size={20} />
-                                Reset
-                            </button>
-                        </div>
+{/* 🆕 MODIFIÉ - Boutons avec OneDrive */}
+<div className="flex gap-2">
+    {/* Bouton Configuration OneDrive */}
+    <button
+        onClick={() => setShowOneDriveConfig(true)}
+        className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
+            window.isOneDriveConfigured && window.isOneDriveConfigured() 
+                ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+        }`}
+        title="Configurer OneDrive"
+    >
+        ⚙️ OneDrive
+        {window.isOneDriveConfigured && window.isOneDriveConfigured() ? ' ✓' : ' !'}
+    </button>
+    
+    {/* Import OneDrive */}
+    <button
+        onClick={async () => {
+            if (!window.isOneDriveConfigured || !window.isOneDriveConfigured()) {
+                alert('⚠️ Veuillez d\'abord configurer OneDrive en cliquant sur le bouton "⚙️ OneDrive"');
+                setShowOneDriveConfig(true);
+                return;
+            }
+            
+            try {
+                const result = await window.loadFromOneDrive();
+                
+                if (result.success && result.data) {
+                    const sessionData = result.data;
+                    
+                    const stats = `• ${sessionData.data.estimations?.length || 0} estimation(s)
+- ${sessionData.data.appelOffres?.length || 0} appel(s) d'offres
+- ${sessionData.data.offres?.length || 0} offre(s)
+- ${sessionData.data.commandes?.length || 0} commande(s)
+- ${sessionData.data.offresComplementaires?.length || 0} offre(s) complémentaire(s)
+- ${sessionData.data.regies?.length || 0} régie(s)
+- ${sessionData.data.factures?.length || 0} facture(s)`;
+                    
+                    const confirmation = confirm(
+                        `⚠️ ATTENTION !\n\n` +
+                        `Cette action va REMPLACER toutes vos données actuelles par :\n\n` +
+                        stats + `\n\n` +
+                        `Fichier : ${result.fileName}\n` +
+                        `Session : ${sessionData.sessionName || 'Sans nom'}\n\n` +
+                        `Voulez-vous continuer ?`
+                    );
+                    
+                    if (!confirmation) return;
+                    
+                    // Restaurer toutes les données
+                    setEstimations(sessionData.data.estimations || []);
+                    setAppelOffres(sessionData.data.appelOffres || []);
+                    setOffres(sessionData.data.offres || []);
+                    setCommandes(sessionData.data.commandes || []);
+                    setOffresComplementaires(sessionData.data.offresComplementaires || []);
+                    setRegies(sessionData.data.regies || []);
+                    setFactures(sessionData.data.factures || []);
+                    
+                    // Sauvegarder localement
+                    window.saveData('estimations', sessionData.data.estimations || []);
+                    window.saveData('appelOffres', sessionData.data.appelOffres || []);
+                    window.saveData('offres', sessionData.data.offres || []);
+                    window.saveData('commandes', sessionData.data.commandes || []);
+                    window.saveData('offresComplementaires', sessionData.data.offresComplementaires || []);
+                    window.saveData('regies', sessionData.data.regies || []);
+                    window.saveData('factures', sessionData.data.factures || []);
+                    
+                    // Restaurer le nom de session
+                    if (sessionData.sessionName) {
+                        handleSessionNameChange(sessionData.sessionName);
+                    }
+                    
+                    alert(`✅ Session restaurée depuis OneDrive !\n\n` + stats);
+                }
+            } catch (error) {
+                console.error("Erreur:", error);
+                if (error.message && error.message.includes("non configuré")) {
+                    alert('⚠️ ' + error.message);
+                    setShowOneDriveConfig(true);
+                } else if (!error.message || error.message !== "Aucun fichier sélectionné") {
+                    alert('❌ Erreur lors de l\'import depuis OneDrive');
+                }
+            }
+        }}
+        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+        title="Importer depuis OneDrive"
+    >
+        ☁️ Import OneDrive
+    </button>
+    
+    {/* Export OneDrive */}
+    <button
+        onClick={async () => {
+            if (!window.isOneDriveConfigured || !window.isOneDriveConfigured()) {
+                alert('⚠️ Veuillez d\'abord configurer OneDrive en cliquant sur le bouton "⚙️ OneDrive"');
+                setShowOneDriveConfig(true);
+                return;
+            }
+            
+            try {
+                const sessionData = {
+                    version: '1.0',
+                    exportDate: new Date().toISOString(),
+                    sessionName: sessionName,
+                    data: {
+                        estimations: estimations,
+                        appelOffres: appelOffres,
+                        offres: offres,
+                        commandes: commandes,
+                        offresComplementaires: offresComplementaires,
+                        regies: regies,
+                        factures: factures
+                    }
+                };
+                
+                const result = await window.saveToOneDrive(sessionName, sessionData);
+                
+                if (result.success) {
+                    alert(`✅ Session sauvegardée sur OneDrive !\n\nFichier : ${result.fileName}`);
+                }
+            } catch (error) {
+                console.error("Erreur:", error);
+                if (error.message && error.message.includes("non configuré")) {
+                    alert('⚠️ ' + error.message);
+                    setShowOneDriveConfig(true);
+                } else {
+                    alert('❌ Erreur lors de l\'export vers OneDrive');
+                }
+            }
+        }}
+        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        title="Exporter vers OneDrive"
+    >
+        ☁️ Export OneDrive
+    </button>
+    
+    {/* Menu Import local */}
+    <ImportMenu />
+    
+    {/* Export JSON local */}
+    <button
+        onClick={handleExportJSON}
+        className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center gap-2"
+        title="Télécharger localement"
+    >
+        <Download size={20} />
+        Export Local
+    </button>
+    
+    {/* Bouton Reset */}
+    <button
+        onClick={handleResetSession}
+        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
+        title="Réinitialiser complètement la session"
+    >
+        <Trash2 size={20} />
+        Reset
+    </button>
+</div>
                     </div>
                 </div>
             </div>
@@ -1960,6 +2101,12 @@ const ImportMenu = () => {
                     }}
                     onUpdateOffres={handleUpdateFavorites}
                     onCreateCommande={handleCreateCommandeFromAO}
+                />
+            )}
+       {/* 🆕 Modal Configuration OneDrive */}
+            {showOneDriveConfig && (
+                <window.OneDriveConfigModal
+                    onClose={() => setShowOneDriveConfig(false)}
                 />
             )}
         </div>
