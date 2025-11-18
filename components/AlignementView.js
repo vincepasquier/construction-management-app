@@ -1,4 +1,4 @@
-// Vue Alignement & Atterrissage - VERSION FINALE AVEC DÉTAILS
+// Vue Alignement & Atterrissage - VERSION CORRIGÉE
 window.AlignementView = ({ 
     estimations, 
     offres, 
@@ -15,6 +15,9 @@ window.AlignementView = ({
     onEditFacture,
     onEditRegie
 }) => {
+    // Déstructurer les icônes en premier
+    const { ChevronRight, Eye, X, Plus } = window.Icons;
+    
     // ========================================
     // ÉTATS
     // ========================================
@@ -82,7 +85,6 @@ window.AlignementView = ({
             if (item.etape) etapesSet.add(item.etape);
         });
 
-        // Positions 0 filtrées selon les lots sélectionnés
         estimations.forEach(e => {
             const estLots = e.lots || [];
             if (selectedLots.length === 0 || selectedLots.some(lot => estLots.includes(lot))) {
@@ -90,7 +92,6 @@ window.AlignementView = ({
             }
         });
 
-        // Positions 1 filtrées selon les positions 0 sélectionnées
         estimations.forEach(e => {
             const estPos0 = e.positions0 || [];
             const estLots = e.lots || [];
@@ -127,17 +128,14 @@ window.AlignementView = ({
     };
 
     // ========================================
-    // DONNÉES HIÉRARCHIQUES : LOT > POS0 > POS1
+    // DONNÉES HIÉRARCHIQUES
     // ========================================
     const hierarchicalData = React.useMemo(() => {
         const lotMap = new Map();
-
-        // Récupérer tous les lots
         const allLots = new Set();
         estimations.forEach(e => (e.lots || []).forEach(lot => allLots.add(lot)));
 
         allLots.forEach(lot => {
-            // Positions 0 du lot
             const pos0Set = new Set();
             estimations.filter(e => e.lots?.includes(lot)).forEach(e => {
                 (e.positions0 || []).forEach(p => pos0Set.add(p));
@@ -145,7 +143,6 @@ window.AlignementView = ({
 
             const positions0 = [];
             pos0Set.forEach(pos0 => {
-                // Positions 1 de la position 0
                 const pos1Set = new Set();
                 estimations.filter(e => e.lots?.includes(lot) && e.positions0?.includes(pos0)).forEach(e => {
                     (e.positions1 || []).forEach(p => pos1Set.add(p));
@@ -205,11 +202,7 @@ window.AlignementView = ({
                     prevu: engagePos0,
                     ecart: engagePos0 - estPos0,
                     ecartPourcent: estPos0 > 0 ? ((engagePos0 - estPos0) / estPos0 * 100) : 0,
-                    children: positions1.sort((a, b) => {
-                        const pos1A = String(a.pos1 || '');
-                        const pos1B = String(b.pos1 || '');
-                        return pos1A.localeCompare(pos1B);
-                    })
+                    children: positions1.sort((a, b) => String(a.pos1 || '').localeCompare(String(b.pos1 || '')))
                 });
             });
 
@@ -237,19 +230,11 @@ window.AlignementView = ({
                 prevu: engageLot,
                 ecart: engageLot - estLot,
                 ecartPourcent: estLot > 0 ? ((engageLot - estLot) / estLot * 100) : 0,
-                children: positions0.sort((a, b) => {
-                    const pos0A = String(a.pos0 || '');
-                    const pos0B = String(b.pos0 || '');
-                    return pos0A.localeCompare(pos0B);
-                })
+                children: positions0.sort((a, b) => String(a.pos0 || '').localeCompare(String(b.pos0 || '')))
             });
         });
 
-        return Array.from(lotMap.values()).sort((a, b) => {
-    const lotA = String(a.lot || '');
-    const lotB = String(b.lot || '');
-    return lotA.localeCompare(lotB);
-});
+        return Array.from(lotMap.values()).sort((a, b) => String(a.lot || '').localeCompare(String(b.lot || '')));
     }, [estimations, commandes, calculateProrata]);
 
     // ========================================
@@ -259,7 +244,6 @@ window.AlignementView = ({
         const details = [];
         const { lot, pos0, pos1 } = row;
 
-        // Récupérer toutes les commandes concernées
         const relatedCommandes = commandes.filter(cmd => {
             const prorata = calculateProrata(cmd, lot, pos0, pos1);
             return prorata > 0;
@@ -270,7 +254,6 @@ window.AlignementView = ({
             const montantBase = cmd.calculatedMontant || cmd.montant || 0;
             const montantProrata = montantBase * prorata;
 
-            // Ajouter la commande
             details.push({
                 type: 'commande',
                 typeLabel: '📦 Commande',
@@ -287,7 +270,6 @@ window.AlignementView = ({
                 data: cmd
             });
 
-            // Ajouter les factures liées
             const facturesLiees = factures.filter(f => f.commandeId === cmd.id);
             facturesLiees.forEach(f => {
                 const montantFacture = f.montantTTC || f.montantHT || 0;
@@ -309,7 +291,6 @@ window.AlignementView = ({
                 });
             });
 
-            // Ajouter les régies liées
             const regiesLiees = regies.filter(r => r.commandeId === cmd.id);
             regiesLiees.forEach(r => {
                 const prorataRegie = calculateProrata(r, lot, pos0, pos1);
@@ -332,7 +313,6 @@ window.AlignementView = ({
                 });
             });
 
-            // Ajouter les OC liées
             const ocLiees = offresComplementaires.filter(oc => oc.commandeId === cmd.id);
             ocLiees.forEach(oc => {
                 const prorataOC = calculateProrata(oc, lot, pos0, pos1);
@@ -356,7 +336,6 @@ window.AlignementView = ({
             });
         });
 
-        // Factures hors commandes (orphelines)
         const facturesOrphelines = factures.filter(f => {
             if (f.commandeId) return false;
             const fLots = f.lots || [];
@@ -391,15 +370,12 @@ window.AlignementView = ({
             });
         });
 
-        // Trier : par commande d'abord, puis hors commandes
         return details.sort((a, b) => {
             if (a.commandeNumero === 'HORS COMMANDES' && b.commandeNumero !== 'HORS COMMANDES') return 1;
             if (a.commandeNumero !== 'HORS COMMANDES' && b.commandeNumero === 'HORS COMMANDES') return -1;
             if (a.commandeNumero !== b.commandeNumero) {
-                const numA = String(a.commandeNumero || '');
-                const numB = String(b.commandeNumero || '');
-                return numA.localeCompare(numB);
-                }
+                return String(a.commandeNumero || '').localeCompare(String(b.commandeNumero || ''));
+            }
             const typeOrder = { 'commande': 0, 'facture': 1, 'regie': 2, 'oc': 3 };
             return typeOrder[a.type] - typeOrder[b.type];
         });
@@ -561,7 +537,7 @@ window.AlignementView = ({
                 )
             ),
 
-            // Tableau de détails si ligne sélectionnée
+            // Tableau de détails
             isSelected && React.createElement('tr', { className: 'bg-blue-50' },
                 React.createElement('td', { colSpan: 9, className: 'px-4 py-4' },
                     React.createElement('div', { className: 'bg-white rounded-lg border' },
@@ -645,7 +621,7 @@ window.AlignementView = ({
                                                         className: 'text-blue-600 hover:text-blue-800',
                                                         title: 'Ouvrir'
                                                     },
-                                                        React.createElement(window.Icons.Eye, { size: 16 })
+                                                        React.createElement(Eye, { size: 16 })
                                                     )
                                                 )
                                             )
@@ -672,7 +648,7 @@ window.AlignementView = ({
             React.createElement('p', { className: 'text-gray-600 mt-1' }, 'Réconciliation estimation vs réalisé et prévisions finales')
         ),
 
-        // Filtres en cascade
+        // Filtres
         React.createElement('div', { className: 'bg-white rounded-lg border p-6' },
             React.createElement('div', { className: 'flex items-center justify-between mb-4' },
                 React.createElement('h3', { className: 'text-lg font-bold' }, '🔍 Filtres'),
@@ -680,7 +656,7 @@ window.AlignementView = ({
                     onClick: resetFilters,
                     className: 'text-sm text-red-600 hover:text-red-800 hover:underline flex items-center gap-1'
                 },
-                    React.createElement(window.Icons.X, { size: 16 }),
+                    React.createElement(X, { size: 16 }),
                     'Réinitialiser'
                 )
             ),
@@ -759,7 +735,7 @@ window.AlignementView = ({
             )
         ),
 
-        // Tableau de réconciliation hiérarchique
+        // Tableau
         React.createElement('div', { className: 'bg-white rounded-lg border p-6' },
             React.createElement('div', { className: 'flex justify-between items-center mb-4' },
                 React.createElement('h3', { className: 'text-lg font-bold' }, '📋 Réconciliation par Lot'),
@@ -770,13 +746,13 @@ window.AlignementView = ({
                     },
                     className: 'px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2'
                 },
-                    React.createElement(window.Icons.Plus, { size: 16 }),
+                    React.createElement(Plus, { size: 16 }),
                     'Ajouter un ajustement'
                 )
             ),
             selectedRowForDetails && React.createElement('div', { className: 'mb-4 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm' },
                 React.createElement('span', { className: 'font-semibold' }, '💡 Astuce : '),
-                'Cliquez sur une ligne pour voir ses détails (commandes, factures, régies...). Cliquez à nouveau pour fermer.'
+                'Cliquez sur une ligne pour voir ses détails. Cliquez à nouveau pour fermer.'
             ),
             React.createElement('div', { className: 'overflow-x-auto' },
                 React.createElement('table', { className: 'w-full' },
@@ -856,5 +832,3 @@ window.AlignementView = ({
         })
     );
 };
-
-    
