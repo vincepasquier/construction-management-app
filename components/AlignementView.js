@@ -395,7 +395,11 @@ window.AlignementView = ({
         return details.sort((a, b) => {
             if (a.commandeNumero === 'HORS COMMANDES' && b.commandeNumero !== 'HORS COMMANDES') return 1;
             if (a.commandeNumero !== 'HORS COMMANDES' && b.commandeNumero === 'HORS COMMANDES') return -1;
-            if (a.commandeNumero !== b.commandeNumero) return a.commandeNumero.localeCompare(b.commandeNumero);
+            if (a.commandeNumero !== b.commandeNumero) {
+                const numA = String(a.commandeNumero || '');
+                const numB = String(b.commandeNumero || '');
+                return numA.localeCompare(numB);
+                }
             const typeOrder = { 'commande': 0, 'facture': 1, 'regie': 2, 'oc': 3 };
             return typeOrder[a.type] - typeOrder[b.type];
         });
