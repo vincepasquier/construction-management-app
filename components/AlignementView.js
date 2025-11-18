@@ -135,6 +135,13 @@ window.AlignementView = ({
                     return sum + montantBase + montantOC + montantRegies;
                 }
             }, 0);
+        
+        // Après le calcul de commandesEngagees, ajouter :
+        
+        const facturesPayees = factures
+            .filter(f => matchesFilters(f) && (f.statut === 'Payée' || f.statut === 'Validée'))
+            .reduce((sum, f) => sum + (f.montantTTC || f.montantHT || 0), 0);
+        
 
         const offresAttente = offres
             .filter(o => matchesFilters(o) && (o.statut === 'En attente' || o.statut === 'Soumise'))
@@ -144,7 +151,7 @@ window.AlignementView = ({
             .filter(oc => matchesFilters(oc) && oc.statut === 'En attente')
             .reduce((sum, oc) => sum + (oc.montant || 0), 0);
 
-        const totalAttente = offresAttente + ocAttente;
+        const totalAttente = offresAttente + ocAttenete;
 
         const totalAjustements = ajustements
             .filter(matchesFilters)
@@ -157,6 +164,7 @@ window.AlignementView = ({
         return {
             totalEstime,
             commandesEngagees,
+            facturesPayees,
             totalAttente,
             totalAjustements,
             montantPrevu,
@@ -939,15 +947,84 @@ window.AlignementView = ({
                                                                         ),
                                                                         adj.prorata < 1 && React.createElement('div', { className: 'text-xs text-gray-500' },
                                                                             'Total: ' + (adj.montant >= 0 ? '+' : '') + (adj.montant || 0).toLocaleString('fr-CH') + ' CHF'
-                                                                        )
-                                                                    )
-                                                                )
-                                                            )
-                                                        )
-                                                )
-                                            )
-                                        )
-                                    )
+                                                                        // === NOUVELLE SECTION : BOUTON VOIR POSITIONS ===
+                                                                        React.createElement('div', { className: 'mt-4 pt-4 border-t' },
+                                                                            React.createElement('button', {
+                                                                                onClick: (e) => {
+                                                                                    e.stopPropagation();
+                                                                                    togglePositions(row.lot);
+                                                                                },
+                                                                                className: 'w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg flex items-center justify-between font-semibold text-blue-800'
+                                                                            },
+                                                                                React.createElement('span', { className: 'flex items-center gap-2' },
+                                                                                    React.createElement('span', null, '📊'),
+                                                                                    'Voir ventilation par positions'
+                                                                                ),
+                                                                                React.createElement(window.Icons.ChevronRight, { 
+                                                                                    size: 18,
+                                                                                    className: 'transition-transform ' + (expandedPositions.has(row.lot) ? 'rotate-90' : '')
+                                                                                })
+                                                                            ),
+                                                                            
+                                                                            // Tableau des positions (si développé)
+                                                                            expandedPositions.has(row.lot) && React.createElement('div', { className: 'mt-4' },
+                                                                                React.createElement('table', { className: 'w-full text-sm' },
+                                                                                    React.createElement('thead', { className: 'bg-gray-100' },
+                                                                                        React.createElement('tr', null,
+                                                                                            React.createElement('th', { className: 'px-3 py-2 text-left w-8' }, ''),
+                                                                                            React.createElement('th', { className: 'px-3 py-2 text-left' }, 'Position'),
+                                                                                            React.createElement('th', { className: 'px-3 py-2 text-right' }, 'Estimé'),
+                                                                                            React.createElement('th', { className: 'px-3 py-2 text-right' }, 'Engagé')
+                                                                                        )
+                                                                                    ),
+                                                                                    React.createElement('tbody', null,
+                                                                                        getPositionsForLot(row.lot).map(pos => 
+                                                                                            React.createElement(React.Fragment, { key: pos.pos0 },
+                                                                                                // Position 0
+                                                                                                React.createElement('tr', { 
+                                                                                                    className: 'border-t hover:bg-gray-50 cursor-pointer',
+                                                                                                    onClick: () => togglePos0(row.lot + '-' + pos.pos0)
+                                                                                                },
+                                                                                                    React.createElement('td', { className: 'px-3 py-2 text-center' },
+                                                                                                        pos.sousPositions.length > 0 && React.createElement(window.Icons.ChevronRight, {
+                                                                                                            size: 14,
+                                                                                                            className: 'transition-transform ' + 
+                                                                                                                (expandedPos0.has(row.lot + '-' + pos.pos0) ? 'rotate-90' : '')
+                                                                                                        })
+                                                                                                    ),
+                                                                                                    React.createElement('td', { className: 'px-3 py-2 font-medium text-blue-700' }, pos.pos0),
+                                                                                                    React.createElement('td', { className: 'px-3 py-2 text-right' },
+                                                                                                        pos.estime.toLocaleString('fr-CH') + ' CHF'
+                                                                                                    ),
+                                                                                                    React.createElement('td', { className: 'px-3 py-2 text-right text-green-700' },
+                                                                                                        pos.engage.toLocaleString('fr-CH') + ' CHF'
+                                                                                                    )
+                                                                                                ),
+                                                                                                
+                                                                                                // Positions 1 (si développé)
+                                                                                                expandedPos0.has(row.lot + '-' + pos.pos0) && pos.sousPositions.map(sp =>
+                                                                                                    React.createElement('tr', { 
+                                                                                                        key: sp.pos1,
+                                                                                                        className: 'border-t bg-gray-50'
+                                                                                                    },
+                                                                                                        React.createElement('td', { className: 'px-3 py-2' }, ''),
+                                                                                                        React.createElement('td', { className: 'px-3 py-2 pl-8 text-gray-700 text-xs' },
+                                                                                                            '└─ ' + sp.pos1
+                                                                                                        ),
+                                                                                                        React.createElement('td', { className: 'px-3 py-2 text-right text-xs' },
+                                                                                                            sp.estime.toLocaleString('fr-CH') + ' CHF'
+                                                                                                        ),
+                                                                                                        React.createElement('td', { className: 'px-3 py-2 text-right text-xs text-green-700' },
+                                                                                                            sp.engage.toLocaleString('fr-CH') + ' CHF'
+                                                                                                        )
+                                                                                                    )
+                                                                                                )
+                                                                                            )
+                                                                                        )
+                                                                                    )
+                                                                                )
+                                                                            )
+                                                                            )
                                 )
                             )
                         ),
