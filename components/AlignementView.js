@@ -508,7 +508,7 @@ window.AlignementView = ({
                         className: 'text-gray-600 hover:text-blue-600 transition-transform ' + (isExpanded ? 'rotate-90' : ''),
                         onClick: (e) => { e.stopPropagation(); toggleRow(row.id); }
                     },
-                        React.createElement(window.Icons.ChevronRight, { size: 18 })
+                        React.createElement(ChevronRight, { size: 18 })
                     )
                 ),
                 React.createElement('td', { className: 'px-4 py-3', style: { paddingLeft: (16 + indent) + 'px' } },
