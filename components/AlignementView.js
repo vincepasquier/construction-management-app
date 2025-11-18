@@ -205,7 +205,11 @@ window.AlignementView = ({
                     prevu: engagePos0,
                     ecart: engagePos0 - estPos0,
                     ecartPourcent: estPos0 > 0 ? ((engagePos0 - estPos0) / estPos0 * 100) : 0,
-                    children: positions1.sort((a, b) => a.pos1.localeCompare(b.pos1))
+                    children: positions1.sort((a, b) => {
+                        const pos1A = String(a.pos1 || '');
+                        const pos1B = String(b.pos1 || '');
+                        return pos1A.localeCompare(pos1B);
+                    })
                 });
             });
 
@@ -233,11 +237,19 @@ window.AlignementView = ({
                 prevu: engageLot,
                 ecart: engageLot - estLot,
                 ecartPourcent: estLot > 0 ? ((engageLot - estLot) / estLot * 100) : 0,
-                children: positions0.sort((a, b) => a.pos0.localeCompare(b.pos0))
+                children: positions0.sort((a, b) => {
+                    const pos0A = String(a.pos0 || '');
+                    const pos0B = String(b.pos0 || '');
+                    return pos0A.localeCompare(pos0B);
+                })
             });
         });
 
-        return Array.from(lotMap.values()).sort((a, b) => a.lot.localeCompare(b.lot));
+        return Array.from(lotMap.values()).sort((a, b) => {
+    const lotA = String(a.lot || '');
+    const lotB = String(b.lot || '');
+    return lotA.localeCompare(lotB);
+});
     }, [estimations, commandes, calculateProrata]);
 
     // ========================================
