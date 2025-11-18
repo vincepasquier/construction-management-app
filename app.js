@@ -2160,16 +2160,31 @@ const ImportMenu = () => {
 // ========================================
 // MONTAGE DE L'APPLICATION
 // ========================================
-window.ConstructionManagement = ConstructionManagement;
 
-// Attendre que tout soit chargé
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const rootElement = document.getElementById('root');
-        if (rootElement && typeof ReactDOM !== 'undefined') {
-            const root = ReactDOM.createRoot(rootElement);
-            root.render(React.createElement(ConstructionManagement));
-            console.log('✅ Application montée avec succès');
-        }
-    }, 500);
-});
+console.log('🚀 Préparation du montage...');
+
+// Attendre que tout soit prêt
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mountApp);
+} else {
+    mountApp();
+}
+
+function mountApp() {
+    console.log('🚀 Montage de l\'application...');
+    
+    const rootElement = document.getElementById('root');
+    
+    if (!rootElement) {
+        console.error('❌ Élément root introuvable');
+        return;
+    }
+    
+    try {
+        const root = ReactDOM.createRoot(rootElement);
+        root.render(React.createElement(ConstructionManagement));
+        console.log('✅ Application montée avec succès !');
+    } catch (error) {
+        console.error('❌ Erreur lors du montage:', error);
+    }
+}
