@@ -1959,7 +1959,6 @@ const ImportMenu = () => {
                         />
                     )}
     
-                    {/* Alignement & Atterrissage */}
                     {activeTab === 'alignement' && (
                         <window.AlignementView
                             estimations={estimations}
@@ -1967,6 +1966,7 @@ const ImportMenu = () => {
                             commandes={commandes}
                             offresComplementaires={offresComplementaires}
                             regies={regies}
+                            factures={factures}  // ← AJOUTER CETTE LIGNE
                             ajustements={ajustements}
                             onSaveAjustement={handleSaveAjustement}
                             onEditCommande={(cmd) => {
