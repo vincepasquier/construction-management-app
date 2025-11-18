@@ -33,7 +33,8 @@ window.loadData = async () => {
         offresComplementaires: storage.get('offresComplementaires')?.value || [],
         regies: storage.get('regies')?.value || [],
         factures: storage.get('factures')?.value || [],
-        appelOffres: storage.get('appelOffres')?.value || [] // ✅ AJOUTÉ
+        appelOffres: storage.get('appelOffres')?.value || [],
+        ajustements: storage.get('ajustements')?.value || []
     };
 };
 
@@ -61,9 +62,15 @@ const loginRequest = {
 
 let msalInstance = null;
 try {
-    msalInstance = new msal.PublicClientApplication(msalConfig);
+    // Vérifier si MSAL est chargé avant de l'utiliser
+    if (typeof msal !== 'undefined') {
+        msalInstance = new msal.PublicClientApplication(msalConfig);
+        console.log("✅ MSAL initialisé");
+    } else {
+        console.log("ℹ️ MSAL non chargé - fonctionnalités Microsoft désactivées");
+    }
 } catch (error) {
-    console.log("MSAL non disponible:", error);
+    console.log("⚠️ MSAL non disponible:", error);
 }
 
 // Fonctions Microsoft Graph (optionnelles)
