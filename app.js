@@ -61,7 +61,6 @@
     // ========================================
     useEffect(() => {
         loadAllData();
-        setAjustements(data.ajustements || []);
     }, []);
 
     useEffect(() => {
@@ -85,6 +84,7 @@
         setRegies(data.regies);
         setFactures(data.factures);
         setAppelOffres(data.appelOffres || []);
+        setAjustements(data.ajustements || []);
     };
 
     // ========================================
