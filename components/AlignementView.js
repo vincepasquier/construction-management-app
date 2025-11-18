@@ -469,11 +469,7 @@ window.AlignementView = ({
                 )
             )
         ),
-    );
-};
-
-// PARTIE 3 - Suite et fin de AlignementView.js
-        
+    
         // Tableau de réconciliation par lot
         React.createElement('div', { className: 'bg-white rounded-lg border p-6' },
             React.createElement('div', { className: 'flex justify-between items-center mb-4' },
