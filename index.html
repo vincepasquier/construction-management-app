@@ -5,33 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Application de Gestion de Construction</title>
     
-    <!-- Tailwind via unpkg -->
-    <link href="https://unpkg.com/tailwindcss@3/dist/tailwind.min.css" rel="stylesheet">
+    <!-- TailwindCSS via CDN Play (complet) -->
+    <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Styles de secours -->
+    <!-- Styles personnalisés -->
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { 
-            font-family: system-ui, -apple-system, sans-serif; 
-            background-color: #f9fafb;
-            color: #111827;
-        }
-        .stat-card {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 24px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .stat-value {
-            font-size: 1.875rem;
-            font-weight: bold;
-            margin: 8px 0;
-        }
-        .stat-label {
-            font-size: 0.875rem;
-            color: #6b7280;
-        }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -43,7 +21,7 @@
     <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body>
+<body class="bg-gray-50">
     <div id="root"></div>
     
     <!-- Scripts -->
@@ -72,63 +50,5 @@
     <script type="text/babel" src="components/AjustementModal.js"></script>
     <script type="text/babel" src="components/AlignementBudgetaire.js"></script>
     <script type="text/babel" src="app.js"></script>
-    
-    <!-- Vérification du chargement avec retry -->
-    <script>
-        console.log('=== VÉRIFICATION ===');
-        console.log('✅ Page chargée');
-        console.log('React:', typeof React !== 'undefined' ? '✅' : '❌');
-        console.log('ReactDOM:', typeof ReactDOM !== 'undefined' ? '✅' : '❌');
-        
-        window.addEventListener('load', () => {
-            console.log('📦 DOM chargé, attente du montage de l\'app...');
-            
-            // Vérifier progressivement si l'app se monte
-            let checkCount = 0;
-            const maxChecks = 30; // 30 secondes max
-            
-            const checkInterval = setInterval(() => {
-                checkCount++;
-                const rootElement = document.getElementById('root');
-                const hasContent = rootElement && rootElement.children.length > 0;
-                
-                if (hasContent) {
-                    console.log('✅ App montée avec succès !');
-                    clearInterval(checkInterval);
-                } else if (checkCount >= maxChecks) {
-                    console.error('❌ App non montée après ' + maxChecks + ' secondes');
-                    console.error('Vérifiez que app.js se charge correctement');
-                    
-                    // Afficher un message d'erreur à l'utilisateur
-                    if (rootElement) {
-                        rootElement.innerHTML = `
-                            <div style="padding: 40px; max-width: 800px; margin: 0 auto; font-family: system-ui;">
-                                <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">
-                                    ⚠️ Erreur de chargement
-                                </h1>
-                                <p style="margin-bottom: 15px;">
-                                    L'application n'a pas pu se charger après ${maxChecks} secondes.
-                                </p>
-                                <div style="background: #fee; padding: 15px; border-radius: 5px;">
-                                    <strong>Actions à essayer :</strong>
-                                    <ul style="margin-top: 10px; padding-left: 20px;">
-                                        <li>Vider le cache (Ctrl+Shift+Delete)</li>
-                                        <li>Vérifier que tous les fichiers sont présents</li>
-                                        <li>Regarder la console (F12) pour les erreurs</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        `;
-                    }
-                    
-                    clearInterval(checkInterval);
-                } else {
-                    if (checkCount % 5 === 0) {
-                        console.log(`⏳ Attente du montage... (${checkCount}/${maxChecks}s)`);
-                    }
-                }
-            }, 1000);
-        });
-    </script>
 </body>
 </html>
