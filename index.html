@@ -16,11 +16,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Configuration TailwindCSS -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {}
+    <script type="text/javascript">
+        if (typeof tailwind !== 'undefined') {
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {}
+                    }
                 }
             }
         }
