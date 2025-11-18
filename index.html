@@ -21,22 +21,17 @@
     </style>
 </head>
 <body class="bg-gray-50">
-    <div id="root">
-        <div style="padding: 40px; text-align: center;">
-            <h1 style="font-size: 24px; margin-bottom: 20px;">⏳ Chargement...</h1>
-            <div id="loading-status"></div>
-        </div>
-    </div>
+    <div id="root"></div>
     
     <!-- OneDrive -->
-    <script src="https://js.live.net/v7.2/OneDrive.js" onerror="console.log('OneDrive non chargé')"></script>
+    <script src="https://js.live.net/v7.2/OneDrive.js"></script>
     
     <!-- Utilitaires -->
-    <script type="text/babel" src="utils/icons.js" onerror="console.error('Erreur icons.js')"></script>
-    <script type="text/babel" src="utils/storage.js" onerror="console.error('Erreur storage.js')"></script>
-    <script type="text/babel" src="utils/export.js" onerror="console.error('Erreur export.js')"></script>
-    <script src="utils/individual-exports.js" onerror="console.error('Erreur individual-exports.js')"></script>
-    <script src="utils/onedrive-helper.js" onerror="console.error('Erreur onedrive-helper.js')"></script>
+    <script type="text/babel" src="utils/icons.js"></script>
+    <script type="text/babel" src="utils/storage.js"></script>
+    <script type="text/babel" src="utils/export.js"></script>
+    <script src="utils/individual-exports.js"></script>
+    <script src="utils/onedrive-helper.js"></script>
     
     <!-- Composants utilitaires -->
     <script type="text/babel" src="components/SmartTable.js"></script>
@@ -64,60 +59,5 @@
     
     <!-- Application -->
     <script type="text/babel" src="app.js"></script>
-    
-    <!-- Vérification -->
-    <script>
-        let checkCount = 0;
-        const maxChecks = 20;
-        
-        function checkLoading() {
-            checkCount++;
-            const status = document.getElementById('loading-status');
-            
-            const checks = {
-                'React': typeof React !== 'undefined',
-                'ReactDOM': typeof ReactDOM !== 'undefined',
-                'Babel': typeof Babel !== 'undefined',
-                'Icons': typeof window.Icons !== 'undefined',
-                'Storage': typeof window.storage !== 'undefined',
-                'AlignementView': typeof window.AlignementView !== 'undefined'
-            };
-            
-            let allLoaded = true;
-            let statusHTML = '<div style="text-align: left; max-width: 400px; margin: 20px auto; font-family: monospace; font-size: 14px;">';
-            
-            for (const [name, loaded] of Object.entries(checks)) {
-                statusHTML += `<div>${loaded ? '✅' : '⏳'} ${name}</div>`;
-                if (!loaded) allLoaded = false;
-            }
-            
-            statusHTML += `</div>`;
-            status.innerHTML = statusHTML;
-            
-            if (allLoaded) {
-                console.log('🎉 Tous les composants sont chargés !');
-                
-                // Vérifier que l'app s'est montée
-                setTimeout(() => {
-                    const root = document.getElementById('root');
-                    if (root && root.children.length <= 1) {
-                        console.error('❌ App non montée');
-                        root.innerHTML = '<div style="padding: 40px; text-align: center; color: red;">Erreur : L\'application ne démarre pas. Vérifiez la console.</div>';
-                    } else {
-                        console.log('✅ App montée !');
-                    }
-                }, 1000);
-                
-            } else if (checkCount < maxChecks) {
-                setTimeout(checkLoading, 1000);
-            } else {
-                console.error('❌ Timeout - Tous les composants ne sont pas chargés');
-                status.innerHTML += '<div style="color: red; margin-top: 20px;">⚠️ Certains composants ne se sont pas chargés. Vérifiez la console.</div>';
-            }
-        }
-        
-        // Démarrer la vérification après un délai
-        setTimeout(checkLoading, 2000);
-    </script>
 </body>
 </html>
