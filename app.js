@@ -61,7 +61,7 @@
     // ========================================
     useEffect(() => {
         loadAllData();
-        setAjustements(window.loadData('ajustements') || []);
+        setAjustements(data.ajustements || []);
     }, []);
 
     useEffect(() => {
@@ -696,6 +696,19 @@ const handleImportCSV = (event, type) => {
         alert('✅ Commande créée ! L\'offre favorite a été acceptée et l\'AO est attribué.');
     };
 
+        const handleSaveAjustement = (ajustement) => {
+    let updated;
+    if (ajustement.id) {
+        // Modification
+        updated = ajustements.map(a => a.id === ajustement.id ? ajustement : a);
+    } else {
+        // Création
+        updated = [...ajustements, { ...ajustement, id: Date.now().toString() }];
+    }
+    setAjustements(updated);
+    window.saveData('ajustements', updated);
+};
+
     // ========================================
     // HANDLERS D'EXPORT
     // ========================================
@@ -707,7 +720,8 @@ const handleImportCSV = (event, type) => {
             offresComplementaires,
             regies,
             factures,
-            appelOffres
+            appelOffres,
+            ajustements 
         });
     };
 
