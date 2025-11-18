@@ -291,7 +291,6 @@ window.AlignementView = ({
 
             const totalAttente = montantOffresAttente + montantOcAttente + 
                 regiesHorsBudget.reduce((s, r) => s + r.montant, 0);
-            const totalAjust = ajustL.reduce((sum, a) => sum + (a.montant || 0), 0);
             const prevu = cmdLot + totalAttente + totalAjust;
             const ecart = prevu - estLot;
 
