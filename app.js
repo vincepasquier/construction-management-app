@@ -1966,7 +1966,7 @@ const ImportMenu = () => {
                             commandes={commandes}
                             offresComplementaires={offresComplementaires}
                             regies={regies}
-                            factures={factures}  // ← AJOUTER CETTE LIGNE
+                            factures={factures}
                             ajustements={ajustements}
                             onSaveAjustement={handleSaveAjustement}
                             onEditCommande={(cmd) => {
@@ -1980,6 +1980,14 @@ const ImportMenu = () => {
                             onEditOffreComplementaire={(oc) => {
                                 setEditingOffreComp(oc);
                                 setShowOffreCompModal(true);
+                            }}
+                            onEditFacture={(facture) => {
+                                setEditingFacture(facture);
+                                setShowFactureModal(true);
+                            }}
+                            onEditRegie={(regie) => {
+                                setEditingRegie(regie);
+                                setShowRegieModal(true);
                             }}
                         />
                     )}
