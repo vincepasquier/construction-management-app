@@ -5,8 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Application de Gestion de Construction</title>
     
-    <!-- TailwindCSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind via unpkg (CDN alternatif) -->
+    <link href="https://unpkg.com/tailwindcss@3/dist/tailwind.min.css" rel="stylesheet">
+    
+    <!-- Styles de secours au cas où Tailwind ne charge pas -->
+    <style>
+        /* Reset basique */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        /* Styles de base */
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background-color: #f9fafb;
+            color: #111827;
+        }
+        
+        /* Styles pour les cartes du Dashboard */
+        .stat-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        /* Classes utilitaires communes */
+        .bg-gray-50 { background-color: #f9fafb; }
+        .bg-white { background-color: white; }
+        .text-gray-600 { color: #4b5563; }
+        .text-gray-900 { color: #111827; }
+        .rounded-lg { border-radius: 8px; }
+        .border { border: 1px solid #e5e7eb; }
+        .shadow-sm { box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .p-4 { padding: 1rem; }
+        .p-6 { padding: 1.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .space-y-6 > * + * { margin-top: 1.5rem; }
+        .grid { display: grid; }
+        .gap-4 { gap: 1rem; }
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        
+        /* Boutons */
+        button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem 1rem; text-align: left; }
+        th { background-color: #f9fafb; font-weight: 600; }
+        tr { border-bottom: 1px solid #e5e7eb; }
+        tr:hover { background-color: #f9fafb; }
+        
+        /* Scrollbar */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
     
     <!-- React et ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -14,14 +85,8 @@
     
     <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Styles inline -->
-    <style>
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
 </head>
-<body class="bg-gray-50">
+<body>
     <div id="root"></div>
     
     <!-- Scripts -->
@@ -50,5 +115,20 @@
     <script type="text/babel" src="components/AjustementModal.js"></script>
     <script type="text/babel" src="components/AlignementBudgetaire.js"></script>
     <script type="text/babel" src="app.js"></script>
+    
+    <!-- Vérification du chargement -->
+    <script>
+        console.log('=== VÉRIFICATION ===');
+        console.log('✅ Page chargée');
+        console.log('React:', typeof React !== 'undefined' ? '✅' : '❌');
+        console.log('ReactDOM:', typeof ReactDOM !== 'undefined' ? '✅' : '❌');
+        
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const hasContent = document.getElementById('root').children.length > 0;
+                console.log('App montée:', hasContent ? '✅' : '❌');
+            }, 2000);
+        });
+    </script>
 </body>
 </html>
