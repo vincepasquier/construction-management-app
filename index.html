@@ -123,11 +123,24 @@
         console.log('React:', typeof React !== 'undefined' ? '✅' : '❌');
         console.log('ReactDOM:', typeof ReactDOM !== 'undefined' ? '✅' : '❌');
         
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const hasContent = document.getElementById('root').children.length > 0;
-                console.log('App montée:', hasContent ? '✅' : '❌');
-            }, 2000);
+            window.addEventListener('load', () => {
+                // Vérifier plusieurs fois jusqu'à ce que l'app soit montée
+                let checkCount = 0;
+                const checkInterval = setInterval(() => {
+                    checkCount++;
+                    const hasContent = document.getElementById('root').children.length > 0;
+                    
+                    if (hasContent) {
+                        console.log('✅ App montée avec succès !');
+                        clearInterval(checkInterval);
+                    } else if (checkCount >= 20) {
+                        console.error('❌ App non montée après 20 secondes');
+                        clearInterval(checkInterval);
+                    } else {
+                        console.log(`⏳ Vérification ${checkCount}/20...`);
+                    }
+                }, 1000);
+            });
         });
     </script>
 </body>
