@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Application de Gestion de Construction</title>
     
-    <!-- React et ReactDOM depuis CDN -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- React et ReactDOM en MODE DÉVELOPPEMENT (pour meilleurs messages d'erreur) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
     <!-- Babel Standalone pour JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -42,7 +42,6 @@
     <!-- ========================================
          UTILITAIRES
          ======================================== -->
-
     
     <script src="https://js.live.net/v7.2/OneDrive.js"></script>
     <script type="text/babel" src="utils/icons.js"></script>
@@ -89,6 +88,26 @@
          APPLICATION PRINCIPALE
          ======================================== -->
     <script type="text/babel" src="app.js"></script>
+    
+    <!-- Script de vérification du chargement -->
+    <script>
+        window.addEventListener('load', () => {
+            console.log('✅ Page chargée');
+            console.log('✅ React:', typeof React !== 'undefined');
+            console.log('✅ ReactDOM:', typeof ReactDOM !== 'undefined');
+            console.log('✅ Icons:', typeof window.Icons !== 'undefined');
+            
+            setTimeout(() => {
+                const root = document.getElementById('root');
+                if (root && root.children.length === 0) {
+                    console.error('❌ L\'application ne s\'est pas montée !');
+                    root.innerHTML = '<div style="padding: 20px; color: red; font-family: monospace;">Erreur : L\'application ne s\'est pas chargée. Vérifiez la console.</div>';
+                } else {
+                    console.log('✅ Application montée avec succès');
+                }
+            }, 2000);
+        });
+    </script>
 </head>
 <body class="bg-gray-50">
     <!-- Point de montage de l'application React -->
