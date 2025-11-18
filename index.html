@@ -8,68 +8,33 @@
     <!-- TailwindCSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Configuration Tailwind pour contenu dynamique -->
-    <script>
-        tailwind.config = {
-            corePlugins: {
-                preflight: true,
-            }
-        }
-    </script>
-    
-    <!-- Styles personnalisés + Force le rendu des classes utilisées -->
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .scrollbar-hide::-webkit-scrollbar {
-                display: none;
-            }
-            .scrollbar-hide {
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-            }
-        }
-        
-        /* Force Tailwind à inclure les classes utilisées dans les composants */
-        @layer components {
-            .stat-card {
-                @apply bg-white rounded-lg border p-6 shadow-sm;
-            }
-            .stat-value {
-                @apply text-3xl font-bold;
-            }
-            .stat-label {
-                @apply text-sm text-gray-600;
-            }
-        }
-    </style>
-    
     <!-- React et ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
     <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Styles inline -->
+    <style>
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
 <body class="bg-gray-50">
     <div id="root"></div>
     
-    <!-- OneDrive -->
+    <!-- Scripts -->
     <script src="https://js.live.net/v7.2/OneDrive.js"></script>
-    
-    <!-- Utilitaires -->
     <script type="text/babel" src="utils/icons.js"></script>
     <script type="text/babel" src="utils/storage.js"></script>
     <script type="text/babel" src="utils/export.js"></script>
     <script src="utils/individual-exports.js"></script>
     <script src="utils/onedrive-helper.js"></script>
-    
-    <!-- Composants utilitaires -->
     <script type="text/babel" src="components/SmartTable.js"></script>
     <script type="text/babel" src="components/SmartSelector.js"></script>
     <script type="text/babel" src="components/SessionManager.js"></script>
     <script type="text/babel" src="components/EstimationBuilder.js"></script>
-    
-    <!-- Modals -->
     <script type="text/babel" src="components/ImportModal.js"></script>
     <script type="text/babel" src="components/ExportModal.js"></script>
     <script type="text/babel" src="components/OffreModal.js"></script>
@@ -80,27 +45,10 @@
     <script type="text/babel" src="components/CommandeModal.js"></script>
     <script type="text/babel" src="components/RegieModal.js"></script>
     <script type="text/babel" src="components/FactureModal.js"></script>
-    
-    <!-- Vues -->
     <script type="text/babel" src="components/Dashboard.js"></script>
     <script type="text/babel" src="components/AlignementView.js"></script>
     <script type="text/babel" src="components/AjustementModal.js"></script>
     <script type="text/babel" src="components/AlignementBudgetaire.js"></script>
-    
-    <!-- Application -->
     <script type="text/babel" src="app.js"></script>
-    
-    <!-- Rafraîchir Tailwind après chargement des composants -->
-    <script>
-        window.addEventListener('load', function() {
-            // Petite pause pour laisser React monter les composants
-            setTimeout(function() {
-                // Forcer Tailwind à rescanner le DOM
-                if (window.tailwind && window.tailwind.refresh) {
-                    window.tailwind.refresh();
-                }
-            }, 1000);
-        });
-    </script>
 </body>
 </html>
