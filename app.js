@@ -697,17 +697,17 @@ const handleImportCSV = (event, type) => {
     };
 
         const handleSaveAjustement = (ajustement) => {
-    let updated;
-    if (ajustement.id) {
-        // Modification
-        updated = ajustements.map(a => a.id === ajustement.id ? ajustement : a);
-    } else {
-        // Création
-        updated = [...ajustements, { ...ajustement, id: Date.now().toString() }];
-    }
-    setAjustements(updated);
-    window.saveData('ajustements', updated);
-};
+            let updated;
+            if (ajustement.id) {
+                // Modification
+                updated = ajustements.map(a => a.id === ajustement.id ? ajustement : a);
+            } else {
+                // Création
+                updated = [...ajustements, { ...ajustement, id: Date.now().toString() }];
+            }
+            setAjustements(updated);
+            window.saveData('ajustements', updated);
+        };
 
     // ========================================
     // HANDLERS D'EXPORT
