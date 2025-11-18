@@ -5,13 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Application de Gestion de Construction</title>
     
-    <!-- TailwindCSS - CHARGÉ EN PREMIER -->
+    <!-- TailwindCSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Styles personnalisés -->
-    <style>
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    <!-- Configuration Tailwind pour contenu dynamique -->
+    <script>
+        tailwind.config = {
+            corePlugins: {
+                preflight: true,
+            }
+        }
+    </script>
+    
+    <!-- Styles personnalisés + Force le rendu des classes utilisées -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+        
+        /* Force Tailwind à inclure les classes utilisées dans les composants */
+        @layer components {
+            .stat-card {
+                @apply bg-white rounded-lg border p-6 shadow-sm;
+            }
+            .stat-value {
+                @apply text-3xl font-bold;
+            }
+            .stat-label {
+                @apply text-sm text-gray-600;
+            }
+        }
     </style>
     
     <!-- React et ReactDOM -->
@@ -60,5 +89,18 @@
     
     <!-- Application -->
     <script type="text/babel" src="app.js"></script>
+    
+    <!-- Rafraîchir Tailwind après chargement des composants -->
+    <script>
+        window.addEventListener('load', function() {
+            // Petite pause pour laisser React monter les composants
+            setTimeout(function() {
+                // Forcer Tailwind à rescanner le DOM
+                if (window.tailwind && window.tailwind.refresh) {
+                    window.tailwind.refresh();
+                }
+            }, 1000);
+        });
+    </script>
 </body>
 </html>
