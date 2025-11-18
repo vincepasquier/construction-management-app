@@ -123,12 +123,6 @@
         
         alert('✅ Session complète exportée avec succès');
     };
-const handleSaveAjustement = (ajustement) => {
-    const updated = [...ajustements, ajustement];
-    setAjustements(updated);
-    window.saveData('ajustements', updated);
-    alert('✅ Ajustement créé');
-};
         
   // Import JSON Session complète - VERSION DEBUG
 const handleImportJSON = (event) => {
