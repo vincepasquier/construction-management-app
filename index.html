@@ -5,139 +5,170 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Application de Gestion de Construction</title>
     
-    <!-- React et ReactDOM en MODE DÉVELOPPEMENT -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    
-    <!-- Babel Standalone pour JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- TailwindCSS -->
+    <!-- TailwindCSS EN PREMIER -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Configuration TailwindCSS (avec vérification) -->
-    <script type="text/javascript">
-        // Attendre que Tailwind soit chargé
-        window.addEventListener('load', function() {
-            if (typeof tailwind !== 'undefined') {
-                tailwind.config = {
-                    theme: {
-                        extend: {
-                            colors: {}
-                        }
-                    }
-                }
-            }
-        });
-    </script>
-    
     <!-- Styles personnalisés -->
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .scrollbar-hide::-webkit-scrollbar {
-                display: none;
-            }
-            .scrollbar-hide {
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-            }
+    <style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
-    
-    <!-- ========================================
-         UTILITAIRES
-         ======================================== -->
-    
-    <script src="https://js.live.net/v7.2/OneDrive.js"></script>
-    <script type="text/babel" src="utils/icons.js"></script>
-    <script type="text/babel" src="utils/storage.js"></script>
-    <script type="text/babel" src="utils/export.js"></script>
-    <script src="utils/individual-exports.js"></script>
-    <script src="utils/onedrive-helper.js"></script>
-    
-    <!-- ========================================
-         COMPOSANTS - UTILITAIRES
-         ======================================== -->
-    <script type="text/babel" src="components/SmartTable.js"></script>
-    <script type="text/babel" src="components/SmartSelector.js"></script>
-    <script type="text/babel" src="components/SessionManager.js"></script>
-    <script type="text/babel" src="components/EstimationBuilder.js"></script>
-    
-    
-    <!-- ========================================
-         COMPOSANTS - MODALS
-         ======================================== -->
-    <script type="text/babel" src="components/ImportModal.js"></script>
-    <script type="text/babel" src="components/ExportModal.js"></script>
-    <script type="text/babel" src="components/OffreModal.js"></script>
-    <script type="text/babel" src="components/OffreComplementaireModal.js"></script>
-    <script src="components/OneDriveConfigModal.js"></script>
-    
-    <!-- NOUVEAUX COMPOSANTS APPELS D'OFFRES -->
-    <script type="text/babel" src="components/AppelOffreModal.js"></script>
-    <script type="text/babel" src="components/AppelOffreDetailView.js"></script>
-    
-    <script type="text/babel" src="components/CommandeModal.js"></script>
-    <script type="text/babel" src="components/RegieModal.js"></script>
-    <script type="text/babel" src="components/FactureModal.js"></script>
-    
-    <!-- ========================================
-         COMPOSANTS - VUES
-         ======================================== -->
-    <script type="text/babel" src="components/Dashboard.js"></script>
-    <script type="text/babel" src="components/AlignementView.js"></script>
-    <script type="text/babel" src="components/AjustementModal.js"></script>
-    <script type="text/babel" src="components/AlignementBudgetaire.js"></script>
-    
-    <!-- ========================================
-         APPLICATION PRINCIPALE
-         ======================================== -->
-    <script type="text/babel" src="app.js"></script>
-    
-    <!-- Script de vérification du chargement -->
-    <script>
-        window.addEventListener('load', () => {
-            console.log('=== VÉRIFICATION DU CHARGEMENT ===');
-            console.log('✅ Page chargée');
-            console.log('✅ React:', typeof React !== 'undefined' ? 'OK' : '❌ MANQUANT');
-            console.log('✅ ReactDOM:', typeof ReactDOM !== 'undefined' ? 'OK' : '❌ MANQUANT');
-            console.log('✅ Babel:', typeof Babel !== 'undefined' ? 'OK' : '❌ MANQUANT');
-            console.log('✅ Icons:', typeof window.Icons !== 'undefined' ? 'OK' : '❌ MANQUANT');
-            console.log('✅ Storage:', typeof window.storage !== 'undefined' ? 'OK' : '❌ MANQUANT');
-            console.log('✅ AlignementView:', typeof window.AlignementView !== 'undefined' ? 'OK' : '❌ MANQUANT');
-            
-            setTimeout(() => {
-                const root = document.getElementById('root');
-                if (root && root.children.length === 0) {
-                    console.error('❌ L\'application ne s\'est pas montée !');
-                    console.error('Vérifiez les erreurs ci-dessus');
-                    root.innerHTML = `
-                        <div style="padding: 40px; max-width: 800px; margin: 0 auto; font-family: system-ui;">
-                            <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">
-                                ⚠️ Erreur de chargement de l'application
-                            </h1>
-                            <p style="margin-bottom: 15px;">
-                                L'application n'a pas pu se charger. Vérifiez la console (F12) pour plus de détails.
-                            </p>
-                            <div style="background: #fee; border-left: 4px solid #dc2626; padding: 15px; margin-top: 20px;">
-                                <strong>Actions à vérifier :</strong>
-                                <ul style="margin-top: 10px; padding-left: 20px;">
-                                    <li>Tous les fichiers sont-ils présents ?</li>
-                                    <li>Y a-t-il des erreurs dans la console ?</li>
-                                    <li>Les chemins des fichiers sont-ils corrects ?</li>
-                                </ul>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    console.log('✅ Application montée avec succès !');
-                }
-            }, 2000);
-        });
-    </script>
 </head>
 <body class="bg-gray-50">
     <!-- Point de montage de l'application React -->
-    <div id="root"></div>
+    <div id="root">
+        <div style="padding: 40px; text-align: center; font-family: system-ui;">
+            <h1 style="font-size: 24px; margin-bottom: 20px;">⏳ Chargement de l'application...</h1>
+            <p style="color: #666;">Veuillez patienter pendant le chargement des composants.</p>
+        </div>
+    </div>
+    
+    <!-- Chargement séquentiel des bibliothèques -->
+    <script>
+        console.log('🔵 Début du chargement...');
+        
+        // Fonction pour charger les scripts dans l'ordre
+        function loadScript(src, type = 'text/javascript') {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                if (type === 'babel') {
+                    script.type = 'text/babel';
+                    script.setAttribute('data-type', 'module');
+                } else {
+                    script.type = type;
+                }
+                script.onload = () => {
+                    console.log('✅ Chargé:', src);
+                    resolve();
+                };
+                script.onerror = () => {
+                    console.error('❌ Erreur:', src);
+                    reject(new Error(`Impossible de charger ${src}`));
+                };
+                document.body.appendChild(script);
+            });
+        }
+        
+        // Fonction pour charger tous les scripts
+        async function loadAllScripts() {
+            try {
+                // 1. React et ReactDOM
+                console.log('📦 Chargement de React...');
+                await loadScript('https://unpkg.com/react@18/umd/react.development.js');
+                await loadScript('https://unpkg.com/react-dom@18/umd/react-dom.development.js');
+                console.log('✅ React chargé');
+                
+                // 2. Babel (nécessaire pour JSX)
+                console.log('📦 Chargement de Babel...');
+                await loadScript('https://unpkg.com/@babel/standalone/babel.min.js');
+                console.log('✅ Babel chargé');
+                
+                // Petite pause pour que Babel s'initialise
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // 3. OneDrive
+                console.log('📦 Chargement OneDrive...');
+                await loadScript('https://js.live.net/v7.2/OneDrive.js');
+                
+                // 4. Utilitaires (ordre important !)
+                console.log('📦 Chargement des utilitaires...');
+                await loadScript('utils/icons.js', 'babel');
+                await loadScript('utils/storage.js', 'babel');
+                await loadScript('utils/export.js', 'babel');
+                await loadScript('utils/individual-exports.js');
+                await loadScript('utils/onedrive-helper.js');
+                
+                // 5. Composants utilitaires
+                console.log('📦 Chargement des composants utilitaires...');
+                await loadScript('components/SmartTable.js', 'babel');
+                await loadScript('components/SmartSelector.js', 'babel');
+                await loadScript('components/SessionManager.js', 'babel');
+                await loadScript('components/EstimationBuilder.js', 'babel');
+                
+                // 6. Modals
+                console.log('📦 Chargement des modals...');
+                await loadScript('components/ImportModal.js', 'babel');
+                await loadScript('components/ExportModal.js', 'babel');
+                await loadScript('components/OffreModal.js', 'babel');
+                await loadScript('components/OffreComplementaireModal.js', 'babel');
+                await loadScript('components/OneDriveConfigModal.js');
+                await loadScript('components/AppelOffreModal.js', 'babel');
+                await loadScript('components/AppelOffreDetailView.js', 'babel');
+                await loadScript('components/CommandeModal.js', 'babel');
+                await loadScript('components/RegieModal.js', 'babel');
+                await loadScript('components/FactureModal.js', 'babel');
+                
+                // 7. Vues
+                console.log('📦 Chargement des vues...');
+                await loadScript('components/Dashboard.js', 'babel');
+                await loadScript('components/AlignementView.js', 'babel');
+                await loadScript('components/AjustementModal.js', 'babel');
+                await loadScript('components/AlignementBudgetaire.js', 'babel');
+                
+                // 8. Application principale
+                console.log('📦 Chargement de l\'application...');
+                await loadScript('app.js', 'babel');
+                
+                // Attendre que Babel transforme tous les scripts
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Vérifications finales
+                console.log('=== VÉRIFICATION FINALE ===');
+                console.log('React:', typeof React !== 'undefined' ? '✅' : '❌');
+                console.log('ReactDOM:', typeof ReactDOM !== 'undefined' ? '✅' : '❌');
+                console.log('Icons:', typeof window.Icons !== 'undefined' ? '✅' : '❌');
+                console.log('Storage:', typeof window.storage !== 'undefined' ? '✅' : '❌');
+                console.log('AlignementView:', typeof window.AlignementView !== 'undefined' ? '✅' : '❌');
+                
+                // Vérifier si l'app s'est montée
+                setTimeout(() => {
+                    const root = document.getElementById('root');
+                    if (root && root.children.length <= 1) {
+                        console.error('❌ L\'application ne s\'est pas montée !');
+                        root.innerHTML = `
+                            <div style="padding: 40px; max-width: 800px; margin: 0 auto; font-family: system-ui;">
+                                <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">
+                                    ⚠️ Erreur de chargement
+                                </h1>
+                                <p>L'application n'a pas pu démarrer. Vérifiez la console (F12).</p>
+                            </div>
+                        `;
+                    } else {
+                        console.log('🎉 Application démarrée avec succès !');
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                console.error('❌ Erreur fatale:', error);
+                document.getElementById('root').innerHTML = `
+                    <div style="padding: 40px; max-width: 800px; margin: 0 auto; font-family: system-ui;">
+                        <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">
+                            ❌ Erreur de chargement
+                        </h1>
+                        <p style="margin-bottom: 15px;">Une erreur s'est produite lors du chargement :</p>
+                        <pre style="background: #fee; padding: 15px; border-radius: 5px; overflow-x: auto;">
+${error.message}
+                        </pre>
+                        <p style="margin-top: 15px; color: #666;">
+                            Vérifiez que tous les fichiers sont présents et que les chemins sont corrects.
+                        </p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Démarrer le chargement quand le DOM est prêt
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadAllScripts);
+        } else {
+            loadAllScripts();
+        }
+    </script>
 </body>
 </html>
