@@ -1959,18 +1959,30 @@ const ImportMenu = () => {
                         />
                     )}
     
-                        {/* Alignement & Atterrissage */}
-                        {activeTab === 'alignement' && (
-                            <window.AlignementView
-                                estimations={estimations}
-                                offres={offres}
-                                commandes={commandes}
-                                offresComplementaires={offresComplementaires}
-                                regies={regies}
-                                ajustements={ajustements}
-                                onSaveAjustement={handleSaveAjustement}
-                            />
-                        )}
+                    {/* Alignement & Atterrissage */}
+                    {activeTab === 'alignement' && (
+                        <window.AlignementView
+                            estimations={estimations}
+                            offres={offres}
+                            commandes={commandes}
+                            offresComplementaires={offresComplementaires}
+                            regies={regies}
+                            ajustements={ajustements}
+                            onSaveAjustement={handleSaveAjustement}
+                            onEditCommande={(cmd) => {
+                                setEditingCommande(cmd);
+                                setShowCommandeModal(true);
+                            }}
+                            onEditOffre={(offre) => {
+                                setEditingOffre(offre);
+                                setShowOffreModal(true);
+                            }}
+                            onEditOffreComplementaire={(oc) => {
+                                setEditingOffreComp(oc);
+                                setShowOffreCompModal(true);
+                            }}
+                        />
+                    )}
                 </div>
             </div>
 
