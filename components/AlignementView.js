@@ -338,8 +338,7 @@ window.AlignementView = ({
     };
 
     const hasActiveFilters = selectedLots.length > 0 || selectedPos0.length > 0 || selectedEtape;
-
-    // ========================================
+// ========================================
     // RENDU
     // ========================================
     return React.createElement('div', { className: 'space-y-6' },
@@ -666,4 +665,3 @@ window.AlignementView = ({
         })
     );
 };
-    
