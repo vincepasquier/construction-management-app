@@ -1,169 +1,245 @@
-// Modal pour créer un ajustement/prévision
-window.AjustementModal = ({ onClose, onSave, availableLots = [], availablePos0 = [] }) => {
-    const [formData, setFormData] = React.useState({
-        type: 'aleas',
+// Modal de création/modification d'ajustements budgétaires
+window.AjustementModal = ({ initialData, onClose, onSave, availableLots, availablePos0 }) => {
+    const [formData, setFormData] = React.useState(initialData || {
+        id: null,
+        type: 'aleas', // aleas, economies, provision
         description: '',
-        montant: '',
+        montant: 0,
         lots: [],
         positions0: [],
-        statut: 'previsionnel',
-        commentaire: ''
+        statut: 'previsionnel', // previsionnel, confirme
+        commentaire: '',
+        dateCreation: new Date().toISOString().split('T')[0]
     });
 
-    const handleSubmit = () => {
-        if (!formData.description || !formData.montant) {
-            alert('⚠️ Veuillez renseigner la description et le montant');
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        
+        if (!formData.description || formData.montant === 0) {
+            alert('⚠️ Veuillez renseigner une description et un montant');
             return;
         }
 
         const ajustement = {
-            id: 'adj_' + Date.now(),
-            type: formData.type,
-            description: formData.description,
-            montant: parseFloat(formData.montant) || 0,
-            lots: formData.lots,
-            positions0: formData.positions0,
-            statut: formData.statut,
-            commentaire: formData.commentaire,
-            dateCreation: new Date().toISOString()
+            ...formData,
+            id: formData.id || `ADJ-${Date.now()}`,
+            dateCreation: formData.dateCreation || new Date().toISOString().split('T')[0]
         };
 
         onSave(ajustement);
         onClose();
     };
 
+    const handleLotsChange = (e) => {
+        const selected = Array.from(e.target.selectedOptions, option => option.value);
+        setFormData({ ...formData, lots: selected });
+    };
+
+    const handlePos0Change = (e) => {
+        const selected = Array.from(e.target.selectedOptions, option => option.value);
+        setFormData({ ...formData, positions0: selected });
+    };
+
     return React.createElement('div', {
-        className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'
+        className: 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4',
+        onClick: onClose
     },
         React.createElement('div', {
-            className: 'bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto'
+            className: 'bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto',
+            onClick: (e) => e.stopPropagation()
         },
-            React.createElement('div', { className: 'flex justify-between items-center mb-6' },
-                React.createElement('h2', { className: 'text-2xl font-bold' }, '📊 Nouvel Ajustement'),
-                React.createElement('button', {
-                    onClick: onClose,
-                    className: 'text-gray-500 hover:text-gray-700'
-                }, React.createElement(window.Icons.X, null))
-            ),
-
-            React.createElement('div', { className: 'space-y-4' },
-                // Type
-                React.createElement('div', null,
-                    React.createElement('label', { className: 'block text-sm font-medium mb-1' }, 'Type d\'ajustement *'),
-                    React.createElement('select', {
-                        value: formData.type,
-                        onChange: (e) => setFormData({...formData, type: e.target.value}),
-                        className: 'w-full px-3 py-2 border rounded-lg'
+            React.createElement('form', { onSubmit: handleSubmit },
+                // En-tête
+                React.createElement('div', { className: 'flex justify-between items-center p-6 border-b' },
+                    React.createElement('h2', { className: 'text-2xl font-bold' },
+                        initialData ? '✏️ Modifier l\'ajustement' : '➕ Nouvel ajustement'
+                    ),
+                    React.createElement('button', {
+                        type: 'button',
+                        onClick: onClose,
+                        className: 'text-gray-400 hover:text-gray-600'
                     },
-                        React.createElement('option', { value: 'aleas' }, '⚡ Aléas / Imprévus'),
-                        React.createElement('option', { value: 'economies' }, '💰 Économies prévues'),
-                        React.createElement('option', { value: 'autre' }, '📝 Autre')
+                        React.createElement(window.Icons.X, { size: 24 })
                     )
                 ),
 
-                // Description
-                React.createElement('div', null,
-                    React.createElement('label', { className: 'block text-sm font-medium mb-1' }, 'Description *'),
-                    React.createElement('input', {
-                        type: 'text',
-                        value: formData.description,
-                        onChange: (e) => setFormData({...formData, description: e.target.value}),
-                        className: 'w-full px-3 py-2 border rounded-lg',
-                        placeholder: 'Ex: Provision pour aléas météo'
-                    })
-                ),
-
-                // Montant
-                React.createElement('div', null,
-                    React.createElement('label', { className: 'block text-sm font-medium mb-1' },
-                        'Montant (CHF) * ',
-                        React.createElement('span', { className: 'text-xs text-gray-500 ml-2' },
-                            '(Positif = augmentation, Négatif = économie)'
+                // Corps
+                React.createElement('div', { className: 'p-6 space-y-4' },
+                    
+                    // Type d'ajustement
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'block text-sm font-medium mb-2' },
+                            'Type d\'ajustement *'
+                        ),
+                        React.createElement('select', {
+                            value: formData.type,
+                            onChange: (e) => setFormData({ ...formData, type: e.target.value }),
+                            className: 'w-full px-3 py-2 border rounded-lg',
+                            required: true
+                        },
+                            React.createElement('option', { value: 'aleas' }, '⚡ Aléas / Dépassement'),
+                            React.createElement('option', { value: 'economies' }, '💰 Économies'),
+                            React.createElement('option', { value: 'provision' }, '📝 Provision / Prévision')
                         )
                     ),
-                    React.createElement('input', {
-                        type: 'number',
-                        step: '0.01',
-                        value: formData.montant,
-                        onChange: (e) => setFormData({...formData, montant: e.target.value}),
-                        className: 'w-full px-3 py-2 border rounded-lg',
-                        placeholder: 'Ex: 50000'
-                    })
-                ),
 
-                // Lots
-                React.createElement('div', null,
-                    React.createElement('label', { className: 'block text-sm font-medium mb-1' },
-                        'Lots concernés (optionnel)'
+                    // Description
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'block text-sm font-medium mb-2' },
+                            'Description *'
+                        ),
+                        React.createElement('input', {
+                            type: 'text',
+                            value: formData.description,
+                            onChange: (e) => setFormData({ ...formData, description: e.target.value }),
+                            className: 'w-full px-3 py-2 border rounded-lg',
+                            placeholder: 'Ex: Surcoût terrassement, Économie matériaux...',
+                            required: true
+                        })
                     ),
-                    React.createElement('select', {
-                        multiple: true,
-                        value: formData.lots,
-                        onChange: (e) => setFormData({...formData, lots: Array.from(e.target.selectedOptions, o => o.value)}),
-                        className: 'w-full px-3 py-2 border rounded-lg h-24'
-                    },
-                        availableLots.map(lot =>
-                            React.createElement('option', { key: lot, value: lot }, lot)
+
+                    // Montant
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'block text-sm font-medium mb-2' },
+                            'Montant (CHF) *',
+                            React.createElement('span', { className: 'text-xs text-gray-500 ml-2' },
+                                '(Positif = augmentation, Négatif = économie)'
+                            )
+                        ),
+                        React.createElement('input', {
+                            type: 'number',
+                            step: '0.01',
+                            value: formData.montant,
+                            onChange: (e) => setFormData({ ...formData, montant: parseFloat(e.target.value) }),
+                            className: 'w-full px-3 py-2 border rounded-lg',
+                            placeholder: 'Ex: 50000 ou -20000',
+                            required: true
+                        })
+                    ),
+
+                    // Statut
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'block text-sm font-medium mb-2' },
+                            'Statut'
+                        ),
+                        React.createElement('select', {
+                            value: formData.statut,
+                            onChange: (e) => setFormData({ ...formData, statut: e.target.value }),
+                            className: 'w-full px-3 py-2 border rounded-lg'
+                        },
+                            React.createElement('option', { value: 'previsionnel' }, '⏳ Prévisionnel'),
+                            React.createElement('option', { value: 'confirme' }, '✅ Confirmé')
                         )
                     ),
-                    React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
-                        'Laisser vide pour impacter tous les lots. Ctrl+clic pour multi-sélection.'
-                    )
-                ),
 
-                // Positions 0
-                React.createElement('div', null,
-                    React.createElement('label', { className: 'block text-sm font-medium mb-1' },
-                        'Positions Niv. 0 (optionnel)'
+                    // Lots
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'block text-sm font-medium mb-2' },
+                            'Lots concernés',
+                            React.createElement('span', { className: 'text-xs text-gray-500 ml-2' },
+                                '(Maintenir Ctrl/Cmd pour sélection multiple)'
+                            )
+                        ),
+                        React.createElement('select', {
+                            multiple: true,
+                            value: formData.lots,
+                            onChange: handleLotsChange,
+                            className: 'w-full px-3 py-2 border rounded-lg h-32'
+                        },
+                            availableLots.map(lot =>
+                                React.createElement('option', { key: lot, value: lot }, lot)
+                            )
+                        ),
+                        React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
+                            'Laisser vide pour appliquer à tous les lots'
+                        )
                     ),
-                    React.createElement('select', {
-                        multiple: true,
-                        value: formData.positions0,
-                        onChange: (e) => setFormData({...formData, positions0: Array.from(e.target.selectedOptions, o => o.value)}),
-                        className: 'w-full px-3 py-2 border rounded-lg h-24'
+
+                    // Positions 0
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'block text-sm font-medium mb-2' },
+                            'Positions Niveau 0',
+                            React.createElement('span', { className: 'text-xs text-gray-500 ml-2' },
+                                '(Maintenir Ctrl/Cmd pour sélection multiple)'
+                            )
+                        ),
+                        React.createElement('select', {
+                            multiple: true,
+                            value: formData.positions0,
+                            onChange: handlePos0Change,
+                            className: 'w-full px-3 py-2 border rounded-lg h-32'
+                        },
+                            availablePos0.map(pos =>
+                                React.createElement('option', { key: pos, value: pos }, pos)
+                            )
+                        ),
+                        React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
+                            'Laisser vide pour appliquer à toutes les positions'
+                        )
+                    ),
+
+                    // Commentaire
+                    React.createElement('div', null,
+                        React.createElement('label', { className: 'block text-sm font-medium mb-2' },
+                            'Commentaire / Notes'
+                        ),
+                        React.createElement('textarea', {
+                            value: formData.commentaire,
+                            onChange: (e) => setFormData({ ...formData, commentaire: e.target.value }),
+                            className: 'w-full px-3 py-2 border rounded-lg h-24 resize-none',
+                            placeholder: 'Notes complémentaires...'
+                        })
+                    ),
+
+                    // Aperçu du montant
+                    React.createElement('div', { 
+                        className: 'p-4 rounded-lg border-2 ' + (
+                            formData.montant > 0 
+                                ? 'bg-red-50 border-red-200' 
+                                : formData.montant < 0 
+                                    ? 'bg-green-50 border-green-200'
+                                    : 'bg-gray-50 border-gray-200'
+                        )
                     },
-                        availablePos0.map(pos =>
-                            React.createElement('option', { key: pos, value: pos }, pos)
+                        React.createElement('div', { className: 'flex items-center justify-between' },
+                            React.createElement('span', { className: 'font-semibold' }, 'Impact budgétaire:'),
+                            React.createElement('span', { 
+                                className: 'text-2xl font-bold ' + (
+                                    formData.montant > 0 
+                                        ? 'text-red-600' 
+                                        : formData.montant < 0 
+                                            ? 'text-green-600'
+                                            : 'text-gray-600'
+                                )
+                            },
+                                (formData.montant > 0 ? '+' : '') + 
+                                (formData.montant || 0).toLocaleString('fr-CH') + ' CHF'
+                            )
+                        ),
+                        React.createElement('div', { className: 'text-xs text-gray-600 mt-2' },
+                            formData.montant > 0 
+                                ? '⚠️ Augmentation du coût du projet'
+                                : formData.montant < 0 
+                                    ? '✅ Réduction du coût du projet'
+                                    : 'ℹ️ Aucun impact'
                         )
                     )
                 ),
 
-                // Statut
-                React.createElement('div', null,
-                    React.createElement('label', { className: 'block text-sm font-medium mb-1' }, 'Statut'),
-                    React.createElement('select', {
-                        value: formData.statut,
-                        onChange: (e) => setFormData({...formData, statut: e.target.value}),
-                        className: 'w-full px-3 py-2 border rounded-lg'
+                // Pied de page
+                React.createElement('div', { className: 'flex justify-end gap-3 p-6 border-t bg-gray-50' },
+                    React.createElement('button', {
+                        type: 'button',
+                        onClick: onClose,
+                        className: 'px-4 py-2 border rounded-lg hover:bg-gray-100'
+                    }, 'Annuler'),
+                    React.createElement('button', {
+                        type: 'submit',
+                        className: 'px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700'
                     },
-                        React.createElement('option', { value: 'previsionnel' }, '⏳ Prévisionnel'),
-                        React.createElement('option', { value: 'confirme' }, '✅ Confirmé')
+                        initialData ? 'Modifier' : 'Créer l\'ajustement'
                     )
-                ),
-
-                // Commentaire
-                React.createElement('div', null,
-                    React.createElement('label', { className: 'block text-sm font-medium mb-1' }, 'Commentaire'),
-                    React.createElement('textarea', {
-                        value: formData.commentaire,
-                        onChange: (e) => setFormData({...formData, commentaire: e.target.value}),
-                        className: 'w-full px-3 py-2 border rounded-lg',
-                        rows: 3,
-                        placeholder: 'Notes complémentaires...'
-                    })
                 )
-            ),
-
-            // Boutons
-            React.createElement('div', { className: 'flex justify-end gap-3 mt-6 pt-4 border-t' },
-                React.createElement('button', {
-                    onClick: onClose,
-                    className: 'px-4 py-2 border rounded-lg hover:bg-gray-50'
-                }, 'Annuler'),
-                React.createElement('button', {
-                    onClick: handleSubmit,
-                    className: 'px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700'
-                }, 'Créer l\'ajustement')
             )
         )
     );
