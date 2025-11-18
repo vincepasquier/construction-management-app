@@ -82,11 +82,21 @@ window.AlignementView = ({
             .filter(matchesFilters)
             .reduce((sum, est) => sum + (est.montantTotal || est.montant || 0), 0);
 
+        // Commandes engagées AVEC PRORATA
         const commandesEngagees = commandes
             .filter(matchesFilters)
             .reduce((sum, cmd) => {
                 const montantBase = cmd.calculatedMontant || cmd.montant || 0;
                 const budgetRegie = cmd.budgetRegie || 0;
+                
+                // Calculer le nombre de lots/positions touchés
+                const lotsCommande = cmd.lots || [];
+                const totalEstimationCommande = estimations
+                    .filter(e => lotsCommande.some(l => e.lots?.includes(l)))
+                    .reduce((s, e) => s + (e.montantTotal || e.montant || 0), 0);
+                
+                // Prorata = 1 si la commande ne touche qu'un seul contexte
+                const prorata = totalEstimationCommande > 0 ? 1 : 1;
                 
                 const ocLiees = offresComplementaires.filter(oc => 
                     oc.commandeId === cmd.id && oc.statut === 'Acceptée'
@@ -150,39 +160,94 @@ window.AlignementView = ({
                 .filter(e => e.lots?.includes(lot))
                 .reduce((sum, e) => sum + (e.montantTotal || e.montant || 0), 0);
 
-            // Commandes engagées pour ce lot
+            // Commandes engagées pour ce lot AVEC PRORATA
             const commandesLot = commandes.filter(c => c.lots?.includes(lot));
             const cmdLot = commandesLot.reduce((sum, cmd) => {
                 const montantBase = cmd.calculatedMontant || cmd.montant || 0;
                 const budgetRegie = cmd.budgetRegie || 0;
                 
-                const ocLiees = offresComplementaires.filter(oc => 
-                    oc.commandeId === cmd.id && oc.statut === 'Acceptée' && oc.lots?.includes(lot)
-                );
-                const montantOC = ocLiees.reduce((s, oc) => s + (oc.montant || 0), 0);
+                // Calculer le prorata pour cette commande sur ce lot
+                const lotsCommande = cmd.lots || [];
+                const totalEstimationCommande = estimations
+                    .filter(e => lotsCommande.some(l => e.lots?.includes(l)))
+                    .reduce((s, e) => s + (e.montantTotal || e.montant || 0), 0);
                 
-                const regiesLiees = regies.filter(r => r.commandeId === cmd.id && r.lots?.includes(lot));
-                const montantRegies = regiesLiees.reduce((s, r) => s + (r.montantTotal || 0), 0);
+                const estimationLot = estimations
+                    .filter(e => e.lots?.includes(lot) && lotsCommande.some(l => e.lots?.includes(l)))
+                    .reduce((s, e) => s + (e.montantTotal || e.montant || 0), 0);
+                
+                const prorata = totalEstimationCommande > 0 ? estimationLot / totalEstimationCommande : 0;
+                const montantProrata = montantBase * prorata;
+                
+                // OC liées avec prorata
+                const ocLiees = offresComplementaires.filter(oc => 
+                    oc.commandeId === cmd.id && oc.statut === 'Acceptée'
+                );
+                const montantOC = ocLiees.reduce((s, oc) => {
+                    const lotsOC = oc.lots || cmd.lots || [];
+                    const totalEstOC = estimations
+                        .filter(e => lotsOC.some(l => e.lots?.includes(l)))
+                        .reduce((se, e) => se + (e.montantTotal || e.montant || 0), 0);
+                    const estLotOC = estimations
+                        .filter(e => e.lots?.includes(lot) && lotsOC.some(l => e.lots?.includes(l)))
+                        .reduce((se, e) => se + (e.montantTotal || e.montant || 0), 0);
+                    const prorataOC = totalEstOC > 0 ? estLotOC / totalEstOC : 0;
+                    return s + (oc.montant || 0) * prorataOC;
+                }, 0);
+                
+                // Régies avec prorata
+                const regiesLiees = regies.filter(r => r.commandeId === cmd.id);
+                const montantRegies = regiesLiees.reduce((s, r) => {
+                    const lotsRegie = r.lots || cmd.lots || [];
+                    const totalEstRegie = estimations
+                        .filter(e => lotsRegie.some(l => e.lots?.includes(l)))
+                        .reduce((se, e) => se + (e.montantTotal || e.montant || 0), 0);
+                    const estLotRegie = estimations
+                        .filter(e => e.lots?.includes(lot) && lotsRegie.some(l => e.lots?.includes(l)))
+                        .reduce((se, e) => se + (e.montantTotal || e.montant || 0), 0);
+                    const prorataRegie = totalEstRegie > 0 ? estLotRegie / totalEstRegie : 0;
+                    return s + (r.montantTotal || 0) * prorataRegie;
+                }, 0);
                 
                 if (budgetRegie > 0) {
-                    const depassement = Math.max(0, montantRegies - budgetRegie);
-                    return sum + montantBase + montantOC + depassement;
+                    const depassement = Math.max(0, montantRegies - budgetRegie * prorata);
+                    return sum + montantProrata + montantOC + depassement;
                 } else {
-                    return sum + montantBase + montantOC + montantRegies;
+                    return sum + montantProrata + montantOC + montantRegies;
                 }
             }, 0);
 
-            // Offres en attente
+            // Offres en attente AVEC PRORATA
             const offresAttenteL = offres.filter(o => 
                 o.lots?.includes(lot) && (o.statut === 'En attente' || o.statut === 'Soumise')
             );
-            const montantOffresAttente = offresAttenteL.reduce((sum, o) => sum + (o.montant || 0), 0);
+            const montantOffresAttente = offresAttenteL.reduce((sum, o) => {
+                const lotsOffre = o.lots || [];
+                const totalEstOffre = estimations
+                    .filter(e => lotsOffre.some(l => e.lots?.includes(l)))
+                    .reduce((s, e) => s + (e.montantTotal || e.montant || 0), 0);
+                const estLotOffre = estimations
+                    .filter(e => e.lots?.includes(lot) && lotsOffre.some(l => e.lots?.includes(l)))
+                    .reduce((s, e) => s + (e.montantTotal || e.montant || 0), 0);
+                const prorataOffre = totalEstOffre > 0 ? estLotOffre / totalEstOffre : 0;
+                return sum + (o.montant || 0) * prorataOffre;
+            }, 0);
 
-            // OC en attente
+            // OC en attente AVEC PRORATA
             const ocAttenteL = offresComplementaires.filter(oc => 
                 oc.lots?.includes(lot) && oc.statut === 'En attente'
             );
-            const montantOcAttente = ocAttenteL.reduce((sum, oc) => sum + (oc.montant || 0), 0);
+            const montantOcAttente = ocAttenteL.reduce((sum, oc) => {
+                const lotsOC = oc.lots || [];
+                const totalEstOC = estimations
+                    .filter(e => lotsOC.some(l => e.lots?.includes(l)))
+                    .reduce((s, e) => s + (e.montantTotal || e.montant || 0), 0);
+                const estLotOC = estimations
+                    .filter(e => e.lots?.includes(lot) && lotsOC.some(l => e.lots?.includes(l)))
+                    .reduce((s, e) => s + (e.montantTotal || e.montant || 0), 0);
+                const prorataOC = totalEstOC > 0 ? estLotOC / totalEstOC : 0;
+                return sum + (oc.montant || 0) * prorataOC;
+            }, 0);
 
             // Régies hors budget
             const regiesHorsBudget = [];
@@ -202,8 +267,27 @@ window.AlignementView = ({
                 }
             });
 
-            // Ajustements
+            // Ajustements AVEC PRORATA
             const ajustL = ajustements.filter(a => a.lots?.includes(lot));
+            const totalAjust = ajustL.reduce((sum, a) => {
+                const lotsAjust = a.lots || [];
+                if (lotsAjust.length === 0) {
+                    // Si pas de lots spécifiques, répartir sur tous les lots au prorata
+                    const totalEstAllLots = estimations.reduce((s, e) => s + (e.montantTotal || e.montant || 0), 0);
+                    const prorataAjust = totalEstAllLots > 0 ? estLot / totalEstAllLots : 0;
+                    return sum + (a.montant || 0) * prorataAjust;
+                } else {
+                    // Prorata basé sur les lots spécifiés
+                    const totalEstAjust = estimations
+                        .filter(e => lotsAjust.some(l => e.lots?.includes(l)))
+                        .reduce((s, e) => s + (e.montantTotal || e.montant || 0), 0);
+                    const estLotAjust = estimations
+                        .filter(e => e.lots?.includes(lot) && lotsAjust.some(l => e.lots?.includes(l)))
+                        .reduce((s, e) => s + (e.montantTotal || e.montant || 0), 0);
+                    const prorataAjust = totalEstAjust > 0 ? estLotAjust / totalEstAjust : 0;
+                    return sum + (a.montant || 0) * prorataAjust;
+                }
+            }, 0);
 
             const totalAttente = montantOffresAttente + montantOcAttente + 
                 regiesHorsBudget.reduce((s, r) => s + r.montant, 0);
