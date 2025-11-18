@@ -2157,5 +2157,19 @@ const ImportMenu = () => {
 // ========================================
 // MONTAGE DE L'APPLICATION
 // ========================================
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<ConstructionManagement />);
+// ========================================
+// MONTAGE DE L'APPLICATION
+// ========================================
+window.ConstructionManagement = ConstructionManagement;
+
+// Attendre que tout soit chargé
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const rootElement = document.getElementById('root');
+        if (rootElement && typeof ReactDOM !== 'undefined') {
+            const root = ReactDOM.createRoot(rootElement);
+            root.render(React.createElement(ConstructionManagement));
+            console.log('✅ Application montée avec succès');
+        }
+    }, 500);
+});
