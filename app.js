@@ -1959,19 +1959,18 @@ const ImportMenu = () => {
                         />
                     )}
     
-                    {/* Alignement Budgétaire */}
-                    {activeTab === 'alignement' && (
-                        <window.AlignementBudgetaire
-                            estimations={estimations}
-                            offres={offres}
-                            commandes={commandes}
-                            offresComplementaires={offresComplementaires}
-                            regies={regies}
-                            factures={factures}
-                            ajustements={ajustements}
-                            onSaveAjustement={handleSaveAjustement}
-                        />
-                    )}
+                        {/* Alignement & Atterrissage */}
+                        {activeTab === 'alignement' && (
+                            <window.AlignementView
+                                estimations={estimations}
+                                offres={offres}
+                                commandes={commandes}
+                                offresComplementaires={offresComplementaires}
+                                regies={regies}
+                                ajustements={ajustements}
+                                onSaveAjustement={handleSaveAjustement}
+                            />
+                        )}
                 </div>
             </div>
 
