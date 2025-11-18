@@ -1,4 +1,4 @@
-// Vue Alignement & Atterrissage
+// Vue Alignement & Atterrissage - VERSION COMPLÈTE HIÉRARCHIQUE
 window.AlignementView = ({ 
     estimations, 
     offres, 
@@ -6,16 +6,29 @@ window.AlignementView = ({
     offresComplementaires, 
     regies, 
     ajustements = [],
-    onSaveAjustement 
+    onSaveAjustement,
+    onEditCommande,
+    onEditOffre,
+    onEditOffreComplementaire,
+    onEditAjustement
 }) => {
-    // États
+    // ========================================
+    // ÉTATS
+    // ========================================
     const [selectedLots, setSelectedLots] = React.useState([]);
     const [selectedPos0, setSelectedPos0] = React.useState([]);
     const [selectedEtape, setSelectedEtape] = React.useState('');
     const [showAjustementModal, setShowAjustementModal] = React.useState(false);
-    const [viewMode, setViewMode] = React.useState('lots');
+    const [editingAjustement, setEditingAjustement] = React.useState(null);
     
-    // Filtres disponibles
+    // États pour l'expansion
+    const [expandedLots, setExpandedLots] = React.useState(new Set());
+    const [expandedSections, setExpandedSections] = React.useState({}); // {lotId: {engage: true, attente: false, ...}}
+    const [expandedPositions, setExpandedPositions] = React.useState(new Set());
+    
+    // ========================================
+    // FILTRES DISPONIBLES
+    // ========================================
     const availableFilters = React.useMemo(() => {
         const lotsSet = new Set();
         const pos0Set = new Set();
@@ -34,7 +47,9 @@ window.AlignementView = ({
         };
     }, [estimations, commandes, offres]);
 
-    // Fonction de filtrage
+    // ========================================
+    // FONCTION DE FILTRAGE
+    // ========================================
     const matchesFilters = (item) => {
         if (selectedLots.length === 0 && selectedPos0.length === 0 && !selectedEtape) {
             return true;
@@ -59,7 +74,9 @@ window.AlignementView = ({
         return matches;
     };
 
-    // Calculs globaux
+    // ========================================
+    // CALCULS GLOBAUX
+    // ========================================
     const globalStats = React.useMemo(() => {
         const totalEstime = estimations
             .filter(matchesFilters)
@@ -116,123 +133,127 @@ window.AlignementView = ({
         };
     }, [estimations, commandes, offres, offresComplementaires, regies, ajustements, selectedLots, selectedPos0, selectedEtape]);
 
-    // Données par lot
+    // ========================================
+    // DONNÉES PAR LOT AVEC DÉTAILS
+    // ========================================
     const dataByLot = React.useMemo(() => {
         const lotMap = new Map();
         const allLots = new Set();
         
-        [...estimations, ...commandes, ...offres, ...offresComplementaires, ...regies].forEach(item => {
+        [...estimations, ...commandes, ...offres, ...offresComplementaires, ...regies, ...ajustements].forEach(item => {
             (item.lots || []).forEach(lot => allLots.add(lot));
         });
 
         allLots.forEach(lot => {
+            // Estimation
             const estLot = estimations
                 .filter(e => e.lots?.includes(lot))
                 .reduce((sum, e) => sum + (e.montantTotal || e.montant || 0), 0);
 
-            const cmdLot = commandes
-                .filter(c => c.lots?.includes(lot))
-                .reduce((sum, cmd) => {
-                    const montantBase = cmd.calculatedMontant || cmd.montant || 0;
-                    const budgetRegie = cmd.budgetRegie || 0;
-                    
-                    const ocLiees = offresComplementaires.filter(oc => 
-                        oc.commandeId === cmd.id && oc.statut === 'Acceptée' && oc.lots?.includes(lot)
-                    );
-                    const montantOC = ocLiees.reduce((s, oc) => s + (oc.montant || 0), 0);
-                    
+            // Commandes engagées pour ce lot
+            const commandesLot = commandes.filter(c => c.lots?.includes(lot));
+            const cmdLot = commandesLot.reduce((sum, cmd) => {
+                const montantBase = cmd.calculatedMontant || cmd.montant || 0;
+                const budgetRegie = cmd.budgetRegie || 0;
+                
+                const ocLiees = offresComplementaires.filter(oc => 
+                    oc.commandeId === cmd.id && oc.statut === 'Acceptée' && oc.lots?.includes(lot)
+                );
+                const montantOC = ocLiees.reduce((s, oc) => s + (oc.montant || 0), 0);
+                
+                const regiesLiees = regies.filter(r => r.commandeId === cmd.id && r.lots?.includes(lot));
+                const montantRegies = regiesLiees.reduce((s, r) => s + (r.montantTotal || 0), 0);
+                
+                if (budgetRegie > 0) {
+                    const depassement = Math.max(0, montantRegies - budgetRegie);
+                    return sum + montantBase + montantOC + depassement;
+                } else {
+                    return sum + montantBase + montantOC + montantRegies;
+                }
+            }, 0);
+
+            // Offres en attente
+            const offresAttenteL = offres.filter(o => 
+                o.lots?.includes(lot) && (o.statut === 'En attente' || o.statut === 'Soumise')
+            );
+            const montantOffresAttente = offresAttenteL.reduce((sum, o) => sum + (o.montant || 0), 0);
+
+            // OC en attente
+            const ocAttenteL = offresComplementaires.filter(oc => 
+                oc.lots?.includes(lot) && oc.statut === 'En attente'
+            );
+            const montantOcAttente = ocAttenteL.reduce((sum, oc) => sum + (oc.montant || 0), 0);
+
+            // Régies hors budget
+            const regiesHorsBudget = [];
+            commandesLot.forEach(cmd => {
+                const budgetRegie = cmd.budgetRegie || 0;
+                if (budgetRegie > 0) {
                     const regiesLiees = regies.filter(r => r.commandeId === cmd.id && r.lots?.includes(lot));
                     const montantRegies = regiesLiees.reduce((s, r) => s + (r.montantTotal || 0), 0);
-                    
-                    if (budgetRegie > 0) {
-                        const depassement = Math.max(0, montantRegies - budgetRegie);
-                        return sum + montantBase + montantOC + depassement;
-                    } else {
-                        return sum + montantBase + montantOC + montantRegies;
+                    const depassement = montantRegies - budgetRegie;
+                    if (depassement > 0) {
+                        regiesHorsBudget.push({
+                            commandeNumero: cmd.numero,
+                            montant: depassement,
+                            regies: regiesLiees
+                        });
                     }
-                }, 0);
+                }
+            });
 
-            const offresAttenteL = offres
-                .filter(o => o.lots?.includes(lot) && (o.statut === 'En attente' || o.statut === 'Soumise'))
-                .reduce((sum, o) => sum + (o.montant || 0), 0);
+            // Ajustements
+            const ajustL = ajustements.filter(a => a.lots?.includes(lot));
 
-            const ocAttenteL = offresComplementaires
-                .filter(oc => oc.lots?.includes(lot) && oc.statut === 'En attente')
-                .reduce((sum, oc) => sum + (oc.montant || 0), 0);
-
-            const ajustL = ajustements
-                .filter(a => a.lots?.includes(lot))
-                .reduce((sum, a) => sum + (a.montant || 0), 0);
-
-            const prevu = cmdLot + offresAttenteL + ocAttenteL + ajustL;
+            const totalAttente = montantOffresAttente + montantOcAttente + 
+                regiesHorsBudget.reduce((s, r) => s + r.montant, 0);
+            const totalAjust = ajustL.reduce((sum, a) => sum + (a.montant || 0), 0);
+            const prevu = cmdLot + totalAttente + totalAjust;
             const ecart = prevu - estLot;
 
             lotMap.set(lot, {
                 lot,
                 estime: estLot,
                 engage: cmdLot,
-                attente: offresAttenteL + ocAttenteL,
-                ajustements: ajustL,
+                attente: totalAttente,
+                ajustements: totalAjust,
                 prevu: prevu,
                 ecart: ecart,
-                ecartPourcent: estLot > 0 ? ((ecart / estLot) * 100) : 0
+                ecartPourcent: estLot > 0 ? ((ecart / estLot) * 100) : 0,
+                // Détails
+                commandes: commandesLot,
+                offresAttente: offresAttenteL,
+                ocAttente: ocAttenteL,
+                regiesHorsBudget: regiesHorsBudget,
+                ajustementsDetail: ajustL
             });
         });
 
         return Array.from(lotMap.values()).sort((a, b) => a.lot.localeCompare(b.lot));
     }, [estimations, commandes, offres, offresComplementaires, regies, ajustements]);
 
-    // Éléments en attente
-    const elementsAttente = React.useMemo(() => {
-        const items = [];
+    // ========================================
+    // FONCTIONS D'EXPANSION
+    // ========================================
+    const toggleLot = (lot) => {
+        const newExpanded = new Set(expandedLots);
+        if (newExpanded.has(lot)) {
+            newExpanded.delete(lot);
+        } else {
+            newExpanded.add(lot);
+        }
+        setExpandedLots(newExpanded);
+    };
 
-        offres
-            .filter(o => matchesFilters(o) && (o.statut === 'En attente' || o.statut === 'Soumise'))
-            .forEach(o => {
-                items.push({
-                    type: 'offre',
-                    description: 'Offre ' + o.fournisseur + ' (' + (o.lots?.join(', ') || '-') + ')',
-                    montant: o.montant || 0,
-                    statut: o.statut,
-                    date: o.dateReception
-                });
-            });
-
-        offresComplementaires
-            .filter(oc => matchesFilters(oc) && oc.statut === 'En attente')
-            .forEach(oc => {
-                items.push({
-                    type: 'oc',
-                    description: 'OC ' + oc.numero + ' - ' + (oc.motif || 'OC'),
-                    montant: oc.montant || 0,
-                    statut: oc.statut,
-                    date: oc.dateCreation
-                });
-            });
-
-        commandes
-            .filter(matchesFilters)
-            .forEach(cmd => {
-                const budgetRegie = cmd.budgetRegie || 0;
-                if (budgetRegie === 0) return;
-                
-                const regiesLiees = regies.filter(r => r.commandeId === cmd.id);
-                const montantRegies = regiesLiees.reduce((s, r) => s + (r.montantTotal || 0), 0);
-                const depassement = montantRegies - budgetRegie;
-                
-                if (depassement > 0) {
-                    items.push({
-                        type: 'regie',
-                        description: 'Régie hors budget (' + cmd.numero + ')',
-                        montant: depassement,
-                        statut: 'Dépassement',
-                        date: null
-                    });
-                }
-            });
-
-        return items.sort((a, b) => (b.montant || 0) - (a.montant || 0));
-    }, [offres, offresComplementaires, commandes, regies, selectedLots, selectedPos0, selectedEtape]);
+    const toggleSection = (lot, section) => {
+        setExpandedSections(prev => ({
+            ...prev,
+            [lot]: {
+                ...prev[lot],
+                [section]: !prev[lot]?.[section]
+            }
+        }));
+    };
 
     const resetFilters = () => {
         setSelectedLots([]);
@@ -242,9 +263,9 @@ window.AlignementView = ({
 
     const hasActiveFilters = selectedLots.length > 0 || selectedPos0.length > 0 || selectedEtape;
 
-    // RENDU - Je continue dans la partie 2...
-    // Suite de AlignementView.js - PARTIE 2 : RENDU
-    
+    // ========================================
+    // RENDU
+    // ========================================
     return React.createElement('div', { className: 'space-y-6' },
         // Titre
         React.createElement('div', null,
@@ -347,7 +368,7 @@ window.AlignementView = ({
                     globalStats.totalAttente.toLocaleString('fr-CH') + ' CHF'
                 ),
                 React.createElement('div', { className: 'text-xs text-orange-600 mt-1' },
-                    elementsAttente.length + ' élément(s)'
+                    'Offres + OC + Régies'
                 )
             ),
 
@@ -452,7 +473,7 @@ window.AlignementView = ({
                     }
                 })
             ),
-            React.createElement('div', { className: 'flex justify-between mt-2 text-xs' },
+            React.createElement('div', { className: 'flex justify-between mt-2 text-xs flex-wrap gap-2' },
                 React.createElement('span', { className: 'flex items-center gap-1' },
                     React.createElement('span', { className: 'w-3 h-3 bg-green-500 rounded' }),
                     'Engagé: ' + globalStats.commandesEngagees.toLocaleString('fr-CH') + ' CHF'
@@ -469,13 +490,16 @@ window.AlignementView = ({
                 )
             )
         ),
-    
-        // Tableau de réconciliation par lot
+
+        // Tableau de réconciliation par lot AVEC EXPANSION
         React.createElement('div', { className: 'bg-white rounded-lg border p-6' },
             React.createElement('div', { className: 'flex justify-between items-center mb-4' },
                 React.createElement('h3', { className: 'text-lg font-bold' }, '📋 Réconciliation par Lot'),
                 React.createElement('button', {
-                    onClick: () => setShowAjustementModal(true),
+                    onClick: () => {
+                        setEditingAjustement(null);
+                        setShowAjustementModal(true);
+                    },
                     className: 'px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2'
                 },
                     React.createElement(window.Icons.Plus, { size: 16 }),
@@ -486,6 +510,7 @@ window.AlignementView = ({
                 React.createElement('table', { className: 'w-full' },
                     React.createElement('thead', { className: 'bg-gray-50 border-b-2' },
                         React.createElement('tr', null,
+                            React.createElement('th', { className: 'px-4 py-3 text-left text-sm font-medium text-gray-600 w-8' }, ''),
                             React.createElement('th', { className: 'px-4 py-3 text-left text-sm font-medium text-gray-600' }, 'Lot'),
                             React.createElement('th', { className: 'px-4 py-3 text-right text-sm font-medium text-gray-600' }, 'Estimé'),
                             React.createElement('th', { className: 'px-4 py-3 text-right text-sm font-medium text-gray-600' }, 'Engagé ✓'),
@@ -497,46 +522,286 @@ window.AlignementView = ({
                         )
                     ),
                     React.createElement('tbody', null,
-                        dataByLot.map(row =>
-                            React.createElement('tr', { key: row.lot, className: 'border-t hover:bg-gray-50' },
-                                React.createElement('td', { className: 'px-4 py-3 font-medium text-blue-600' }, row.lot),
-                                React.createElement('td', { className: 'px-4 py-3 text-right' }, 
-                                    row.estime.toLocaleString('fr-CH') + ' CHF'
-                                ),
-                                React.createElement('td', { className: 'px-4 py-3 text-right text-green-700 font-semibold' },
-                                    row.engage.toLocaleString('fr-CH') + ' CHF'
-                                ),
-                                React.createElement('td', { className: 'px-4 py-3 text-right text-orange-700' },
-                                    row.attente.toLocaleString('fr-CH') + ' CHF'
-                                ),
-                                React.createElement('td', { className: 'px-4 py-3 text-right text-purple-700' },
-                                    (row.ajustements >= 0 ? '+' : '') + row.ajustements.toLocaleString('fr-CH') + ' CHF'
-                                ),
-                                React.createElement('td', { className: 'px-4 py-3 text-right font-bold' },
-                                    row.prevu.toLocaleString('fr-CH') + ' CHF'
-                                ),
-                                React.createElement('td', {
-                                    className: 'px-4 py-3 text-right font-semibold ' + (
-                                        row.ecart > 0 
-                                            ? Math.abs(row.ecartPourcent) > 5 
-                                                ? 'text-red-600' 
-                                                : 'text-orange-600'
-                                            : 'text-green-600'
-                                    )
+                        dataByLot.map(row => 
+                            React.createElement(React.Fragment, { key: row.lot },
+                                // Ligne principale du lot
+                                React.createElement('tr', { 
+                                    className: 'border-t hover:bg-gray-50 cursor-pointer',
+                                    onClick: () => toggleLot(row.lot)
                                 },
-                                    (row.ecart >= 0 ? '+' : '') + row.ecart.toLocaleString('fr-CH') + ' CHF'
-                                ),
-                                React.createElement('td', { className: 'px-4 py-3 text-center' },
-                                    React.createElement('span', {
-                                        className: 'inline-block px-2 py-1 rounded text-xs font-semibold ' + (
-                                            row.ecartPourcent > 5 
-                                                ? 'bg-red-100 text-red-700' 
-                                                : row.ecartPourcent > 0 
-                                                    ? 'bg-orange-100 text-orange-700'
-                                                    : 'bg-green-100 text-green-700'
+                                    React.createElement('td', { className: 'px-4 py-3 text-center' },
+                                        React.createElement('button', {
+                                            className: 'text-gray-600 hover:text-blue-600 transition-transform ' + 
+                                                (expandedLots.has(row.lot) ? 'rotate-90' : ''),
+                                            onClick: (e) => {
+                                                e.stopPropagation();
+                                                toggleLot(row.lot);
+                                            }
+                                        },
+                                            React.createElement(window.Icons.ChevronRight, { size: 18 })
+                                        )
+                                    ),
+                                    React.createElement('td', { className: 'px-4 py-3 font-medium text-blue-600' }, row.lot),
+                                    React.createElement('td', { className: 'px-4 py-3 text-right' }, 
+                                        row.estime.toLocaleString('fr-CH') + ' CHF'
+                                    ),
+                                    React.createElement('td', { className: 'px-4 py-3 text-right text-green-700 font-semibold' },
+                                        row.engage.toLocaleString('fr-CH') + ' CHF'
+                                    ),
+                                    React.createElement('td', { className: 'px-4 py-3 text-right text-orange-700' },
+                                        row.attente.toLocaleString('fr-CH') + ' CHF'
+                                    ),
+                                    React.createElement('td', { className: 'px-4 py-3 text-right text-purple-700' },
+                                        (row.ajustements >= 0 ? '+' : '') + row.ajustements.toLocaleString('fr-CH') + ' CHF'
+                                    ),
+                                    React.createElement('td', { className: 'px-4 py-3 text-right font-bold' },
+                                        row.prevu.toLocaleString('fr-CH') + ' CHF'
+                                    ),
+                                    React.createElement('td', {
+                                        className: 'px-4 py-3 text-right font-semibold ' + (
+                                            row.ecart > 0 
+                                                ? Math.abs(row.ecartPourcent) > 5 
+                                                    ? 'text-red-600' 
+                                                    : 'text-orange-600'
+                                                : 'text-green-600'
                                         )
                                     },
-                                        (row.ecartPourcent >= 0 ? '+' : '') + row.ecartPourcent.toFixed(1) + '%'
+                                        (row.ecart >= 0 ? '+' : '') + row.ecart.toLocaleString('fr-CH') + ' CHF'
+                                    ),
+                                    React.createElement('td', { className: 'px-4 py-3 text-center' },
+                                        React.createElement('span', {
+                                            className: 'inline-block px-2 py-1 rounded text-xs font-semibold ' + (
+                                                row.ecartPourcent > 5 
+                                                    ? 'bg-red-100 text-red-700' 
+                                                    : row.ecartPourcent > 0 
+                                                        ? 'bg-orange-100 text-orange-700'
+                                                        : 'bg-green-100 text-green-700'
+                                            )
+                                        },
+                                            (row.ecartPourcent >= 0 ? '+' : '') + row.ecartPourcent.toFixed(1) + '%'
+                                        )
+                                    )
+                                ),
+
+                                // Lignes de détail (si développé)
+                                expandedLots.has(row.lot) && React.createElement('tr', { className: 'bg-gray-50' },
+                                    React.createElement('td', { colSpan: 9, className: 'px-4 py-4' },
+                                        React.createElement('div', { className: 'space-y-4' },
+                                            
+                                            // 💚 SECTION ENGAGÉ
+                                            React.createElement('div', { className: 'border rounded-lg overflow-hidden' },
+                                                React.createElement('button', {
+                                                    onClick: () => toggleSection(row.lot, 'engage'),
+                                                    className: 'w-full px-4 py-3 bg-green-50 hover:bg-green-100 flex items-center justify-between font-semibold text-green-800'
+                                                },
+                                                    React.createElement('span', { className: 'flex items-center gap-2' },
+                                                        React.createElement('span', null, '💚'),
+                                                        'Engagé (' + row.engage.toLocaleString('fr-CH') + ' CHF)',
+                                                        React.createElement('span', { className: 'text-xs font-normal' }, 
+                                                            row.commandes.length + ' commande(s)'
+                                                        )
+                                                    ),
+                                                    React.createElement(window.Icons.ChevronRight, { 
+                                                        size: 18,
+                                                        className: 'transition-transform ' + (expandedSections[row.lot]?.engage ? 'rotate-90' : '')
+                                                    })
+                                                ),
+                                                expandedSections[row.lot]?.engage && React.createElement('div', { className: 'p-4 bg-white' },
+                                                    row.commandes.length === 0 ? 
+                                                        React.createElement('p', { className: 'text-sm text-gray-500 italic' }, 'Aucune commande')
+                                                    :
+                                                        React.createElement('div', { className: 'space-y-2' },
+                                                            row.commandes.map(cmd => {
+                                                                const montant = cmd.calculatedMontant || cmd.montant || 0;
+                                                                return React.createElement('div', {
+                                                                    key: cmd.id,
+                                                                    className: 'flex items-center justify-between p-3 bg-green-50 rounded-lg hover:bg-green-100 cursor-pointer',
+                                                                    onClick: () => onEditCommande && onEditCommande(cmd)
+                                                                },
+                                                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                                                        React.createElement('span', { className: 'text-lg' }, '📦'),
+                                                                        React.createElement('div', null,
+                                                                            React.createElement('div', { className: 'font-semibold text-sm' }, cmd.numero),
+                                                                            React.createElement('div', { className: 'text-xs text-gray-600' },
+                                                                                cmd.fournisseur + ' • ' + (cmd.positions0?.join(', ') || 'Toutes positions')
+                                                                            )
+                                                                        )
+                                                                    ),
+                                                                    React.createElement('div', { className: 'text-right' },
+                                                                        React.createElement('div', { className: 'font-bold text-green-700' },
+                                                                            montant.toLocaleString('fr-CH') + ' CHF'
+                                                                        )
+                                                                    )
+                                                                );
+                                                            })
+                                                        )
+                                                )
+                                            ),
+
+                                            // 🟠 SECTION EN ATTENTE
+                                            React.createElement('div', { className: 'border rounded-lg overflow-hidden' },
+                                                React.createElement('button', {
+                                                    onClick: () => toggleSection(row.lot, 'attente'),
+                                                    className: 'w-full px-4 py-3 bg-orange-50 hover:bg-orange-100 flex items-center justify-between font-semibold text-orange-800'
+                                                },
+                                                    React.createElement('span', { className: 'flex items-center gap-2' },
+                                                        React.createElement('span', null, '🟠'),
+                                                        'En Attente (' + row.attente.toLocaleString('fr-CH') + ' CHF)',
+                                                        React.createElement('span', { className: 'text-xs font-normal' }, 
+                                                            (row.offresAttente.length + row.ocAttente.length + row.regiesHorsBudget.length) + ' élément(s)'
+                                                        )
+                                                    ),
+                                                    React.createElement(window.Icons.ChevronRight, { 
+                                                        size: 18,
+                                                        className: 'transition-transform ' + (expandedSections[row.lot]?.attente ? 'rotate-90' : '')
+                                                    })
+                                                ),
+                                                expandedSections[row.lot]?.attente && React.createElement('div', { className: 'p-4 bg-white space-y-3' },
+                                                    // Offres en attente
+                                                    row.offresAttente.length > 0 && React.createElement('div', null,
+                                                        React.createElement('div', { className: 'text-xs font-semibold text-gray-500 mb-2' }, 'OFFRES'),
+                                                        React.createElement('div', { className: 'space-y-2' },
+                                                            row.offresAttente.map(offre =>
+                                                                React.createElement('div', {
+                                                                    key: offre.id,
+                                                                    className: 'flex items-center justify-between p-3 bg-orange-50 rounded-lg hover:bg-orange-100 cursor-pointer',
+                                                                    onClick: () => onEditOffre && onEditOffre(offre)
+                                                                },
+                                                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                                                        React.createElement('span', { className: 'text-lg' }, '💼'),
+                                                                        React.createElement('div', null,
+                                                                            React.createElement('div', { className: 'font-semibold text-sm' }, 
+                                                                                offre.numero + ' - ' + offre.fournisseur
+                                                                            ),
+                                                                            React.createElement('div', { className: 'text-xs text-gray-600' },
+                                                                                'Statut: ' + (offre.statut || 'En attente')
+                                                                            )
+                                                                        )
+                                                                    ),
+                                                                    React.createElement('div', { className: 'font-bold text-orange-700' },
+                                                                        offre.montant.toLocaleString('fr-CH') + ' CHF'
+                                                                    )
+                                                                )
+                                                            )
+                                                        )
+                                                    ),
+                                                    
+                                                    // OC en attente
+                                                    row.ocAttente.length > 0 && React.createElement('div', null,
+                                                        React.createElement('div', { className: 'text-xs font-semibold text-gray-500 mb-2' }, 'OFFRES COMPLÉMENTAIRES'),
+                                                        React.createElement('div', { className: 'space-y-2' },
+                                                            row.ocAttente.map(oc =>
+                                                                React.createElement('div', {
+                                                                    key: oc.id,
+                                                                    className: 'flex items-center justify-between p-3 bg-orange-50 rounded-lg hover:bg-orange-100 cursor-pointer',
+                                                                    onClick: () => onEditOffreComplementaire && onEditOffreComplementaire(oc)
+                                                                },
+                                                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                                                        React.createElement('span', { className: 'text-lg' }, '➕'),
+                                                                        React.createElement('div', null,
+                                                                            React.createElement('div', { className: 'font-semibold text-sm' }, 
+                                                                                oc.numero + ' - ' + (oc.motif || 'OC')
+                                                                            ),
+                                                                            React.createElement('div', { className: 'text-xs text-gray-600' },
+                                                                                oc.fournisseur
+                                                                            )
+                                                                        )
+                                                                    ),
+                                                                    React.createElement('div', { className: 'font-bold text-orange-700' },
+                                                                        oc.montant.toLocaleString('fr-CH') + ' CHF'
+                                                                    )
+                                                                )
+                                                            )
+                                                        )
+                                                    ),
+                                                    
+                                                    // Régies hors budget
+                                                    row.regiesHorsBudget.length > 0 && React.createElement('div', null,
+                                                        React.createElement('div', { className: 'text-xs font-semibold text-gray-500 mb-2' }, 'RÉGIES HORS BUDGET'),
+                                                        React.createElement('div', { className: 'space-y-2' },
+                                                            row.regiesHorsBudget.map((rh, idx) =>
+                                                                React.createElement('div', {
+                                                                    key: idx,
+                                                                    className: 'flex items-center justify-between p-3 bg-red-50 rounded-lg'
+                                                                },
+                                                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                                                        React.createElement('span', { className: 'text-lg' }, '⏱️'),
+                                                                        React.createElement('div', null,
+                                                                            React.createElement('div', { className: 'font-semibold text-sm' }, 
+                                                                                'Dépassement régie - ' + rh.commandeNumero
+                                                                            ),
+                                                                            React.createElement('div', { className: 'text-xs text-gray-600' },
+                                                                                rh.regies.length + ' régie(s) hors budget'
+                                                                            )
+                                                                        )
+                                                                    ),
+                                                                    React.createElement('div', { className: 'font-bold text-red-700' },
+                                                                        '+' + rh.montant.toLocaleString('fr-CH') + ' CHF'
+                                                                    )
+                                                                )
+                                                            )
+                                                        )
+                                                    ),
+
+                                                    (row.offresAttente.length === 0 && row.ocAttente.length === 0 && row.regiesHorsBudget.length === 0) &&
+                                                        React.createElement('p', { className: 'text-sm text-gray-500 italic' }, 'Aucun élément en attente')
+                                                )
+                                            ),
+
+                                            // 🟣 SECTION AJUSTEMENTS
+                                            React.createElement('div', { className: 'border rounded-lg overflow-hidden' },
+                                                React.createElement('button', {
+                                                    onClick: () => toggleSection(row.lot, 'ajustements'),
+                                                    className: 'w-full px-4 py-3 bg-purple-50 hover:bg-purple-100 flex items-center justify-between font-semibold text-purple-800'
+                                                },
+                                                    React.createElement('span', { className: 'flex items-center gap-2' },
+                                                        React.createElement('span', null, '🟣'),
+                                                        'Ajustements (' + (row.ajustements >= 0 ? '+' : '') + row.ajustements.toLocaleString('fr-CH') + ' CHF)',
+                                                        React.createElement('span', { className: 'text-xs font-normal' }, 
+                                                            row.ajustementsDetail.length + ' ajustement(s)'
+                                                        )
+                                                    ),
+                                                    React.createElement(window.Icons.ChevronRight, { 
+                                                        size: 18,
+                                                        className: 'transition-transform ' + (expandedSections[row.lot]?.ajustements ? 'rotate-90' : '')
+                                                    })
+                                                ),
+                                                expandedSections[row.lot]?.ajustements && React.createElement('div', { className: 'p-4 bg-white' },
+                                                    row.ajustementsDetail.length === 0 ? 
+                                                        React.createElement('p', { className: 'text-sm text-gray-500 italic' }, 'Aucun ajustement')
+                                                    :
+                                                        React.createElement('div', { className: 'space-y-2' },
+                                                            row.ajustementsDetail.map(adj =>
+                                                                React.createElement('div', {
+                                                                    key: adj.id,
+                                                                    className: 'flex items-center justify-between p-3 bg-purple-50 rounded-lg hover:bg-purple-100 cursor-pointer',
+                                                                    onClick: () => {
+                                                                        setEditingAjustement(adj);
+                                                                        setShowAjustementModal(true);
+                                                                    }
+                                                                },
+                                                                    React.createElement('div', { className: 'flex items-center gap-3' },
+                                                                        React.createElement('span', { className: 'text-lg' },
+                                                                            adj.type === 'aleas' ? '⚡' : adj.type === 'economies' ? '💰' : '📝'
+                                                                        ),
+                                                                        React.createElement('div', null,
+                                                                            React.createElement('div', { className: 'font-semibold text-sm' }, adj.description),
+                                                                            React.createElement('div', { className: 'text-xs text-gray-600' },
+                                                                                'Type: ' + adj.type + ' • ' + (adj.statut === 'confirme' ? '✅ Confirmé' : '⏳ Prévisionnel')
+                                                                            )
+                                                                        )
+                                                                    ),
+                                                                    React.createElement('div', {
+                                                                        className: 'font-bold ' + (adj.montant >= 0 ? 'text-red-700' : 'text-green-700')
+                                                                    },
+                                                                        (adj.montant >= 0 ? '+' : '') + adj.montant.toLocaleString('fr-CH') + ' CHF'
+                                                                    )
+                                                                )
+                                                            )
+                                                        )
+                                                )
+                                            )
+                                        )
                                     )
                                 )
                             )
@@ -544,6 +809,7 @@ window.AlignementView = ({
                         
                         // Ligne TOTAL
                         React.createElement('tr', { className: 'border-t-2 border-gray-300 bg-gray-50 font-bold' },
+                            React.createElement('td', { className: 'px-4 py-3' }, ''),
                             React.createElement('td', { className: 'px-4 py-3' }, 'TOTAL'),
                             React.createElement('td', { className: 'px-4 py-3 text-right' }, 
                                 globalStats.totalEstime.toLocaleString('fr-CH') + ' CHF'
@@ -590,76 +856,13 @@ window.AlignementView = ({
             )
         ),
 
-        // Éléments en attente
-        elementsAttente.length > 0 && React.createElement('div', { className: 'bg-white rounded-lg border p-6' },
-            React.createElement('h3', { className: 'text-lg font-bold mb-4' }, '⚠️ Éléments en attente de validation'),
-            React.createElement('div', { className: 'space-y-2' },
-                elementsAttente.map((item, idx) =>
-                    React.createElement('div', {
-                        key: idx,
-                        className: 'flex items-center justify-between p-3 bg-orange-50 border border-orange-200 rounded-lg'
-                    },
-                        React.createElement('div', { className: 'flex items-center gap-3' },
-                            React.createElement('span', { className: 'text-2xl' },
-                                item.type === 'offre' ? '💼' : item.type === 'oc' ? '➕' : '⏱️'
-                            ),
-                            React.createElement('div', null,
-                                React.createElement('div', { className: 'font-medium' }, item.description),
-                                React.createElement('div', { className: 'text-xs text-gray-600' },
-                                    'Statut: ' + item.statut +
-                                    (item.date ? ' • ' + new Date(item.date).toLocaleDateString('fr-CH') : '')
-                                )
-                            )
-                        ),
-                        React.createElement('div', { className: 'text-right' },
-                            React.createElement('div', { className: 'font-bold text-orange-700' },
-                                item.montant.toLocaleString('fr-CH') + ' CHF'
-                            )
-                        )
-                    )
-                )
-            )
-        ),
-
-        // Ajustements & Prévisions
-        ajustements.length > 0 && React.createElement('div', { className: 'bg-white rounded-lg border p-6' },
-            React.createElement('h3', { className: 'text-lg font-bold mb-4' }, '📊 Ajustements & Prévisions'),
-            React.createElement('div', { className: 'space-y-2' },
-                ajustements.filter(matchesFilters).map((adj) =>
-                    React.createElement('div', {
-                        key: adj.id,
-                        className: 'flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg'
-                    },
-                        React.createElement('div', { className: 'flex items-center gap-3' },
-                            React.createElement('span', { className: 'text-2xl' },
-                                adj.type === 'aleas' ? '⚡' : adj.type === 'economies' ? '💰' : '📝'
-                            ),
-                            React.createElement('div', null,
-                                React.createElement('div', { className: 'font-medium' }, adj.description),
-                                React.createElement('div', { className: 'text-xs text-gray-600' },
-                                    'Type: ' + adj.type + ' • ' + (adj.lots?.join(', ') || 'Tous les lots') +
-                                    (adj.commentaire ? ' • ' + adj.commentaire : '')
-                                )
-                            )
-                        ),
-                        React.createElement('div', { className: 'text-right' },
-                            React.createElement('div', {
-                                className: 'font-bold ' + (adj.montant > 0 ? 'text-red-700' : 'text-green-700')
-                            },
-                                (adj.montant >= 0 ? '+' : '') + adj.montant.toLocaleString('fr-CH') + ' CHF'
-                            ),
-                            React.createElement('div', { className: 'text-xs text-gray-500' },
-                                adj.statut === 'confirme' ? '✅ Confirmé' : '⏳ Prévisionnel'
-                            )
-                        )
-                    )
-                )
-            )
-        ),
-
         // Modal Ajustement
         showAjustementModal && React.createElement(window.AjustementModal, {
-            onClose: () => setShowAjustementModal(false),
+            initialData: editingAjustement,
+            onClose: () => {
+                setShowAjustementModal(false);
+                setEditingAjustement(null);
+            },
             onSave: onSaveAjustement,
             availableLots: availableFilters.lots,
             availablePos0: availableFilters.positions0
