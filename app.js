@@ -1999,7 +1999,8 @@ const ImportMenu = () => {
                         offresComplementaires,
                         regies,
                         factures,
-                        appelOffres
+                        appelOffres,
+                        ajustements
                     }}
                     sessionName={sessionName}
                 />
