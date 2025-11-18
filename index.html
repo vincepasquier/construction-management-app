@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Application de Gestion de Construction</title>
     
-    <!-- React et ReactDOM en MODE DÉVELOPPEMENT (pour meilleurs messages d'erreur) -->
+    <!-- React et ReactDOM en MODE DÉVELOPPEMENT -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
@@ -15,17 +15,20 @@
     <!-- TailwindCSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Configuration TailwindCSS -->
+    <!-- Configuration TailwindCSS (avec vérification) -->
     <script type="text/javascript">
-        if (typeof tailwind !== 'undefined') {
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        colors: {}
+        // Attendre que Tailwind soit chargé
+        window.addEventListener('load', function() {
+            if (typeof tailwind !== 'undefined') {
+                tailwind.config = {
+                    theme: {
+                        extend: {
+                            colors: {}
+                        }
                     }
                 }
             }
-        }
+        });
     </script>
     
     <!-- Styles personnalisés -->
@@ -94,18 +97,40 @@
     <!-- Script de vérification du chargement -->
     <script>
         window.addEventListener('load', () => {
+            console.log('=== VÉRIFICATION DU CHARGEMENT ===');
             console.log('✅ Page chargée');
-            console.log('✅ React:', typeof React !== 'undefined');
-            console.log('✅ ReactDOM:', typeof ReactDOM !== 'undefined');
-            console.log('✅ Icons:', typeof window.Icons !== 'undefined');
+            console.log('✅ React:', typeof React !== 'undefined' ? 'OK' : '❌ MANQUANT');
+            console.log('✅ ReactDOM:', typeof ReactDOM !== 'undefined' ? 'OK' : '❌ MANQUANT');
+            console.log('✅ Babel:', typeof Babel !== 'undefined' ? 'OK' : '❌ MANQUANT');
+            console.log('✅ Icons:', typeof window.Icons !== 'undefined' ? 'OK' : '❌ MANQUANT');
+            console.log('✅ Storage:', typeof window.storage !== 'undefined' ? 'OK' : '❌ MANQUANT');
+            console.log('✅ AlignementView:', typeof window.AlignementView !== 'undefined' ? 'OK' : '❌ MANQUANT');
             
             setTimeout(() => {
                 const root = document.getElementById('root');
                 if (root && root.children.length === 0) {
                     console.error('❌ L\'application ne s\'est pas montée !');
-                    root.innerHTML = '<div style="padding: 20px; color: red; font-family: monospace;">Erreur : L\'application ne s\'est pas chargée. Vérifiez la console.</div>';
+                    console.error('Vérifiez les erreurs ci-dessus');
+                    root.innerHTML = `
+                        <div style="padding: 40px; max-width: 800px; margin: 0 auto; font-family: system-ui;">
+                            <h1 style="color: #dc2626; font-size: 24px; margin-bottom: 20px;">
+                                ⚠️ Erreur de chargement de l'application
+                            </h1>
+                            <p style="margin-bottom: 15px;">
+                                L'application n'a pas pu se charger. Vérifiez la console (F12) pour plus de détails.
+                            </p>
+                            <div style="background: #fee; border-left: 4px solid #dc2626; padding: 15px; margin-top: 20px;">
+                                <strong>Actions à vérifier :</strong>
+                                <ul style="margin-top: 10px; padding-left: 20px;">
+                                    <li>Tous les fichiers sont-ils présents ?</li>
+                                    <li>Y a-t-il des erreurs dans la console ?</li>
+                                    <li>Les chemins des fichiers sont-ils corrects ?</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
                 } else {
-                    console.log('✅ Application montée avec succès');
+                    console.log('✅ Application montée avec succès !');
                 }
             }, 2000);
         });
