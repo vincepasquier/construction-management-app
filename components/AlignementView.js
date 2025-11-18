@@ -1,4 +1,4 @@
-// Vue Alignement & Atterrissage - VERSION CORRIGÉE
+// Vue Alignement & Atterrissage - VERSION FINALE AVEC VÉRIFICATION ICÔNES
 window.AlignementView = ({ 
     estimations, 
     offres, 
@@ -15,8 +15,12 @@ window.AlignementView = ({
     onEditFacture,
     onEditRegie
 }) => {
-    // Déstructurer les icônes en premier
-    const { ChevronRight, Eye, X, Plus } = window.Icons;
+    // Déstructurer les icônes avec vérification
+    const Icons = window.Icons || {};
+    const ChevronRight = Icons.ChevronRight || (() => React.createElement('span', null, '›'));
+    const Eye = Icons.Eye || (() => React.createElement('span', null, '👁️'));
+    const X = Icons.X || (() => React.createElement('span', null, '✕'));
+    const Plus = Icons.Plus || (() => React.createElement('span', null, '+'));
     
     // ========================================
     // ÉTATS
