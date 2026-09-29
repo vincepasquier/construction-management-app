@@ -16,6 +16,7 @@ export const MODULES: { id: ModuleApp; libelle: string; description: string }[] 
   { id: "risques", libelle: "Risques", description: "Registre et suivi des risques" },
   { id: "validations", libelle: "Validations", description: "Circuits de validation" },
   { id: "documents", libelle: "Documents", description: "Registre et SharePoint" },
+  { id: "juridique", libelle: "Autorisations & foncier", description: "Permis, préavis, servitudes" },
   { id: "organigramme", libelle: "Organigramme", description: "Organisation du projet" },
   { id: "ressources", libelle: "Ressources", description: "Équipe, charge, lots" },
   { id: "entreprises", libelle: "Entreprises", description: "Carnet d'adresses" },
@@ -42,27 +43,27 @@ const A: NiveauAcces = "aucun";
 export const DROITS_PROFIL: Record<ProfilAcces, Record<ModuleApp, NiveauAcces>> = {
   "Administrateur": {
     portefeuille: E, finances: E, appelsOffres: E, contrats: E, planning: E, taches: E, risques: E, validations: E,
-    documents: E, organigramme: E, ressources: E, entreprises: E, ia: E, parametres: E, acces: E,
+    documents: E, juridique: E, organigramme: E, ressources: E, entreprises: E, ia: E, parametres: E, acces: E,
   },
   "Directeur de projet": {
     portefeuille: E, finances: E, appelsOffres: E, contrats: E, planning: E, taches: E, risques: E, validations: E,
-    documents: E, organigramme: E, ressources: E, entreprises: E, ia: E, parametres: L, acces: L,
+    documents: E, juridique: E, organigramme: E, ressources: E, entreprises: E, ia: E, parametres: L, acces: L,
   },
   "Responsable de lot": {
     portefeuille: L, finances: L, appelsOffres: E, contrats: L, planning: E, taches: E, risques: E, validations: E,
-    documents: E, organigramme: L, ressources: L, entreprises: E, ia: E, parametres: A, acces: A,
+    documents: E, juridique: E, organigramme: L, ressources: L, entreprises: E, ia: E, parametres: A, acces: A,
   },
   "Collaborateur": {
     portefeuille: L, finances: L, appelsOffres: L, contrats: L, planning: E, taches: E, risques: L, validations: E,
-    documents: E, organigramme: L, ressources: L, entreprises: L, ia: E, parametres: A, acces: A,
+    documents: E, juridique: L, organigramme: L, ressources: L, entreprises: L, ia: E, parametres: A, acces: A,
   },
   "Lecture seule": {
     portefeuille: L, finances: L, appelsOffres: L, contrats: L, planning: L, taches: L, risques: L, validations: L,
-    documents: L, organigramme: L, ressources: L, entreprises: L, ia: A, parametres: A, acces: A,
+    documents: L, juridique: L, organigramme: L, ressources: L, entreprises: L, ia: A, parametres: A, acces: A,
   },
   "Externe": {
     portefeuille: A, finances: A, appelsOffres: A, contrats: A, planning: L, taches: E, risques: A, validations: E,
-    documents: L, organigramme: L, ressources: A, entreprises: A, ia: A, parametres: A, acces: A,
+    documents: L, juridique: A, organigramme: L, ressources: A, entreprises: A, ia: A, parametres: A, acces: A,
   },
 };
 

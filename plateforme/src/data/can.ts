@@ -5,9 +5,13 @@
 
 export const CHAPITRES_CAN: Record<string, string> = {
   "111": "Travaux en régie",
+  "112": "Essais",
   "113": "Installation de chantier",
   "117": "Démolitions et démontages",
   "151": "Travaux pour conduites souterraines",
+  "161": "Épuisement des eaux",
+  "162": "Enceintes de fouilles",
+  "164": "Tirants d'ancrage et parois clouées",
   "181": "Aménagements paysagers",
   "211": "Fouilles et terrassements",
   "221": "Couches de fondation pour chaussées",

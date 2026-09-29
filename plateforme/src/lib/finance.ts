@@ -37,8 +37,21 @@ export function factureDuContrat(c: Contrat, factures: Facture[]) {
 // Soumissions / appels d'offres
 // ---------------------------------------------------------------------------
 
+const arrondi5ct = (x: number) => Math.round(x * 20) / 20;
+
+/**
+ * Montant brut d'une offre. Pour un descriptif importé d'un CRBX, chaque ligne (subdivision)
+ * est arrondie à 5 centimes comme dans les logiciels de soumission, afin de retrouver
+ * exactement le total annoncé par l'entreprise.
+ */
 export function montantBrutSoumission(ao: AppelOffres, s: Soumission): number {
-  return ao.positions.reduce((sum, p) => sum + p.quantite * (s.prixUnitaires[p.id] ?? 0), 0);
+  const total = ao.positions.reduce((sum, p) => {
+    const pu = s.prixUnitaires[p.id] ?? 0;
+    if (!pu) return sum;
+    const lignes = p.quantitesParElevation ? Object.values(p.quantitesParElevation) : null;
+    return sum + (lignes ? lignes.reduce((t, q) => t + arrondi5ct(q * pu), 0) : p.quantite * pu);
+  }, 0);
+  return Math.round(total * 100) / 100;
 }
 
 export function montantNetSoumission(ao: AppelOffres, s: Soumission): number {

@@ -35,7 +35,7 @@ interface EtatApp extends DonneesDemo {
 const vide: DonneesDemo = {
   projets: [], lots: [], budget: [], entreprises: [], appelsOffres: [], contrats: [],
   factures: [], taches: [], documents: [], personnes: [], affectations: [],
-  organigramme: [], validations: [], risques: [], actions: [],
+  organigramme: [], validations: [], risques: [], actions: [], autorisations: [], servitudes: [],
 };
 
 export const COLLECTIONS = Object.keys(vide) as Collection[];
@@ -82,15 +82,16 @@ export const useStore = create<EtatApp>()(
     }),
     {
       name: "chantier-plus",
-      version: 2,
-      // v1 → v2 : nouveaux modules (organigramme, validations, risques, tâches). Les données
-      // de démonstration correspondantes sont ajoutées pour les projets de démonstration encore présents.
+      version: 3,
+      // Nouveaux modules : les données de démonstration correspondantes sont ajoutées pour les
+      // projets de démonstration encore présents, sans toucher aux données existantes.
       migrate: (ancien, version) => {
         const etat = ancien as Record<string, unknown>;
-        if (version < 2) {
+        // v2 : organigramme, validations, risques, tâches · v3 : autorisations et servitudes
+        if (version < 3) {
           const demo = donneesDemo();
           const projets = new Set(((etat.projets as { id: ID }[]) ?? []).map((p) => p.id));
-          for (const c of ["organigramme", "validations", "risques", "actions"] as const) {
+          for (const c of ["organigramme", "validations", "risques", "actions", "autorisations", "servitudes"] as const) {
             if (!Array.isArray(etat[c])) etat[c] = (demo[c] as { projetId: ID }[]).filter((x) => projets.has(x.projetId));
           }
         }
@@ -134,6 +135,8 @@ export function useProjetActif() {
     validations: s.validations.filter((x) => x.projetId === pid),
     risques: s.risques.filter((x) => x.projetId === pid && (!filtre || !x.lotId || lotIds.has(x.lotId))),
     actions: s.actions.filter((x) => x.projetId === pid && (!filtre || !x.lotId || lotIds.has(x.lotId))),
+    autorisations: s.autorisations.filter((x) => x.projetId === pid && (!filtre || !x.lotId || lotIds.has(x.lotId))),
+    servitudes: s.servitudes.filter((x) => x.projetId === pid && (!filtre || !x.lotId || lotIds.has(x.lotId))),
   };
 }
 

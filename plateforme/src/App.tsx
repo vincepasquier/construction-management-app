@@ -18,6 +18,7 @@ const Taches = lazy(() => import("./pages/Taches").then((m) => ({ default: m.Tac
 const Risques = lazy(() => import("./pages/Risques").then((m) => ({ default: m.Risques })));
 const Validations = lazy(() => import("./pages/Validations").then((m) => ({ default: m.Validations })));
 const Organigramme = lazy(() => import("./pages/Organigramme").then((m) => ({ default: m.Organigramme })));
+const Juridique = lazy(() => import("./pages/Juridique").then((m) => ({ default: m.Juridique })));
 const Acces = lazy(() => import("./pages/Acces").then((m) => ({ default: m.Acces })));
 const Parametres = lazy(() => import("./pages/Parametres").then((m) => ({ default: m.Parametres })));
 
@@ -41,6 +42,7 @@ export function App() {
           <Route path="risques" element={<Risques />} />
           <Route path="validations" element={<Validations />} />
           <Route path="organigramme" element={<Organigramme />} />
+          <Route path="juridique" element={<Juridique />} />
           <Route path="acces" element={<Acces />} />
           <Route path="parametres" element={<Parametres />} />
           <Route path="*" element={<Navigate to="/" replace />} />

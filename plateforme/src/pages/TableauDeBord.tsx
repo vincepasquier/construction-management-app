@@ -8,6 +8,7 @@ import { avancementPlanning, courbeEnS, suiviParCFC, tachesEnRetard, totauxSuivi
 import { aujourdhui, formatCHF, formatCompact, formatDate, formatPct } from "../lib/format";
 import { Avatar, Badge, Bouton, Carte, EnTetePage, Indicateur, Progression } from "../components/ui";
 import { SansProjet } from "../components/SansProjet";
+import { FrisePhases } from "../components/FrisePhases";
 import { FormulaireProjet } from "./Portefeuille";
 import { cfcCorrespond, libelleCFC } from "../data/cfc";
 
@@ -58,6 +59,8 @@ export function TableauDeBord() {
         <Indicateur libelle="Prévision finale" valeur={formatCompact(t.prevision)}
           detail={`Écart ${t.ecart >= 0 ? "+" : ""}${formatCHF(t.ecart)} (${ecartPct.toFixed(1)} %)`} tendance={t.ecart < 0 ? "mauvais" : "bon"} />
       </div>
+
+      <div className="mt-6"><FrisePhases projet={p} lots={d.lots} /></div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Carte className="lg:col-span-2" titre="Courbe de dépenses" sousTitre="Planifié (courbe en S sur la prévision) vs facturé cumulé">

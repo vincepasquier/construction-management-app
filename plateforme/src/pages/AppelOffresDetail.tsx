@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { BoutonIA } from "../components/BoutonIA";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Award, Download, FileUp, Pencil, Plus, Sparkles, Trash2, Trophy, UserPlus } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Award, CheckCircle2, Download, FileArchive, FileUp, Pencil, Plus, Sparkles, Trash2, Trophy, UserPlus } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useStore } from "../store/useStore";
 import { ParcoursMarche } from "../components/ParcoursMarche";
@@ -9,6 +9,8 @@ import { useUI } from "../store/useUI";
 import { evaluerSoumissions, montantBrutSoumission, montantNetSoumission, positionsManquantes } from "../lib/finance";
 import { aujourdhui, formatCHF, formatCHFPrecis, formatDate, formatNombre } from "../lib/format";
 import { telechargerCSV } from "../lib/csv";
+import { lireFichierCrb } from "../lib/sia451";
+import { descriptifDepuisCrbx, entrepriseDepuisCrbx, lireFichier, soumissionDepuisCrbx } from "../lib/importCrbx";
 import { nouvelId } from "../lib/id";
 import { CHAPITRES_CAN, libelleCAN, UNITES } from "../data/can";
 import { libelleCFC } from "../data/cfc";
@@ -146,26 +148,49 @@ function Descriptif({ ao, maj }: { ao: AppelOffres; maj: (p: Partial<AppelOffres
     alert(`${positions.length} position(s) importée(s).`);
   };
 
+  const fichierCrbx = useRef<HTMLInputElement>(null);
+  const importerCrbx = async (fichierChoisi: File) => {
+    try {
+      const f = lireFichierCrb(await lireFichier(fichierChoisi));
+      if (ao.positions.length && !confirm(`Remplacer les ${ao.positions.length} position(s) actuelles par les ${f.positions.length} position(s) du fichier ? Les prix déjà saisis sont conservés pour les positions identiques.`)) return;
+      maj(descriptifDepuisCrbx(f, fichierChoisi.name));
+      alert(`${f.positions.length} position(s) importée(s) depuis ${fichierChoisi.name}.` + (f.estOffre ? `\n\nCe fichier contient les prix de ${f.entreprise ?? "l'entreprise"} : importez-le aussi dans l'onglet « Comparatif des offres ».` : ""));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    }
+  };
+
   const chapitres = [...new Set(ao.positions.map((p) => p.chapitre))].sort();
+  const titreChapitre = (ch: string) => ao.chapitres?.[ch] ?? libelleCAN(ch);
 
   return (
-    <Carte titre="Descriptif selon CAN" sousTitre="Positions du catalogue des articles normalisés, regroupées par chapitre"
+    <Carte titre="Descriptif selon CAN"
+      sousTitre={ao.source ? `Importé de ${ao.source.fichier}${ao.source.logiciel ? ` · ${ao.source.logiciel}` : ""}${ao.source.date ? ` · ${formatDate(ao.source.date)}` : ""}` : "Positions du catalogue des articles normalisés, regroupées par chapitre"}
       action={<div className="flex gap-2">
+        <input ref={fichierCrbx} type="file" accept=".crbx,.e1s,.01s,.x1s" hidden onChange={(e) => { if (e.target.files?.[0]) void importerCrbx(e.target.files[0]); e.target.value = ""; }} />
+        <Bouton taille="sm" icone={<FileArchive size={14} />} onClick={() => fichierCrbx.current?.click()} title="Fichier CRBX / SIA 451 exporté du logiciel de soumission">Importer CRBX</Bouton>
         <input ref={fichier} type="file" accept=".csv,.txt" hidden onChange={(e) => e.target.files?.[0] && importer(e.target.files[0])} />
         <Bouton taille="sm" icone={<FileUp size={14} />} onClick={() => fichier.current?.click()} title="CSV : numéro;libellé;unité;quantité">Importer CSV</Bouton>
         <Bouton taille="sm" variante="primaire" icone={<Plus size={14} />} onClick={() => setEdition({ id: nouvelId("pos"), chapitre: "", numero: "", libelle: "", unite: "m3", quantite: 0 })}>Position</Bouton>
       </div>}>
       {ao.positions.length === 0 ? (
-        <Vide titre="Aucune position" texte="Ajoutez les positions du descriptif ou importez-les depuis votre logiciel de devis (CSV : numéro;libellé;unité;quantité)." />
+        <Vide titre="Aucune position" texte="Importez le fichier CRBX envoyé aux entreprises (Messerli, BauBit, Sorba…), ou ajoutez les positions à la main / par CSV." />
       ) : (
         <Tableau>
           <thead><tr><th>N° CAN</th><th>Libellé</th><th>Unité</th><th className="!text-right">Quantité</th><th /></tr></thead>
           <tbody>
             {chapitres.map((ch) => [
-              <tr key={ch} className="bg-slate-50/70 dark:bg-slate-800/30"><td colSpan={5} className="text-xs font-semibold uppercase tracking-wide text-slate-500">{ch} · {libelleCAN(ch)}</td></tr>,
+              <tr key={ch} className="bg-slate-50/70 dark:bg-slate-800/30"><td colSpan={5} className="text-xs font-semibold uppercase tracking-wide text-slate-500">{ch} · {titreChapitre(ch)} <span className="font-normal normal-case">({ao.positions.filter((p) => p.chapitre === ch).length} pos.)</span></td></tr>,
               ...ao.positions.filter((p) => p.chapitre === ch).map((p) => (
                 <tr key={p.id}>
-                  <td className="num text-slate-500">{p.numero}</td><td>{p.libelle}</td><td>{p.unite}</td><td className="num text-right">{formatNombre(p.quantite)}</td>
+                  <td className="num whitespace-nowrap text-slate-500">{p.numero}</td>
+                  <td className="max-w-xl" title={p.texte}>
+                    {p.libelle}
+                    {p.quantitesParElevation && Object.keys(p.quantitesParElevation).length > 1 && (
+                      <p className="text-[11px] text-slate-400">{Object.entries(p.quantitesParElevation).map(([e, q]) => `${ao.elevations?.[e] ?? e} : ${formatNombre(q)}`).join(" · ")}</p>
+                    )}
+                  </td>
+                  <td>{p.unite}</td><td className="num text-right">{formatNombre(p.quantite)}</td>
                   <td className="text-right whitespace-nowrap">
                     <Bouton taille="sm" variante="fantome" onClick={() => setEdition(p)}><Pencil size={14} /></Bouton>
                     <Bouton taille="sm" variante="fantome" onClick={() => maj({ positions: ao.positions.filter((x) => x.id !== p.id) })}><Trash2 size={14} /></Bouton>
@@ -218,6 +243,39 @@ function Comparatif({ ao, maj, nomEnt }: { ao: AppelOffres; maj: (p: Partial<App
   const nets = ao.soumissions.map((s) => montantNetSoumission(ao, s));
   const minNet = Math.min(...nets.filter((n) => n > 0));
   const disponibles = entreprises.filter((e) => !ao.soumissions.some((s) => s.entrepriseId === e.id));
+  const { ajouter } = useStore();
+  const fichiersOffres = useRef<HTMLInputElement>(null);
+  const [resultatImport, setResultatImport] = useState<{ fichier: string; entreprise: string; nouvelle: boolean; total: number; declare?: number; ecarts: number; erreur?: string }[] | null>(null);
+  const [ecartsVus, setEcartsVus] = useState<Soumission | null>(null);
+
+  /** Import d'une ou plusieurs offres rentrées au format CRBX */
+  const importerOffres = async (fichiers: File[]) => {
+    let courant = ao;
+    const connues = [...entreprises];
+    const bilan: NonNullable<typeof resultatImport> = [];
+    for (const fichier of fichiers) {
+      try {
+        const f = lireFichierCrb(await lireFichier(fichier));
+        if (!f.estOffre) throw new Error("aucun prix unitaire : c'est le descriptif d'appel d'offres, à importer dans l'onglet « Descriptif CAN ».");
+        // Sans descriptif, on le reprend de la première offre (quantités identiques pour toutes les entreprises)
+        if (courant.positions.length === 0) courant = { ...courant, ...descriptifDepuisCrbx(f, fichier.name) };
+        const { entreprise, nouvelle } = entrepriseDepuisCrbx(f, connues);
+        if (nouvelle) { ajouter("entreprises", entreprise); connues.push(entreprise); }
+        const sou = soumissionDepuisCrbx(courant, f, entreprise.id, fichier.name);
+        courant = { ...courant, soumissions: [...courant.soumissions.filter((x) => x.entrepriseId !== entreprise.id), sou] };
+        bilan.push({ fichier: fichier.name, entreprise: entreprise.nom, nouvelle, total: montantBrutSoumission(courant, sou), declare: f.totalDeclare, ecarts: sou.ecarts?.length ?? 0 });
+      } catch (e) {
+        bilan.push({ fichier: fichier.name, entreprise: "—", nouvelle: false, total: 0, ecarts: 0, erreur: e instanceof Error ? e.message : String(e) });
+      }
+    }
+    maj({ positions: courant.positions, source: courant.source, chapitres: courant.chapitres, elevations: courant.elevations, soumissions: courant.soumissions,
+      entreprisesInvitees: [...new Set([...courant.entreprisesInvitees, ...courant.soumissions.map((x) => x.entrepriseId)])] });
+    setResultatImport(bilan);
+  };
+
+  // Récapitulatif par chapitre CAN
+  const chapitres = [...new Set(ao.positions.map((p) => p.chapitre))].sort();
+  const sousTotal = (s: Soumission, ch: string) => montantBrutSoumission({ ...ao, positions: ao.positions.filter((p) => p.chapitre === ch) }, s);
 
   const exporter = () => telechargerCSV(`${ao.numero}_comparatif`,
     ["N°", "Libellé", "Unité", "Quantité", ...ao.soumissions.flatMap((s) => [`PU ${nomEnt(s.entrepriseId)}`, `Total ${nomEnt(s.entrepriseId)}`])],
@@ -227,13 +285,35 @@ function Comparatif({ ao, maj, nomEnt }: { ao: AppelOffres; maj: (p: Partial<App
     ]);
 
   return (
+    <>
+    {ao.soumissions.length > 0 && chapitres.length > 1 && (
+      <Carte className="mb-6" titre="Récapitulatif par chapitre CAN" sousTitre="Montants bruts HT">
+        <Tableau>
+          <thead><tr><th>Chapitre</th>{ao.soumissions.map((s) => <th key={s.id} className="!text-right normal-case">{nomEnt(s.entrepriseId)}</th>)}</tr></thead>
+          <tbody>
+            {chapitres.map((ch) => {
+              const montants = ao.soumissions.map((s) => sousTotal(s, ch));
+              const min = Math.min(...montants.filter((m) => m > 0));
+              return (
+                <tr key={ch}>
+                  <td><span className="num mr-2 text-slate-400">{ch}</span>{ao.chapitres?.[ch] ?? libelleCAN(ch)}</td>
+                  {montants.map((m, i) => <td key={i} className={cx("num text-right", m > 0 && m === min && ao.soumissions.length > 1 && "font-medium text-emerald-600")}>{m ? formatCHF(m) : "—"}</td>)}
+                </tr>
+              );
+            })}
+          </tbody>
+        </Tableau>
+      </Carte>
+    )}
     <Carte titre="Comparatif des prix unitaires" sousTitre="Prix le plus bas en vert · écart > 30 % par rapport à la médiane signalé en orange"
       action={<div className="flex gap-2">
         {ao.soumissions.length > 0 && <Bouton libre taille="sm" icone={<Download size={14} />} onClick={exporter}>Export</Bouton>}
+        <input ref={fichiersOffres} type="file" multiple accept=".crbx,.e1s,.01s,.x1s" hidden onChange={(e) => { const fs = [...(e.target.files ?? [])]; if (fs.length) void importerOffres(fs); e.target.value = ""; }} />
+        <Bouton taille="sm" icone={<FileArchive size={14} />} onClick={() => fichiersOffres.current?.click()} title="Un ou plusieurs fichiers CRBX remplis par les entreprises">Importer des offres CRBX</Bouton>
         <Bouton taille="sm" variante="primaire" icone={<UserPlus size={14} />} onClick={() => setAjout(true)} disabled={!disponibles.length}>Saisir une offre</Bouton>
       </div>}>
       {ao.soumissions.length === 0 ? (
-        <Vide titre="Aucune offre saisie" texte={ao.positions.length ? "Saisissez les offres reçues pour obtenir le comparatif automatique." : "Commencez par compléter le descriptif CAN."} />
+        <Vide titre="Aucune offre" texte="Importez les fichiers CRBX rentrés par les entreprises (sélection multiple possible), ou saisissez une offre à la main. Le comparatif et les contrôles se font automatiquement." />
       ) : (
         <Tableau>
           <thead>
@@ -246,7 +326,11 @@ function Comparatif({ ao, maj, nomEnt }: { ao: AppelOffres; maj: (p: Partial<App
                     <span className="normal-case">{nomEnt(s.entrepriseId)}</span>
                     <button onClick={() => confirm("Retirer cette offre ?") && maj({ soumissions: ao.soumissions.filter((x) => x.id !== s.id) })} className="ml-1 text-slate-300 hover:text-rose-600"><Trash2 size={12} /></button>
                   </div>
-                  <div className="text-[10px] font-normal normal-case text-slate-400">PU · total</div>
+                  <div className="text-[10px] font-normal normal-case text-slate-400">
+                    PU · total
+                    {s.fichier && <span className="ml-1 rounded bg-slate-100 px-1 text-slate-500 dark:bg-slate-800" title={s.fichier}>CRBX</span>}
+                    {!!s.ecarts?.length && <button onClick={() => setEcartsVus(s)} className="ml-1 text-amber-600 hover:underline">⚠ {s.ecarts.length} écart(s)</button>}
+                  </div>
                 </th>
               ))}
             </tr>
@@ -281,6 +365,15 @@ function Comparatif({ ao, maj, nomEnt }: { ao: AppelOffres; maj: (p: Partial<App
             <tr><td colSpan={2} className="text-slate-500">Total brut</td>{ao.soumissions.map((s) => <td key={s.id} className="num text-right">{formatCHFPrecis(montantBrutSoumission(ao, s))}</td>)}</tr>
             <tr><td colSpan={2} className="text-slate-500">Rabais %</td>{ao.soumissions.map((s) => <td key={s.id} className="text-right"><input disabled={lecture} type="number" step="0.1" value={s.rabaisPct} onChange={(e) => majSoumission(s.id, { rabaisPct: Number(e.target.value) })} className="num w-16 rounded bg-transparent px-1 text-right ring-1 ring-slate-200 dark:ring-slate-700" /></td>)}</tr>
             <tr><td colSpan={2} className="text-slate-500">Escompte %</td>{ao.soumissions.map((s) => <td key={s.id} className="text-right"><input disabled={lecture} type="number" step="0.1" value={s.escomptePct} onChange={(e) => majSoumission(s.id, { escomptePct: Number(e.target.value) })} className="num w-16 rounded bg-transparent px-1 text-right ring-1 ring-slate-200 dark:ring-slate-700" /></td>)}</tr>
+            {ao.soumissions.some((s) => s.totalDeclare) && (
+              <tr><td colSpan={2} className="text-slate-500">Total annoncé dans le fichier</td>{ao.soumissions.map((s) => {
+                if (!s.totalDeclare) return <td key={s.id} className="text-right text-slate-400">—</td>;
+                const ok = Math.abs(montantBrutSoumission(ao, s) - s.totalDeclare) < 0.06 || Math.abs(montantNetSoumission(ao, s) - s.totalDeclare) < 0.06;
+                return <td key={s.id} className={cx("num text-right", ok ? "text-emerald-600" : "font-medium text-rose-600")} title={ok ? "Concorde avec le recalcul" : "Différence avec le recalcul : vérifier l'offre"}>
+                  {ok ? <CheckCircle2 size={13} className="mr-1 inline" /> : <AlertTriangle size={13} className="mr-1 inline" />}{formatCHFPrecis(s.totalDeclare)}
+                </td>;
+              })}</tr>
+            )}
             <tr className="font-semibold"><td colSpan={2}>Total net HT</td>{ao.soumissions.map((s, i) => (
               <td key={s.id} className={cx("num text-right", nets[i] === minNet && "text-emerald-600")}>
                 {formatCHFPrecis(nets[i])}
@@ -308,6 +401,51 @@ function Comparatif({ ao, maj, nomEnt }: { ao: AppelOffres; maj: (p: Partial<App
         </Modale>
       )}
     </Carte>
+
+    {resultatImport && (
+      <Modale ouverte large onFermer={() => setResultatImport(null)} titre="Import des offres CRBX"
+        pied={<Bouton libre variante="primaire" onClick={() => setResultatImport(null)}>Fermer</Bouton>}>
+        <Tableau>
+          <thead><tr><th>Fichier</th><th>Entreprise</th><th className="!text-right">Total recalculé</th><th className="!text-right">Total annoncé</th><th>Contrôle</th></tr></thead>
+          <tbody>
+            {resultatImport.map((r, i) => (
+              <tr key={i}>
+                <td className="max-w-56 truncate text-slate-500" title={r.fichier}>{r.fichier}</td>
+                {r.erreur ? <td colSpan={4} className="text-rose-600">{r.erreur}</td> : <>
+                  <td className="font-medium">{r.entreprise} {r.nouvelle && <Badge couleur="bleu">ajoutée au carnet</Badge>}</td>
+                  <td className="num text-right">{formatCHFPrecis(r.total)}</td>
+                  <td className="num text-right">{r.declare ? formatCHFPrecis(r.declare) : "—"}</td>
+                  <td className="space-x-1">
+                    {r.declare && Math.abs(r.declare - r.total) >= 0.06 ? <Badge couleur="rouge">Total différent</Badge> : <Badge couleur="vert">Total vérifié</Badge>}
+                    {r.ecarts > 0 && <Badge couleur="orange">{r.ecarts} écart(s)</Badge>}
+                  </td>
+                </>}
+              </tr>
+            ))}
+          </tbody>
+        </Tableau>
+        <p className="mt-3 text-xs text-slate-500">Contrôles : total recalculé ligne par ligne (arrondi à 5 ct), positions manquantes ou ajoutées, quantités modifiées par rapport au descriptif, positions non chiffrées.</p>
+      </Modale>
+    )}
+
+    {ecartsVus && (
+      <Modale ouverte large onFermer={() => setEcartsVus(null)} titre={`Écarts – ${nomEnt(ecartsVus.entrepriseId)}`}
+        pied={<Bouton libre onClick={() => setEcartsVus(null)}>Fermer</Bouton>}>
+        <Tableau>
+          <thead><tr><th>Position</th><th>Libellé</th><th>Écart</th></tr></thead>
+          <tbody>
+            {(ecartsVus.ecarts ?? []).map((e, i) => (
+              <tr key={i}>
+                <td className="num whitespace-nowrap text-slate-500">{e.cle}</td>
+                <td className="max-w-md truncate">{ao.positions.find((p) => p.numero === e.cle)?.libelle ?? "—"}</td>
+                <td><Badge couleur={e.type === "non chiffree" ? "orange" : "rouge"}>{e.detail}</Badge></td>
+              </tr>
+            ))}
+          </tbody>
+        </Tableau>
+      </Modale>
+    )}
+    </>
   );
 }
 

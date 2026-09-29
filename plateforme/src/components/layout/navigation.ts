@@ -1,5 +1,5 @@
 import {
-  BarChart3, Briefcase, CalendarRange, FileCheck2, FileSignature, FolderOpen, Gavel, KeyRound, LayoutGrid, ListChecks, Network,
+  BarChart3, Briefcase, CalendarRange, FileCheck2, FileSignature, FolderOpen, Gavel, KeyRound, Landmark, LayoutGrid, ListChecks, Network,
   Settings, ShieldAlert, Users, Wallet,
 } from "lucide-react";
 import type { ModuleApp } from "../../types";
@@ -14,6 +14,7 @@ export const NAVIGATION = [
   { a: "/taches", libelle: "Tâches", icone: ListChecks, groupe: "Suivi", module: "taches" },
   { a: "/risques", libelle: "Risques", icone: ShieldAlert, groupe: "Suivi", module: "risques" },
   { a: "/validations", libelle: "Validations", icone: FileCheck2, groupe: "Suivi", module: "validations" },
+  { a: "/juridique", libelle: "Autorisations & foncier", icone: Landmark, groupe: "Suivi", module: "juridique" },
   { a: "/documents", libelle: "Documents", icone: FolderOpen, groupe: "Suivi", module: "documents" },
   { a: "/organigramme", libelle: "Organigramme", icone: Network, groupe: "Organisation", module: "organigramme" },
   { a: "/ressources", libelle: "Ressources", icone: Users, groupe: "Organisation", module: "ressources" },

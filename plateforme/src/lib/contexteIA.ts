@@ -1,5 +1,5 @@
 // Construit un résumé textuel du projet actif, transmis à l'assistant IA comme contexte.
-import type { Action, AppelOffres, BudgetLigne, CircuitValidation, Contrat, DocumentProjet, Entreprise, Facture, Lot, Personne, Projet, Risque, Tache } from "../types";
+import type { Action, Autorisation, Servitude, AppelOffres, BudgetLigne, CircuitValidation, Contrat, DocumentProjet, Entreprise, Facture, Lot, Personne, Projet, Risque, Tache } from "../types";
 import { criticite, estActif, score } from "./risques";
 import { etapeCourante } from "./validations";
 import { libelleCFC } from "../data/cfc";
@@ -22,6 +22,8 @@ interface Donnees {
   risques?: Risque[];
   actions?: Action[];
   validations?: CircuitValidation[];
+  autorisations?: Autorisation[];
+  servitudes?: Servitude[];
 }
 
 const chf = (v: number) => `${Math.round(v).toLocaleString("de-CH")} CHF`;
@@ -40,7 +42,7 @@ export function construireContexte(d: Donnees, aujourdhui: string): string {
   if (d.projet.description) lignes.push(d.projet.description);
 
   lignes.push(`\n## Lots`);
-  for (const l of d.lots) lignes.push(`- ${l.code} ${l.nom} (CFC ${l.cfc.join(", ")}) – responsable : ${nomPers(l.responsableId)}`);
+  for (const l of d.lots) lignes.push(`- ${l.code} ${l.nom} (CFC ${l.cfc.join(", ")}) – responsable : ${nomPers(l.responsableId)}${l.phase ? ` – phase SIA ${l.phase}` : ""}`);
 
   lignes.push(`\n## Synthèse financière (HT)`);
   lignes.push(`Budget ${chf(t.budget)} · Engagé ${chf(t.engage)} · Avenants en attente ${chf(t.enAttente)} · Facturé ${chf(t.facture)} · Payé ${chf(t.paye)} · Prévision ${chf(t.prevision)} · Écart ${chf(t.ecart)}`);
@@ -109,6 +111,17 @@ export function construireContexte(d: Donnees, aujourdhui: string): string {
     for (const v of circuits) {
       const ec = etapeCourante(v);
       lignes.push(`- ${v.titre} (${v.objet.type}, v${v.version}) : ${v.statut}${ec ? `, en attente de ${nomPers(ec.personneId)}` : ""}${v.echeance ? `, échéance ${v.echeance}` : ""}`);
+    }
+  }
+
+  if (d.autorisations?.length || d.servitudes?.length) {
+    lignes.push(`\n## Autorisations et foncier`);
+    for (const a of d.autorisations ?? []) {
+      lignes.push(`- ${a.type} « ${a.objet} » (${a.autorite}${a.reference ? `, réf. ${a.reference}` : ""}) : ${a.statut}, ${a.oppositions} opposition(s)${a.validite ? `, valable jusqu'au ${a.validite}` : ""}`);
+      for (const c of a.conditions) lignes.push(`  - Condition ${c.service} : ${c.texte} – ${c.statut}${c.echeance ? `, échéance ${c.echeance}` : ""}, responsable ${nomPers(c.responsableId)}`);
+    }
+    for (const s of d.servitudes ?? []) {
+      lignes.push(`- Parcelle ${s.parcelle} (${s.commune}), ${s.proprietaire} : ${s.type}, ${s.statut}${s.indemnite ? `, indemnité ${chf(s.indemnite)}` : ""}${s.echeance ? `, échéance ${s.echeance}` : ""}`);
     }
   }
 

@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileSignature, Gavel, Plus } from "lucide-react";
+import { FileArchive, FileSignature, Gavel, Plus } from "lucide-react";
+import { lireFichierCrb } from "../lib/sia451";
+import { descriptifDepuisCrbx, entrepriseDepuisCrbx, lireFichier, soumissionDepuisCrbx } from "../lib/importCrbx";
 import { parcoursMarche } from "../lib/parcours";
 import { FormulaireContrat } from "./Contrats";
 import { useProjetActif, useStore } from "../store/useStore";
@@ -19,11 +21,36 @@ export function AppelsOffres() {
   const d = useProjetActif();
   const { entreprises, ajouter, contrats, factures } = useStore();
   const [greAGre, setGreAGre] = useState(false);
+  const [depuisCrbx, setDepuisCrbx] = useState<AppelOffres | null>(null);
+  const fichierCrbx = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const [filtre, setFiltre] = useState<"tous" | "cours" | "termines">("cours");
   const [creation, setCreation] = useState(false);
   if (!d.projet) return <SansProjet />;
   const jour = aujourdhui();
+  const projet = d.projet;
+
+  /** Nouvel appel d'offres à partir d'un CRBX : descriptif, et offre si le fichier est rempli */
+  const importerCrbx = async (fichier: File) => {
+    try {
+      const f = lireFichierCrb(await lireFichier(fichier));
+      let ao: AppelOffres = {
+        id: nouvelId("ao"), projetId: projet.id, numero: `AO-${projet.code}-${String(d.appelsOffres.length + 1).padStart(2, "0")}`,
+        objet: f.objet || fichier.name.replace(/\.crbx$/i, ""), cfc: "", procedure: "Ouverte", statut: f.estOffre ? "Évaluation" : "Préparation",
+        dateEnvoi: f.date ?? jour, dateRetour: jour, montantEstime: 0, soumissions: [], entreprisesInvitees: [],
+        criteres: [{ id: nouvelId("cr"), nom: "Prix", poids: 60, estPrix: true }, { id: nouvelId("cr"), nom: "Références", poids: 20 }, { id: nouvelId("cr"), nom: "Organisation et délais", poids: 20 }],
+        ...descriptifDepuisCrbx(f, fichier.name),
+      };
+      if (f.estOffre) {
+        const { entreprise, nouvelle } = entrepriseDepuisCrbx(f, entreprises);
+        if (nouvelle) ajouter("entreprises", entreprise);
+        ao = { ...ao, soumissions: [soumissionDepuisCrbx(ao, f, entreprise.id, fichier.name)], entreprisesInvitees: [entreprise.id] };
+      }
+      setDepuisCrbx(ao);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : String(e));
+    }
+  };
 
   const liste = d.appelsOffres.filter((a) =>
     filtre === "tous" ? true : filtre === "cours" ? !["Adjugé", "Annulé"].includes(a.statut) : ["Adjugé", "Annulé"].includes(a.statut));
@@ -32,6 +59,8 @@ export function AppelsOffres() {
     <>
       <EnTetePage titre="Marchés & appels d'offres" description="Du descriptif CAN à l'adjudication, puis au contrat et aux factures"
         actions={<>
+          <input ref={fichierCrbx} type="file" accept=".crbx,.e1s,.01s,.x1s" hidden onChange={(e) => { if (e.target.files?.[0]) void importerCrbx(e.target.files[0]); e.target.value = ""; }} />
+          <Bouton icone={<FileArchive size={16} />} onClick={() => fichierCrbx.current?.click()} title="Crée l'appel d'offres à partir du fichier CRBX (descriptif ou offre remplie)">Depuis un CRBX</Bouton>
           <Bouton icone={<FileSignature size={16} />} onClick={() => setGreAGre(true)}>Marché de gré à gré</Bouton>
           <Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => setCreation(true)}>Nouvel appel d'offres</Bouton>
         </>} />
@@ -95,6 +124,11 @@ export function AppelsOffres() {
       {greAGre && <FormulaireContrat projetId={d.projet.id} numeroSuggere={`C-${d.projet.code}-${String(contrats.filter((c) => c.projetId === d.projet!.id).length + 1).padStart(2, "0")}`}
         onFermer={() => setGreAGre(false)} onEnregistrer={(c) => { ajouter("contrats", c); navigate(`/contrats/${c.id}`); }} />}
 
+      {depuisCrbx && (
+        <FormulaireAO projetId={projet.id} initial={depuisCrbx} titre={`Nouvel appel d'offres – ${depuisCrbx.positions.length} positions importées${depuisCrbx.soumissions.length ? " + 1 offre" : ""}`}
+          onFermer={() => setDepuisCrbx(null)} onEnregistrer={(a) => { ajouter("appelsOffres", a); navigate(`/appels-offres/${a.id}?onglet=${a.soumissions.length ? "soumissions" : "descriptif"}`); }} />
+      )}
+
       {creation && (
         <FormulaireAO projetId={d.projet.id} numeroSuggere={`AO-${d.projet.code}-${String(d.appelsOffres.length + 1).padStart(2, "0")}`}
           onFermer={() => setCreation(false)} onEnregistrer={(a) => { ajouter("appelsOffres", a); navigate(`/appels-offres/${a.id}`); }} />
@@ -103,8 +137,8 @@ export function AppelsOffres() {
   );
 }
 
-export function FormulaireAO({ projetId, numeroSuggere, initial, onFermer, onEnregistrer }: {
-  projetId: string; numeroSuggere?: string; initial?: AppelOffres; onFermer: () => void; onEnregistrer: (a: AppelOffres) => void;
+export function FormulaireAO({ projetId, numeroSuggere, initial, titre, onFermer, onEnregistrer }: {
+  projetId: string; numeroSuggere?: string; initial?: AppelOffres; titre?: string; onFermer: () => void; onEnregistrer: (a: AppelOffres) => void;
 }) {
   const { lots, entreprises } = useStore();
   const [a, setA] = useState<AppelOffres>(() => initial ?? {
@@ -121,7 +155,7 @@ export function FormulaireAO({ projetId, numeroSuggere, initial, onFermer, onEnr
   const suggerees = entreprises.filter((e) => a.cfc && e.specialites.some((s) => a.cfc.startsWith(s) || s.startsWith(a.cfc)));
 
   return (
-    <Modale ouverte onFermer={onFermer} titre={initial ? "Modifier l'appel d'offres" : "Nouvel appel d'offres"}
+    <Modale ouverte onFermer={onFermer} titre={titre ?? (initial ? "Modifier l'appel d'offres" : "Nouvel appel d'offres")}
       pied={<><Bouton libre onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!a.numero || !a.objet || !a.cfc} onClick={() => { onEnregistrer(a); onFermer(); }}>Enregistrer</Bouton></>}>
       <div className="grid grid-cols-2 gap-4">
         <Champ libelle="Numéro"><Saisie value={a.numero} onChange={(e) => maj({ numero: e.target.value })} /></Champ>

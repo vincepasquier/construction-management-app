@@ -13,10 +13,8 @@ import type { PhaseSIA, Projet } from "../types";
 import { nouvelId } from "../lib/id";
 import type { DonneesDemo } from "../data/demo";
 
-export const PHASES: PhaseSIA[] = [
-  "31 Avant-projet", "32 Projet de l'ouvrage", "33 Procédure de demande d'autorisation", "41 Appels d'offres",
-  "51 Projet d'exécution", "52 Exécution de l'ouvrage", "53 Mise en service, achèvement",
-];
+export { PHASES } from "../data/phasesSia";
+import { PHASES } from "../data/phasesSia";
 
 const COULEURS = ["#4f46e5", "#0891b2", "#059669", "#d97706", "#db2777", "#7c3aed", "#475569"];
 

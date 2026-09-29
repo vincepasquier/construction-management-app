@@ -1,7 +1,7 @@
 // Jeu de données de démonstration (entièrement fictif) pour découvrir la plateforme.
 import type {
   Action, Affectation, AppelOffres, BudgetLigne, CircuitValidation, Contrat, DocumentProjet, Entreprise, Facture, Lot,
-  NoeudOrganigramme, Personne, Projet, Risque, Tache,
+  NoeudOrganigramme, Personne, Projet, Risque, Servitude, Tache, Autorisation,
 } from "../types";
 import { genererDepuisProjet } from "../lib/organigramme";
 
@@ -21,6 +21,8 @@ export interface DonneesDemo {
   validations: CircuitValidation[];
   risques: Risque[];
   actions: Action[];
+  autorisations: Autorisation[];
+  servitudes: Servitude[];
 }
 
 export function donneesDemo(): DonneesDemo {
@@ -51,12 +53,15 @@ export function donneesDemo(): DonneesDemo {
   ];
 
   const lots: Lot[] = [
-    { id: "lot-1", projetId: "prj-1", code: "L1", nom: "Génie civil & chaussée", cfc: ["11", "13", "20", "21", "461"], responsableId: "per-2" },
-    { id: "lot-2", projetId: "prj-1", code: "L2", nom: "Réseaux souterrains", cfc: ["15", "45", "463"], responsableId: "per-3" },
-    { id: "lot-3", projetId: "prj-1", code: "L3", nom: "Aménagements & équipements", cfc: ["42", "44", "23"], responsableId: "per-3" },
-    { id: "lot-4", projetId: "prj-1", code: "L0", nom: "Honoraires & frais", cfc: ["29", "49", "5"], responsableId: "per-1" },
-    { id: "lot-5", projetId: "prj-2", code: "L1", nom: "Collecteur en tranchée", cfc: ["13", "45"], responsableId: "per-2" },
-    { id: "lot-6", projetId: "prj-2", code: "L2", nom: "Fonçage sous voies", cfc: ["17"], responsableId: "per-3" },
+    { id: "lot-1", projetId: "prj-1", code: "L1", nom: "Génie civil & chaussée", cfc: ["11", "13", "20", "21", "461"], responsableId: "per-2", phase: "52 Exécution de l'ouvrage",
+      datesPhases: { "32 Projet de l'ouvrage": { debut: "2024-09-01", fin: "2025-03-31" }, "41 Appels d'offres": { debut: "2025-09-15", fin: "2025-12-19" }, "51 Projet d'exécution": { debut: "2025-11-01", fin: "2026-03-31" }, "52 Exécution de l'ouvrage": { debut: "2026-02-02", fin: "2027-06-04" } } },
+    { id: "lot-2", projetId: "prj-1", code: "L2", nom: "Réseaux souterrains", cfc: ["15", "45", "463"], responsableId: "per-3", phase: "52 Exécution de l'ouvrage",
+      datesPhases: { "41 Appels d'offres": { debut: "2025-10-01", fin: "2026-01-15" }, "51 Projet d'exécution": { debut: "2025-12-01", fin: "2026-03-15" }, "52 Exécution de l'ouvrage": { debut: "2026-02-16", fin: "2026-12-18" } } },
+    { id: "lot-3", projetId: "prj-1", code: "L3", nom: "Aménagements & équipements", cfc: ["42", "44", "23"], responsableId: "per-3", phase: "41 Appels d'offres",
+      datesPhases: { "41 Appels d'offres": { debut: "2026-08-24", fin: "2026-10-30" }, "51 Projet d'exécution": { debut: "2026-11-01", fin: "2027-01-31" }, "52 Exécution de l'ouvrage": { debut: "2027-02-15", fin: "2027-06-18" } } },
+    { id: "lot-4", projetId: "prj-1", code: "L0", nom: "Honoraires & frais", cfc: ["29", "49", "5"], responsableId: "per-1", phase: "52 Exécution de l'ouvrage" },
+    { id: "lot-5", projetId: "prj-2", code: "L1", nom: "Collecteur en tranchée", cfc: ["13", "45"], responsableId: "per-2", phase: "41 Appels d'offres" },
+    { id: "lot-6", projetId: "prj-2", code: "L2", nom: "Fonçage sous voies", cfc: ["17"], responsableId: "per-3", phase: "33 Procédure de demande d'autorisation" },
   ];
 
   const budget: BudgetLigne[] = [
@@ -342,8 +347,49 @@ export function donneesDemo(): DonneesDemo {
     a(11, "prj-2", "Implanter les piézomètres", "per-2", "À faire", "Normale", "2026-11-15", "Risque R-10", "rsk-10"),
   ];
 
+  const autorisations: Autorisation[] = [
+    {
+      id: "aut-1", projetId: "prj-1", type: "Approbation des plans", objet: "Réaménagement de la RC 601 (routes et réseaux)", autorite: "Département cantonal des infrastructures",
+      reference: "DI-2024-0815", statut: "Délivrée", dateDepot: "2025-03-10", dateEnquete: "2025-04-11", oppositions: 3, dateDecision: "2025-09-02", validite: "2028-09-02",
+      conditions: [
+        { id: "c1", service: "Office de l'environnement", texte: "Suivi environnemental de chantier (SER) par un spécialiste mandaté", echeance: "2026-02-02", responsableId: "per-1", statut: "Respectée" },
+        { id: "c2", service: "Office de l'environnement", texte: "Analyse des matériaux d'excavation avant évacuation (OLED)", echeance: "2026-03-01", responsableId: "per-2", statut: "En cours" },
+        { id: "c3", service: "Service de la mobilité", texte: "Plan de signalisation de chantier validé avant chaque étape", echeance: "2027-01-08", responsableId: "per-4", statut: "En cours" },
+        { id: "c4", service: "Archéologie cantonale", texte: "Annoncer le début des terrassements 15 jours à l'avance", echeance: "2027-01-01", responsableId: "per-4", statut: "À traiter" },
+        { id: "c5", service: "Commune", texte: "Maintien de l'accès aux commerces pendant toute la durée des travaux", responsableId: "per-1", statut: "En cours" },
+      ],
+    },
+    {
+      id: "aut-2", projetId: "prj-1", type: "Autorisation de police (circulation)", objet: "Circulation alternée et déviation poids lourds", autorite: "Police cantonale",
+      reference: "PC-26-114", statut: "Délivrée", dateDepot: "2025-12-01", oppositions: 0, dateDecision: "2026-01-20", validite: "2026-12-31", lotId: "lot-1",
+      conditions: [{ id: "c6", service: "Police cantonale", texte: "Renouvellement de l'autorisation pour 2027", echeance: "2026-11-15", responsableId: "per-4", statut: "À traiter" }],
+    },
+    {
+      id: "aut-3", projetId: "prj-2", type: "Approbation des plans", objet: "Collecteur intercommunal DN 600", autorite: "Département cantonal de l'environnement",
+      reference: "DE-2026-0231", statut: "Oppositions en traitement", dateDepot: "2026-05-15", dateEnquete: "2026-06-01", oppositions: 2, conditions: [],
+    },
+    {
+      id: "aut-4", projetId: "prj-2", type: "Autorisation spéciale", objet: "Fonçage sous les voies CFF", autorite: "CFF Infrastructure / OFT",
+      statut: "En préparation", oppositions: 0, lotId: "lot-6", conditions: [],
+    },
+  ];
+
+  const sv = (n: number, projetId: string, parcelle: string, proprietaire: string, type: Servitude["type"], statut: Servitude["statut"], indemnite: number, emprise?: string, echeance?: string, dateSignature?: string, remarque?: string): Servitude => ({
+    id: `srv-${n}`, projetId, parcelle, commune: projetId === "prj-1" ? "Exemple-les-Bains" : "Vallée d'Exemple", proprietaire, type, statut, indemnite, emprise, echeance, dateSignature, remarque,
+  });
+  const servitudes: Servitude[] = [
+    sv(1, "prj-1", "1245", "Famille Rochat", "Acquisition de terrain", "Inscrite au registre foncier", 18_400, "46 m2", undefined, "2025-06-12"),
+    sv(2, "prj-1", "1246", "Garage du Centre SA", "Emprise temporaire", "Convention signée", 6_000, "120 m2 (8 mois)", undefined, "2025-11-03"),
+    sv(3, "prj-1", "1310", "PPE Les Tilleuls", "Servitude de conduite", "En négociation", 4_500, "32 m", "2026-10-31", undefined, "Assemblée des copropriétaires le 20.10"),
+    sv(4, "prj-1", "1311", "M. et Mme Favre", "Servitude de conduite", "Accord de principe", 2_800, "18 m", "2026-10-15"),
+    sv(5, "prj-1", "1402", "Commune d'Exemple", "Servitude de passage", "Convention signée", 0, "chemin d'accès", undefined, "2025-10-20"),
+    sv(6, "prj-2", "88", "Exploitation agricole Monnet", "Servitude de conduite", "En négociation", 12_000, "340 m", "2026-11-30", undefined, "Indemnité pour pertes de récolte à préciser"),
+    sv(7, "prj-2", "91", "Hoirie Perrin", "Servitude de conduite", "À négocier", 7_500, "210 m", "2026-12-15"),
+    sv(8, "prj-2", "CFF 5012", "CFF SA", "Droit de superficie", "À négocier", 0, "fonçage 40 m", "2026-12-31"),
+  ];
+
   return {
     projets, lots, budget, entreprises, appelsOffres, contrats, factures, taches, documents, personnes, affectations,
-    organigramme, validations, risques, actions,
+    organigramme, validations, risques, actions, autorisations, servitudes,
   };
 }

@@ -13,13 +13,17 @@ export type Role =
   | "Maître d'ouvrage";
 
 export type PhaseSIA =
+  | "11 Énoncé des besoins"
+  | "21 Définition du projet"
+  | "22 Procédure de choix de mandataires"
   | "31 Avant-projet"
   | "32 Projet de l'ouvrage"
   | "33 Procédure de demande d'autorisation"
   | "41 Appels d'offres"
   | "51 Projet d'exécution"
   | "52 Exécution de l'ouvrage"
-  | "53 Mise en service, achèvement";
+  | "53 Mise en service, achèvement"
+  | "61 Exploitation";
 
 export interface Projet {
   id: ID;
@@ -46,6 +50,10 @@ export interface Lot {
   /** Codes CFC couverts par le lot (préfixes acceptés, ex. "21" couvre 211, 212…) */
   cfc: string[];
   responsableId?: ID;
+  /** Phase SIA 112 dans laquelle se trouve le lot */
+  phase?: PhaseSIA;
+  /** Dates prévues ou réelles de chaque phase du lot (frise des phases) */
+  datesPhases?: Partial<Record<PhaseSIA, { debut?: string; fin?: string }>>;
 }
 
 export interface BudgetLigne {
@@ -80,6 +88,10 @@ export interface PositionCAN {
   libelle: string;
   unite: string;
   quantite: number;
+  /** Texte descriptif complet (import CRBX) */
+  texte?: string;
+  /** Quantités par subdivision (« élévations » SIA 451 : PG, EA, EB…) */
+  quantitesParElevation?: Record<string, number>;
 }
 
 export interface Critere {
@@ -101,6 +113,10 @@ export interface Soumission {
   /** Notes 0–5 pour les critères hors prix */
   notes: Record<ID, number>;
   remarques?: string;
+  /** Offre importée d'un fichier CRBX : total annoncé par l'entreprise et contrôles */
+  fichier?: string;
+  totalDeclare?: number;
+  ecarts?: { cle: string; type: string; detail: string }[];
 }
 
 export interface AppelOffres {
@@ -120,6 +136,10 @@ export interface AppelOffres {
   soumissions: Soumission[];
   entreprisesInvitees: ID[];
   adjudicataireId?: ID;
+  /** Descriptif importé d'un fichier CRBX */
+  source?: { fichier: string; date?: string; logiciel?: string; projet?: string };
+  chapitres?: Record<string, string>;
+  elevations?: Record<string, string>;
 }
 
 export type StatutAvenant = "Demandé" | "Approuvé" | "Refusé";
@@ -362,7 +382,7 @@ export interface Action {
 
 export type ModuleApp =
   | "portefeuille" | "finances" | "appelsOffres" | "contrats" | "planning" | "taches" | "risques"
-  | "validations" | "documents" | "organigramme" | "ressources" | "entreprises" | "parametres" | "acces" | "ia";
+  | "validations" | "documents" | "juridique" | "organigramme" | "ressources" | "entreprises" | "parametres" | "acces" | "ia";
 
 export type NiveauAcces = "aucun" | "lecture" | "ecriture";
 
@@ -374,4 +394,72 @@ export interface AccesPersonne {
   projets: ID[] | "tous";
   /** Dérogations au profil, module par module */
   modules: Partial<Record<ModuleApp, NiveauAcces>>;
+}
+
+// ---------------------------------------------------------------------------
+// Autorisations et foncier
+// ---------------------------------------------------------------------------
+
+export type TypeAutorisation =
+  | "Permis de construire" | "Approbation des plans" | "Autorisation spéciale" | "Autorisation de défrichement"
+  | "Permis de fouille" | "Autorisation de police (circulation)" | "Autre";
+
+export type StatutAutorisation =
+  | "En préparation" | "Déposée" | "Mise à l'enquête" | "Oppositions en traitement" | "Délivrée" | "En recours" | "Refusée" | "Échue";
+
+export type StatutCondition = "À traiter" | "En cours" | "Respectée" | "Levée";
+
+export interface ConditionAutorisation {
+  id: ID;
+  /** Service ou autorité émettant le préavis / la charge */
+  service: string;
+  texte: string;
+  /** Phase ou échéance à laquelle la condition doit être remplie */
+  echeance?: string;
+  responsableId?: ID;
+  statut: StatutCondition;
+}
+
+export interface Autorisation {
+  id: ID;
+  projetId: ID;
+  type: TypeAutorisation;
+  objet: string;
+  autorite: string;
+  reference?: string;
+  statut: StatutAutorisation;
+  dateDepot?: string;
+  dateEnquete?: string;
+  oppositions: number;
+  dateDecision?: string;
+  /** Fin de validité (ex. début des travaux exigé avant cette date) */
+  validite?: string;
+  conditions: ConditionAutorisation[];
+  url?: string;
+  lotId?: ID;
+}
+
+export type TypeServitude =
+  | "Servitude de passage" | "Servitude de conduite" | "Emprise temporaire" | "Acquisition de terrain"
+  | "Droit de superficie" | "Autre";
+
+export type StatutServitude =
+  | "À négocier" | "En négociation" | "Accord de principe" | "Convention signée" | "Inscrite au registre foncier" | "Refus / expropriation";
+
+export interface Servitude {
+  id: ID;
+  projetId: ID;
+  parcelle: string;
+  commune: string;
+  proprietaire: string;
+  contact?: string;
+  type: TypeServitude;
+  statut: StatutServitude;
+  /** Surface ou longueur concernée, en texte libre (ex. « 120 m2 », « 45 m ») */
+  emprise?: string;
+  indemnite: number;
+  echeance?: string;
+  dateSignature?: string;
+  remarque?: string;
+  lotId?: ID;
 }

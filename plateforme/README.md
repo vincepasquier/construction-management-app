@@ -39,14 +39,16 @@ L'application démarre avec un **jeu de démonstration fictif** (deux projets : 
 | Module | Contenu |
 |---|---|
 | **Portefeuille** | Tous les projets accessibles : budget, prévision, écart, avancement, santé ; « mon travail » (mes tâches, validations en attente, mes risques) |
-| **Tableau de bord** | Indicateurs du projet, courbe en S (planifié vs facturé), alertes (retards, avenants, factures échues), lots et responsables, jalons |
+| **Tableau de bord** | Indicateurs du projet, **frise des phases SIA 112** (projet et chaque lot : phase en cours en un clic, dates par phase, vue calendrier), courbe en S, alertes, lots et responsables, jalons |
 | **Finances CFC** | Arborescence CFC (SN 506 500) : budget, engagé, avenants en attente, facturé, prévision, écart ; budget détaillé ; export Excel ; **import d'un chiffrage quelconque par l'IA** (Excel, CSV, PDF, photo, texte) converti en lignes CFC vérifiables avant import |
 | **Marchés & appels d'offres** | Parcours guidé en 7 étapes (descriptif → consultation → offres → adjudication → contrat → facturation → clôture) avec la **prochaine action en un clic**. Descriptif par positions **CAN** (saisie ou import CSV), comparatif des prix unitaires (prix le plus bas, écarts > 30 % vs médiane, positions non chiffrées), rabais / escompte, **évaluation multicritère** pondérée, adjudication → contrat créé automatiquement ; marchés de gré à gré |
+| **Import CRBX (SIA 451)** | Le CRBX envoyé aux entreprises crée le descriptif (positions CAN, textes, unités, quantités par subdivision). Les CRBX rentrés (Messerli, BauBit, Sorba…) deviennent des offres, avec l'entreprise reconnue ou ajoutée au carnet, et sont contrôlés : total recalculé ligne par ligne et comparé au total annoncé, positions manquantes ou ajoutées, quantités modifiées, positions non chiffrées. Récapitulatif par chapitre CAN |
 | **Contrats & factures** | Contrats d'entreprise, mandats, fournitures ; avenants ; situations, régies, décompte final ; TVA ; retenue de garantie ; contrôle de dépassement ; « Faire valider » sur factures et avenants |
 | **Planning** | Gantt interactif (glisser pour décaler, étirer pour la durée), dépendances, jalons, retards détectés automatiquement |
 | **Tâches** | Actions attribuées aux membres : tableau glisser-déposer (à faire / en cours / en attente / terminé), vue **par personne** (avec ses tâches de planning, validations et risques), « mes tâches » ; priorités, échéances, origine (séance, risque…) |
 | **Risques** | Matrice probabilité × impact cliquable, registre, criticité, exposition financière pondérée, **suivi par responsable**, création de tâches de traitement, **suggestions de risques par l'IA** |
 | **Validations** | Circuits de validation séquentiels (documents, factures, avenants) : modèles de circuits, décision (approuver / demander des modifications / refuser) avec commentaire, nouvelles versions, historique ; l'issue met à jour la facture ou l'avenant |
+| **Autorisations & foncier** | Permis et approbations des plans (dépôt, enquête, oppositions, décision, validité), **conditions des préavis** avec responsable et échéance (→ tâche en un clic), **servitudes et emprises par parcelle** (propriétaire, statut jusqu'à l'inscription au RF, indemnités), échéances des 60 prochains jours |
 | **Documents** | Registre documentaire (catégories, versions, liens, état de validation) + navigateur **SharePoint** (parcourir, rechercher, téléverser, créer des dossiers, ajouter au registre) |
 | **Organigramme** | Création guidée (génération depuis le projet, modèle type ou à partir de zéro), édition directe, annuaire des intervenants ; **toujours accessible en un clic** (bouton en haut de l'écran, Ctrl Maj O), imprimable |
 | **Ressources** | Équipe et rôles, plan de charge sur 12 mois (surcharges en rouge), affectations, organisation des lots et responsables |
@@ -86,7 +88,7 @@ Dans l'ancienne application : *Export → Session complète (JSON)*. Puis dans C
 
 - **Droits d'accès** : ils organisent l'interface (menus masqués, lecture seule) mais ne constituent pas une protection tant que les données restent dans le navigateur. La sécurité réelle viendra avec le serveur de données et la connexion Microsoft 365.
 - **Stockage local** : les données sont enregistrées dans le navigateur (export / restauration JSON dans les paramètres). Pour un usage à plusieurs, la prochaine étape est une base de données partagée (PostgreSQL, API) avec authentification Microsoft 365 et droits par rôle.
-- **CAN** : seuls les numéros et titres de chapitres courants sont inclus (le contenu est sous licence CRB). Import des fichiers **SIA 451** à ajouter.
+- **CAN / CRBX** : l'import lit les fichiers CRBX / SIA 451 (descriptif et offres). Les textes complets des positions CAN ne figurent pas tous dans ces fichiers (ils proviennent du catalogue CRB sous licence) : certains libellés restent courts. L'export d'un CRBX depuis Chantier+ n'est pas encore disponible.
 - **CFC** : extrait des groupes principaux ; compléter selon le référentiel utilisé (ou eCCC-Bât / eCCC-GC).
 - Pistes : chemin critique calculé, révision des prix (indices), gestion des garanties bancaires, PV de séance, tableau de bord maître d'ouvrage, application mobile de chantier.
 
