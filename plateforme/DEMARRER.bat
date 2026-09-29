@@ -1,8 +1,16 @@
 @echo off
 cd /d "%~dp0"
 echo ================================================
-echo   Chantier+ - demarrage
+echo   Chantier+ - mode developpement
 echo ================================================
+where npm >nul 2>nul || (
+  echo npm est introuvable sur ce PC.
+  echo Pour simplement utiliser l'application, lancez pret-a-lancer\LANCER.bat
+  echo ^(seul node.exe est necessaire^).
+  echo Pour developper, installez Node.js depuis https://nodejs.org ^(inclut npm^).
+  pause
+  exit /b 1
+)
 if not exist node_modules (
   echo Installation des dependances...
   call npm install

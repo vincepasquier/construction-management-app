@@ -1,0 +1,18 @@
+CHANTIER+ - VERSION PRETE A LANCER
+===================================
+
+Aucune installation requise : seul node.exe est necessaire (Node.js 18 ou plus recent).
+
+1. Double-cliquez sur LANCER.bat
+   - Si node.exe n'est pas installe sur le PC, copiez votre fichier node.exe
+     dans ce dossier (a cote de LANCER.bat), puis relancez.
+2. Le navigateur s'ouvre sur http://localhost:8787
+3. Laissez la fenetre noire ouverte pendant l'utilisation.
+
+Assistant IA (facultatif)
+- Ouvrez le fichier .env (cree au premier lancement) avec le Bloc-notes
+- Renseignez : ANTHROPIC_API_KEY=votre-cle
+- Fermez et relancez LANCER.bat
+
+Les donnees sont enregistrees dans votre navigateur.
+Pensez a exporter une sauvegarde : Parametres > Exporter tout (JSON).

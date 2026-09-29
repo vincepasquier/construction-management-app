@@ -1,6 +1,7 @@
 // Serveur API : relaie les requêtes de l'assistant IA vers Claude (la clé API reste côté
-// serveur) et, en production, sert l'application compilée.
+// serveur) et sert l'application compilée (production ou version prête à lancer).
 import express from "express";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
@@ -113,11 +114,14 @@ app.post("/api/assistant", async (req, res) => {
   }
 });
 
-// Production : servir le front compilé
-if (process.env.NODE_ENV === "production") {
-  const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../dist");
-  app.use(express.static(dist));
-  app.get(/^(?!\/api).*/, (_req, res) => res.sendFile(path.join(dist, "index.html")));
+// Front compilé : « web/ » à côté du serveur (version prête à lancer) ou « ../dist » (npm start)
+const ici = path.dirname(fileURLToPath(import.meta.url));
+const dossierWeb = [path.join(ici, "web"), path.resolve(ici, "../dist")].find((d) => fs.existsSync(path.join(d, "index.html")));
+if (dossierWeb && (process.env.NODE_ENV === "production" || dossierWeb.endsWith("web"))) {
+  app.use(express.static(dossierWeb));
+  app.get(/^(?!\/api).*/, (_req, res) => res.sendFile(path.join(dossierWeb, "index.html")));
 }
 
-app.listen(PORT, () => console.log(`API Chantier+ sur http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(dossierWeb ? `Chantier+ est prêt : ouvrez http://localhost:${PORT}` : `API Chantier+ sur http://localhost:${PORT}`);
+});

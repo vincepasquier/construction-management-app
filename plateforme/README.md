@@ -4,7 +4,16 @@ Application web pour **directeurs de projet** et **responsables de lot** : finan
 
 ## Démarrage
 
-Prérequis : [Node.js](https://nodejs.org) 20 ou plus récent.
+### Utiliser l'application (seul `node.exe` est nécessaire)
+
+Le dossier [`pret-a-lancer/`](pret-a-lancer/) contient une version déjà compilée, sans dépendance à installer :
+
+1. Double-cliquer sur `pret-a-lancer/LANCER.bat`. Si Node.js n'est pas installé, copier `node.exe` dans ce dossier.
+2. Le navigateur s'ouvre sur http://localhost:8787 ; laisser la fenêtre noire ouverte.
+
+Sur Mac / Linux : `cd pret-a-lancer && node serveur.mjs`.
+
+### Développer (Node.js complet avec npm)
 
 ```bash
 cd plateforme
@@ -13,7 +22,7 @@ cp .env.example .env      # puis renseigner ANTHROPIC_API_KEY pour l'assistant I
 npm run dev               # front http://localhost:5173 + API http://localhost:8787
 ```
 
-Sous Windows : double-cliquer sur `DEMARRER.bat`.
+Sous Windows : `DEMARRER.bat`. Après une modification du code, régénérer la version prête à lancer avec `npm run pret-a-lancer`.
 
 L'application démarre avec un **jeu de démonstration fictif** (deux projets : réaménagement de route cantonale et collecteur vers STEP). Paramètres → « Tout effacer » pour repartir de zéro.
 
@@ -23,6 +32,7 @@ L'application démarre avec un **jeu de démonstration fictif** (deux projets : 
 | `npm run build` | Vérification TypeScript + compilation dans `dist/` |
 | `npm start` | Production : le serveur Node sert `dist/` et l'API |
 | `npm test` | Tests unitaires (calculs financiers, évaluation des offres, import) |
+| `npm run pret-a-lancer` | Régénère `pret-a-lancer/` (front compilé + serveur en un seul fichier) |
 
 ## Modules
 
@@ -58,7 +68,7 @@ Le serveur (`server/index.ts`) appelle l'API Claude d'Anthropic ; la clé reste 
 ## SharePoint
 
 1. Portail Azure → *Microsoft Entra ID → Inscriptions d'applications → Nouvelle inscription*.
-2. Plateforme **Single-page application**, URI de redirection = adresse de la plateforme (ex. `http://localhost:5173`).
+2. Plateforme **Single-page application**, URI de redirection = adresse de la plateforme (`http://localhost:8787` pour la version prête à lancer, `http://localhost:5173` en développement).
 3. Autorisations déléguées Microsoft Graph : `Sites.ReadWrite.All`, `Files.ReadWrite.All` (consentement administrateur).
 4. Dans Chantier+ → Paramètres : client ID, tenant ID, hôte (`entreprise.sharepoint.com`), chemin du site (`/sites/Projets`), dossier racine.
 5. Sur chaque projet, le champ « Dossier SharePoint » désigne son sous-dossier.
