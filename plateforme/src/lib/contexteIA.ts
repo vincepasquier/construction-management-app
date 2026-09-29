@@ -1,5 +1,7 @@
 // Construit un résumé textuel du projet actif, transmis à l'assistant IA comme contexte.
-import type { AppelOffres, BudgetLigne, Contrat, DocumentProjet, Entreprise, Facture, Lot, Personne, Projet, Tache } from "../types";
+import type { Action, AppelOffres, BudgetLigne, CircuitValidation, Contrat, DocumentProjet, Entreprise, Facture, Lot, Personne, Projet, Risque, Tache } from "../types";
+import { criticite, estActif, score } from "./risques";
+import { etapeCourante } from "./validations";
 import { libelleCFC } from "../data/cfc";
 import {
   avancementPlanning, avenantsEnAttente, evaluerSoumissions, factureDuContrat, montantContrat,
@@ -17,6 +19,9 @@ interface Donnees {
   documents: DocumentProjet[];
   entreprises: Entreprise[];
   personnes: Personne[];
+  risques?: Risque[];
+  actions?: Action[];
+  validations?: CircuitValidation[];
 }
 
 const chf = (v: number) => `${Math.round(v).toLocaleString("de-CH")} CHF`;
@@ -80,6 +85,31 @@ export function construireContexte(d: Donnees, aujourdhui: string): string {
   for (const tache of d.taches) {
     const enRetard = retard.includes(tache);
     lignes.push(`- ${tache.jalon ? "◆ " : ""}${tache.nom} : ${tache.debut} → ${tache.fin}, ${tache.avancement} %${enRetard ? " – EN RETARD" : ""}`);
+  }
+
+  const risques = (d.risques ?? []).filter(estActif).sort((a, b) => score(b) - score(a));
+  if (d.risques?.length) {
+    lignes.push(`\n## Registre des risques (${risques.length} actif(s))`);
+    for (const r of d.risques) {
+      lignes.push(`- ${r.code} ${r.titre} [${r.categorie}] : P${r.probabilite} × I${r.impact} = ${score(r)} (${criticite(score(r))}), impact ${chf(r.impactFinancier)}, ${r.statut}, responsable ${nomPers(r.proprietaireId)}${r.mesures ? ` – mesures : ${r.mesures}` : ""}`);
+    }
+  }
+
+  const ouvertes = (d.actions ?? []).filter((a) => a.statut !== "Terminé");
+  if (ouvertes.length) {
+    lignes.push(`\n## Tâches ouvertes`);
+    for (const a of ouvertes) {
+      lignes.push(`- ${a.titre} → ${nomPers(a.assigneId)}, ${a.statut}, priorité ${a.priorite}${a.echeance ? `, échéance ${a.echeance}${a.echeance < aujourdhui ? " – EN RETARD" : ""}` : ""}${a.origine ? ` (origine : ${a.origine})` : ""}`);
+    }
+  }
+
+  const circuits = (d.validations ?? []).filter((v) => v.statut === "En cours" || v.statut === "À corriger");
+  if (circuits.length) {
+    lignes.push(`\n## Validations en cours`);
+    for (const v of circuits) {
+      const ec = etapeCourante(v);
+      lignes.push(`- ${v.titre} (${v.objet.type}, v${v.version}) : ${v.statut}${ec ? `, en attente de ${nomPers(ec.personneId)}` : ""}${v.echeance ? `, échéance ${v.echeance}` : ""}`);
+    }
   }
 
   if (d.documents.length) {

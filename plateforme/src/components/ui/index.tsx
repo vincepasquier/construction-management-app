@@ -1,8 +1,16 @@
 import { clsx } from "clsx";
 import { X } from "lucide-react";
-import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { createContext, useContext, useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
 
 export { clsx as cx };
+
+/**
+ * Mode lecture seule : fourni par la mise en page selon les droits de l'utilisateur sur le
+ * module affiché. Les boutons d'action et les champs sont alors désactivés, sauf ceux marqués
+ * `libre` (recherche, export, navigation…).
+ */
+export const LectureSeule = createContext(false);
+export const useLectureSeule = () => useContext(LectureSeule);
 
 // ---------------------------------------------------------------------------
 // Boutons
@@ -11,11 +19,13 @@ export { clsx as cx };
 type Variante = "primaire" | "secondaire" | "fantome" | "danger";
 
 export function Bouton({
-  variante = "secondaire", taille = "md", icone, className, children, ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variante?: Variante; taille?: "sm" | "md"; icone?: ReactNode }) {
+  variante = "secondaire", taille = "md", icone, className, children, libre, ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variante?: Variante; taille?: "sm" | "md"; icone?: ReactNode; libre?: boolean }) {
+  const lecture = useLectureSeule();
   return (
     <button
       {...props}
+      disabled={props.disabled || (lecture && !libre)}
       className={clsx(
         "inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap",
         taille === "sm" ? "h-8 px-2.5 text-xs" : "h-9 px-3.5 text-sm",
@@ -109,6 +119,9 @@ const COULEURS_STATUT: Record<string, CouleurBadge> = {
   "En préparation": "gris", "Signé": "bleu", "En cours": "violet", "Réceptionné": "vert", "Clôturé": "gris",
   "Demandé": "orange", "Approuvé": "vert", "Refusé": "rouge",
   "Reçue": "gris", "Contrôlée": "bleu", "Approuvée": "violet", "Payée": "vert", "Contestée": "rouge",
+  "À corriger": "orange",
+  "Ouvert": "orange", "En traitement": "violet", "Survenu": "rouge", "Clos": "gris",
+  "À faire": "gris", "En attente": "orange", "Terminé": "vert",
 };
 
 export function BadgeStatut({ statut }: { statut: string }) {
@@ -163,9 +176,19 @@ export function Champ({ libelle, aide, children, className }: { libelle: string;
   );
 }
 
-export const Saisie = (p: InputHTMLAttributes<HTMLInputElement>) => <input {...p} className={clsx(champ, p.className)} />;
-export const Zone = (p: TextareaHTMLAttributes<HTMLTextAreaElement>) => <textarea {...p} className={clsx(champ, p.className)} />;
-export const Liste = (p: SelectHTMLAttributes<HTMLSelectElement>) => <select {...p} className={clsx(champ, "pr-8", p.className)} />;
+type Libre = { libre?: boolean };
+export function Saisie({ libre, ...p }: InputHTMLAttributes<HTMLInputElement> & Libre) {
+  const lecture = useLectureSeule();
+  return <input {...p} disabled={p.disabled || (lecture && !libre)} className={clsx(champ, "disabled:opacity-70", p.className)} />;
+}
+export function Zone({ libre, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement> & Libre) {
+  const lecture = useLectureSeule();
+  return <textarea {...p} disabled={p.disabled || (lecture && !libre)} className={clsx(champ, "disabled:opacity-70", p.className)} />;
+}
+export function Liste({ libre, ...p }: SelectHTMLAttributes<HTMLSelectElement> & Libre) {
+  const lecture = useLectureSeule();
+  return <select {...p} disabled={p.disabled || (lecture && !libre)} className={clsx(champ, "pr-8 disabled:opacity-70", p.className)} />;
+}
 
 // ---------------------------------------------------------------------------
 // Fenêtre modale / panneau latéral

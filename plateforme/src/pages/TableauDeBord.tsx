@@ -1,9 +1,9 @@
 import { useState } from "react";
+import { BoutonIA } from "../components/BoutonIA";
 import { Link } from "react-router-dom";
-import { AlertTriangle, CalendarClock, Diamond, FileWarning, Pencil, Receipt, Sparkles } from "lucide-react";
+import { AlertTriangle, CalendarClock, Diamond, FileWarning, Pencil, Receipt } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useProjetActif, useStore } from "../store/useStore";
-import { useUI } from "../store/useUI";
 import { avancementPlanning, courbeEnS, suiviParCFC, tachesEnRetard, totauxSuivi } from "../lib/finance";
 import { aujourdhui, formatCHF, formatCompact, formatDate, formatPct } from "../lib/format";
 import { Avatar, Badge, Bouton, Carte, EnTetePage, Indicateur, Progression } from "../components/ui";
@@ -14,7 +14,6 @@ import { cfcCorrespond, libelleCFC } from "../data/cfc";
 export function TableauDeBord() {
   const d = useProjetActif();
   const { personnes, entreprises, modifier } = useStore();
-  const { ouvrirAssistant } = useUI();
   const [edition, setEdition] = useState(false);
   if (!d.projet) return <SansProjet />;
   const p = d.projet;
@@ -47,7 +46,7 @@ export function TableauDeBord() {
         description={<span className="flex flex-wrap items-center gap-2"><Badge couleur="violet">{p.phase}</Badge>{p.maitreOuvrage} · {p.lieu} · {formatDate(p.dateDebut)} → {formatDate(p.dateFin)}</span>}
         actions={<>
           <Bouton icone={<Pencil size={15} />} onClick={() => setEdition(true)}>Modifier</Bouton>
-          <Bouton variante="primaire" icone={<Sparkles size={15} />} onClick={() => ouvrirAssistant("Fais-moi un point de situation synthétique du projet (finances, planning, risques, décisions à prendre) sous forme de rapport pour le maître d'ouvrage.")}>Rapport IA</Bouton>
+          <BoutonIA variante="primaire" question={"Fais-moi un point de situation synthétique du projet (finances, planning, risques, décisions à prendre) sous forme de rapport pour le maître d'ouvrage."}>Rapport IA</BoutonIA>
         </>}
       />
       {d.filtreActif && <p className="-mt-3 mb-4 text-sm text-brand-600">Vue filtrée sur vos lots : {d.lots.map((l) => l.code).join(", ")}</p>}

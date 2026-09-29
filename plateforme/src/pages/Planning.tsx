@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState } from "react";
-import { Diamond, Plus, Sparkles } from "lucide-react";
+import { BoutonIA } from "../components/BoutonIA";
+import { Diamond, Plus } from "lucide-react";
 import { useProjetActif, useStore } from "../store/useStore";
-import { useUI } from "../store/useUI";
 import { avancementPlanning, tachesEnRetard } from "../lib/finance";
 import { ajouterJours, aujourdhui, formatDate, formatPct, joursEntre } from "../lib/format";
 import { nouvelId } from "../lib/id";
-import { Avatar, Badge, Bouton, Carte, Champ, cx, EnTetePage, Indicateur, Liste, Modale, Onglets, Saisie } from "../components/ui";
+import { Avatar, Badge, Bouton, Carte, Champ, cx, EnTetePage, Indicateur, Liste, Modale, Onglets, Saisie, useLectureSeule } from "../components/ui";
 import { SansProjet } from "../components/SansProjet";
 import type { Tache } from "../types";
 
@@ -19,11 +19,11 @@ interface Glisse { id: string; mode: "deplacer" | "etirer"; x0: number; delta: n
 export function Planning() {
   const d = useProjetActif();
   const { personnes, modifier, ajouter, supprimer } = useStore();
-  const { ouvrirAssistant } = useUI();
   const [zoom, setZoom] = useState<Zoom>("mois");
   const [edition, setEdition] = useState<Tache | null>(null);
   const [glisse, setGlisse] = useState<Glisse | null>(null);
   const zone = useRef<HTMLDivElement>(null);
+  const lecture = useLectureSeule();
   const jour = aujourdhui();
 
   const lignes = useMemo(() => {
@@ -59,6 +59,7 @@ export function Planning() {
 
   const commencer = (e: React.PointerEvent, t: Tache, mode: Glisse["mode"]) => {
     e.stopPropagation();
+    if (lecture) { setEdition(t); return; }
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
     setGlisse({ id: t.id, mode, x0: e.clientX, delta: 0 });
   };
@@ -78,7 +79,7 @@ export function Planning() {
       <EnTetePage titre="Planning" description="Diagramme de Gantt – glissez les barres pour décaler, tirez le bord droit pour modifier la durée"
         actions={<>
           <Onglets valeur={zoom} onChange={setZoom} options={[{ id: "trimestre", libelle: "Trimestre" }, { id: "mois", libelle: "Mois" }, { id: "semaine", libelle: "Semaine" }]} />
-          <Bouton icone={<Sparkles size={15} />} onClick={() => ouvrirAssistant("Analyse le planning : tâches en retard, chemin critique probable (selon les dépendances), impact sur les jalons et la date de réception, et propose des mesures de rattrapage.")}>Analyse IA</Bouton>
+          <BoutonIA question={"Analyse le planning : tâches en retard, chemin critique probable (selon les dépendances), impact sur les jalons et la date de réception, et propose des mesures de rattrapage."}>Analyse IA</BoutonIA>
           <Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => setEdition({ id: nouvelId("t"), projetId: p.id, nom: "", debut: jour, fin: ajouterJours(jour, 14), avancement: 0, jalon: false, dependances: [], lotId: d.lots[0]?.id })}>Tâche</Bouton>
         </>} />
 
@@ -175,7 +176,7 @@ export function Planning() {
         <Modale ouverte onFermer={() => setEdition(null)} titre={d.taches.some((t) => t.id === edition.id) ? "Modifier la tâche" : "Nouvelle tâche"}
           pied={<>
             {d.taches.some((t) => t.id === edition.id) && <Bouton variante="fantome" className="mr-auto text-rose-600" onClick={() => { supprimer("taches", edition.id); setEdition(null); }}>Supprimer</Bouton>}
-            <Bouton onClick={() => setEdition(null)}>Annuler</Bouton>
+            <Bouton libre onClick={() => setEdition(null)}>Annuler</Bouton>
             <Bouton variante="primaire" disabled={!edition.nom || edition.fin < edition.debut} onClick={() => {
               if (d.taches.some((t) => t.id === edition.id)) modifier("taches", edition.id, edition); else ajouter("taches", edition);
               setEdition(null);

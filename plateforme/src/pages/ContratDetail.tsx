@@ -1,14 +1,16 @@
-import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Check, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BoutonIA } from "../components/BoutonIA";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { ArrowLeft, Check, FileCheck2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useStore } from "../store/useStore";
-import { useUI } from "../store/useUI";
 import { avenantsEnAttente, factureDuContrat, montantContrat } from "../lib/finance";
 import { ajouterJours, aujourdhui, formatCHF, formatDate } from "../lib/format";
 import { nouvelId } from "../lib/id";
 import { libelleCFC } from "../data/cfc";
-import { BadgeStatut, Bouton, Carte, Champ, EnTetePage, Indicateur, Liste, Modale, Progression, Saisie, Tableau, Vide } from "../components/ui";
+import { useLectureSeule, BadgeStatut, Bouton, Carte, Champ, EnTetePage, Indicateur, Liste, Modale, Progression, Saisie, Tableau, Vide } from "../components/ui";
 import { FormulaireContrat } from "./Contrats";
+import { ParcoursMarche } from "../components/ParcoursMarche";
+import { etapeCourante } from "../lib/validations";
 import type { Avenant, Facture, StatutFacture, TypeFacture } from "../types";
 
 const STATUTS_FACTURE: StatutFacture[] = ["Reçue", "Contrôlée", "Approuvée", "Payée", "Contestée"];
@@ -18,12 +20,24 @@ export function ContratDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { contrats, factures, entreprises, projets, appelsOffres, modifier, supprimer, ajouter } = useStore();
-  const { ouvrirAssistant } = useUI();
   const [edition, setEdition] = useState(false);
   const [avenant, setAvenant] = useState<Avenant | null>(null);
   const [facture, setFacture] = useState<Facture | null>(null);
+  const [params, setParams] = useSearchParams();
+  const lecture = useLectureSeule();
+  const { validations, personnes } = useStore();
   const c = contrats.find((x) => x.id === id);
-  if (!c) return <Carte><Vide titre="Contrat introuvable" action={<Link to="/contrats"><Bouton>Retour</Bouton></Link>} /></Carte>;
+
+  const nouvelleFacture = (): Facture | null => c ? {
+    id: nouvelId("fac"), projetId: c.projetId, contratId: c.id, numero: `S${factures.filter((f) => f.contratId === c.id).length + 1}`, type: "Situation",
+    date: aujourdhui(), echeance: ajouterJours(aujourdhui(), 30), montantHT: 0, statut: "Reçue",
+  } : null;
+
+  // Arrivée depuis le parcours du marché : ouvrir directement la saisie d'une facture
+  useEffect(() => {
+    if (params.get("action") === "facture" && c) { setFacture(nouvelleFacture()); setParams({}, { replace: true }); }
+  }, [params]);
+  if (!c) return <Carte><Vide titre="Contrat introuvable" action={<Link to="/contrats"><Bouton libre>Retour</Bouton></Link>} /></Carte>;
 
   const ent = entreprises.find((e) => e.id === c.entrepriseId);
   const projet = projets.find((p) => p.id === c.projetId);
@@ -39,6 +53,20 @@ export function ContratDetail() {
 
   let cumul = 0;
 
+  /** Circuit de validation lié à une facture ou un avenant, et son état */
+  const circuitDe = (objetId: string) => validations.filter((v) => v.objet.id === objetId && v.statut !== "Annulé").at(-1);
+  const etatCircuit = (objetId: string) => {
+    const v = circuitDe(objetId);
+    if (!v) return null;
+    const ec = etapeCourante(v);
+    return (
+      <Link to="/validations" className="mt-1 inline-flex items-center gap-1 text-[11px] text-brand-600 hover:underline" onClick={(e) => e.stopPropagation()}>
+        <FileCheck2 size={11} />{v.statut === "En cours" ? `chez ${personnes.find((p) => p.id === ec?.personneId)?.nom ?? "?"}` : v.statut}
+      </Link>
+    );
+  };
+  const faireValider = (type: "Facture" | "Avenant", objetId: string) => navigate(`/validations?type=${type}&id=${objetId}&contratId=${c.id}`);
+
   return (
     <>
       <Link to="/contrats" className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"><ArrowLeft size={14} /> Contrats</Link>
@@ -48,7 +76,7 @@ export function ContratDetail() {
           {ao && <Link to={`/appels-offres/${ao.id}`} className="text-brand-600 hover:underline">· issu de {ao.numero}</Link>}</span>}
         actions={<>
           <Bouton icone={<Pencil size={15} />} onClick={() => setEdition(true)}>Modifier</Bouton>
-          <Bouton icone={<Sparkles size={15} />} onClick={() => ouvrirAssistant(`Fais le point sur le contrat ${c.numero} (${ent?.nom}) : situation financière, avenants, factures en cours, retenue de garantie, et signale tout point à contrôler (dépassement, facture échue, avenant sans décision).`)}>Analyse IA</Bouton>
+          <BoutonIA question={`Fais le point sur le contrat ${c.numero} (${ent?.nom}) : situation financière, avenants, factures en cours, retenue de garantie, et signale tout point à contrôler (dépassement, facture échue, avenant sans décision).`}>Analyse IA</BoutonIA>
           <Bouton variante="danger" icone={<Trash2 size={15} />} onClick={() => { if (confirm("Supprimer ce contrat et ses factures ?")) { fs.forEach((f) => supprimer("factures", f.id)); supprimer("contrats", c.id); navigate("/contrats"); } }}>Supprimer</Bouton>
         </>}
       />
@@ -61,6 +89,13 @@ export function ContratDetail() {
         <Indicateur libelle="Solde à facturer" valeur={formatCHF(bilan.solde)} tendance={bilan.solde < 0 ? "mauvais" : undefined} />
       </div>
       <Progression className="mt-4 !h-2" valeur={bilan.avancementPct} couleur={projet?.couleur} />
+      <div className="mt-6" />
+      <ParcoursMarche ao={ao} contrat={c} factures={factures}
+        onEtape={(e) => { if (ao && ["descriptif", "consultation", "offres", "adjudication"].includes(e)) navigate(`/appels-offres/${ao.id}?onglet=${e === "descriptif" ? "descriptif" : e === "adjudication" ? "evaluation" : "soumissions"}`); }}
+        actions={{
+          contrat: { libelle: "Marquer comme signé", aide: "Une fois le contrat signé par les deux parties, marquez-le comme signé pour démarrer le suivi de facturation.", faire: () => modifier("contrats", c.id, { statut: "Signé", dateSignature: aujourdhui() }) },
+          facturation: { libelle: "Saisir une facture", aide: "Enregistrez les situations au fil des travaux, puis faites-les valider ; le décompte final clôture le marché.", faire: () => setFacture(nouvelleFacture()) },
+        }} />
 
       <div className="mt-6 grid gap-6 xl:grid-cols-5">
         <Carte className="xl:col-span-2" titre="Avenants" sousTitre={`${c.avenants.length} avenant(s)`}
@@ -72,14 +107,16 @@ export function ContratDetail() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{a.numero} · {a.objet}</p>
                     <p className="text-xs text-slate-500">{formatDate(a.date)}</p>
+                    {etatCircuit(a.id)}
                   </div>
                   <span className={`num text-sm font-medium ${a.montant < 0 ? "text-emerald-600" : ""}`}>{a.montant > 0 ? "+" : ""}{formatCHF(a.montant)}</span>
                   {a.statut === "Demandé" ? (
                     <div className="flex gap-1">
-                      <button title="Approuver" onClick={() => majAvenant({ ...a, statut: "Approuvé" })} className="rounded-md p-1 text-emerald-600 hover:bg-emerald-50"><Check size={16} /></button>
-                      <button title="Refuser" onClick={() => majAvenant({ ...a, statut: "Refusé" })} className="rounded-md p-1 text-rose-600 hover:bg-rose-50"><X size={16} /></button>
+                      <button disabled={lecture} title="Approuver" onClick={() => majAvenant({ ...a, statut: "Approuvé" })} className="rounded-md p-1 text-emerald-600 hover:bg-emerald-50"><Check size={16} /></button>
+                      <button disabled={lecture} title="Refuser" onClick={() => majAvenant({ ...a, statut: "Refusé" })} className="rounded-md p-1 text-rose-600 hover:bg-rose-50"><X size={16} /></button>
                     </div>
                   ) : <BadgeStatut statut={a.statut} />}
+                  {a.statut === "Demandé" && !circuitDe(a.id) && <button title="Faire valider" onClick={() => faireValider("Avenant", a.id)} className="text-slate-300 hover:text-brand-600"><FileCheck2 size={14} /></button>}
                   <button onClick={() => setAvenant(a)} className="text-slate-300 hover:text-slate-600"><Pencil size={14} /></button>
                 </li>
               ))}
@@ -88,9 +125,7 @@ export function ContratDetail() {
         </Carte>
 
         <Carte className="xl:col-span-3" titre="Factures et situations" sousTitre={`TVA ${tva} % · retenue calculée sur les acomptes validés`}
-          action={<Bouton taille="sm" variante="primaire" icone={<Plus size={14} />} onClick={() => setFacture({
-            id: nouvelId("fac"), projetId: c.projetId, contratId: c.id, numero: `S${fs.length + 1}`, type: "Situation", date: aujourdhui(), echeance: ajouterJours(aujourdhui(), 30), montantHT: 0, statut: "Reçue",
-          })}>Facture</Bouton>}>
+          action={<Bouton taille="sm" variante="primaire" icone={<Plus size={14} />} onClick={() => setFacture(nouvelleFacture())}>Facture</Bouton>}>
           {fs.length === 0 ? <Vide titre="Aucune facture" /> : (
             <Tableau>
               <thead><tr><th>N°</th><th>Date</th><th className="!text-right">HT</th><th className="!text-right">TTC</th><th className="!text-right">Cumul</th><th>Statut</th><th /></tr></thead>
@@ -99,7 +134,7 @@ export function ContratDetail() {
                   if (f.statut !== "Contestée") cumul += f.montantHT;
                   return (
                     <tr key={f.id}>
-                      <td><p className="font-medium">{f.numero}</p><p className="text-xs text-slate-500">{f.type}</p></td>
+                      <td><p className="font-medium">{f.numero}</p><p className="text-xs text-slate-500">{f.type}</p>{etatCircuit(f.id)}</td>
                       <td><p>{formatDate(f.date)}</p><p className={`text-xs ${f.echeance < aujourdhui() && f.statut !== "Payée" ? "text-rose-600" : "text-slate-500"}`}>éch. {formatDate(f.echeance)}</p></td>
                       <td className="num text-right">{formatCHF(f.montantHT)}</td>
                       <td className="num text-right text-slate-500">{formatCHF(f.montantHT * (1 + tva / 100))}</td>
@@ -109,7 +144,10 @@ export function ContratDetail() {
                           {STATUTS_FACTURE.map((s) => <option key={s}>{s}</option>)}
                         </Liste>
                       </td>
-                      <td className="text-right"><button onClick={() => setFacture(f)} className="text-slate-300 hover:text-slate-600"><Pencil size={14} /></button></td>
+                      <td className="text-right whitespace-nowrap">
+                        {(f.statut === "Reçue" || f.statut === "Contrôlée") && !circuitDe(f.id) && <button title="Faire valider" onClick={() => faireValider("Facture", f.id)} className="mr-1 text-slate-300 hover:text-brand-600"><FileCheck2 size={14} /></button>}
+                        <button onClick={() => setFacture(f)} className="text-slate-300 hover:text-slate-600"><Pencil size={14} /></button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -125,7 +163,7 @@ export function ContratDetail() {
         <Modale ouverte onFermer={() => setAvenant(null)} titre="Avenant"
           pied={<>
             {c.avenants.some((x) => x.id === avenant.id) && <Bouton variante="fantome" className="mr-auto text-rose-600" onClick={() => { modifier("contrats", c.id, { avenants: c.avenants.filter((x) => x.id !== avenant.id) }); setAvenant(null); }}>Supprimer</Bouton>}
-            <Bouton onClick={() => setAvenant(null)}>Annuler</Bouton>
+            <Bouton libre onClick={() => setAvenant(null)}>Annuler</Bouton>
             <Bouton variante="primaire" disabled={!avenant.objet} onClick={() => { majAvenant(avenant); setAvenant(null); }}>Enregistrer</Bouton>
           </>}>
           <div className="grid grid-cols-2 gap-4">
@@ -142,7 +180,7 @@ export function ContratDetail() {
         <Modale ouverte onFermer={() => setFacture(null)} titre="Facture"
           pied={<>
             {fs.some((x) => x.id === facture.id) && <Bouton variante="fantome" className="mr-auto text-rose-600" onClick={() => { supprimer("factures", facture.id); setFacture(null); }}>Supprimer</Bouton>}
-            <Bouton onClick={() => setFacture(null)}>Annuler</Bouton>
+            <Bouton libre onClick={() => setFacture(null)}>Annuler</Bouton>
             <Bouton variante="primaire" disabled={!facture.numero || !facture.montantHT} onClick={() => {
               if (fs.some((x) => x.id === facture.id)) modifier("factures", facture.id, facture); else ajouter("factures", facture);
               setFacture(null);

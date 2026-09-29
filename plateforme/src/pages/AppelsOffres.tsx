@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Gavel, Plus } from "lucide-react";
+import { FileSignature, Gavel, Plus } from "lucide-react";
+import { parcoursMarche } from "../lib/parcours";
+import { FormulaireContrat } from "./Contrats";
 import { useProjetActif, useStore } from "../store/useStore";
 import { montantNetSoumission } from "../lib/finance";
 import { aujourdhui, formatCHF, formatDate, joursEntre } from "../lib/format";
 import { nouvelId } from "../lib/id";
 import { CFC_OPTIONS, libelleCFC } from "../data/cfc";
-import { BadgeStatut, Bouton, Carte, Champ, EnTetePage, Liste, Modale, Onglets, Saisie, Tableau, Vide } from "../components/ui";
+import { Bouton, Carte, Champ, EnTetePage, Liste, Modale, Onglets, Saisie, Tableau, Vide } from "../components/ui";
 import { SansProjet } from "../components/SansProjet";
 import type { AppelOffres, ProcedureAO, StatutAO } from "../types";
 
@@ -15,7 +17,8 @@ export const STATUTS_AO: StatutAO[] = ["Préparation", "Publié", "Ouverture des
 
 export function AppelsOffres() {
   const d = useProjetActif();
-  const { entreprises, ajouter } = useStore();
+  const { entreprises, ajouter, contrats, factures } = useStore();
+  const [greAGre, setGreAGre] = useState(false);
   const navigate = useNavigate();
   const [filtre, setFiltre] = useState<"tous" | "cours" | "termines">("cours");
   const [creation, setCreation] = useState(false);
@@ -27,8 +30,11 @@ export function AppelsOffres() {
 
   return (
     <>
-      <EnTetePage titre="Appels d'offres" description="Descriptifs CAN, soumissions, comparatifs et adjudications"
-        actions={<Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => setCreation(true)}>Nouvel appel d'offres</Bouton>} />
+      <EnTetePage titre="Marchés & appels d'offres" description="Du descriptif CAN à l'adjudication, puis au contrat et aux factures"
+        actions={<>
+          <Bouton icone={<FileSignature size={16} />} onClick={() => setGreAGre(true)}>Marché de gré à gré</Bouton>
+          <Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => setCreation(true)}>Nouvel appel d'offres</Bouton>
+        </>} />
 
       <div className="mb-4">
         <Onglets valeur={filtre} onChange={setFiltre} options={[
@@ -43,7 +49,7 @@ export function AppelsOffres() {
           <Vide icone={<Gavel size={22} />} titre="Aucun appel d'offres" texte="Créez un appel d'offres pour préparer le descriptif CAN et recevoir les soumissions." />
         ) : (
           <Tableau>
-            <thead><tr><th>N°</th><th>Objet</th><th>CFC</th><th>Procédure</th><th>Retour des offres</th><th>Offres</th><th className="!text-right">Estimation</th><th className="!text-right">Meilleure offre</th><th>Statut</th></tr></thead>
+            <thead><tr><th>N°</th><th>Objet</th><th>CFC</th><th>Procédure</th><th>Retour des offres</th><th>Offres</th><th className="!text-right">Estimation</th><th className="!text-right">Meilleure offre</th><th>Avancement du marché</th></tr></thead>
             <tbody>
               {liste.map((a) => {
                 const montants = a.soumissions.map((s) => montantNetSoumission(a, s)).filter((m) => m > 0);
@@ -66,7 +72,18 @@ export function AppelsOffres() {
                       {meilleure ? formatCHF(meilleure) : "—"}
                       {ecart !== null && <span className={`ml-1 text-xs ${ecart > 0 ? "text-rose-600" : "text-emerald-600"}`}>{ecart > 0 ? "+" : ""}{ecart.toFixed(1)}%</span>}
                     </td>
-                    <td><BadgeStatut statut={a.statut} />{a.adjudicataireId && <p className="mt-1 text-xs text-slate-500">{entreprises.find((e) => e.id === a.adjudicataireId)?.nom}</p>}</td>
+                    <td>
+                      {(() => {
+                        const etapes = parcoursMarche(a, contrats.find((c) => c.appelOffresId === a.id), factures);
+                        const actuelle = etapes.find((e) => e.etat === "actuel");
+                        return (
+                          <div title={etapes.map((e) => `${e.libelle} : ${e.detail}`).join("\n")}>
+                            <div className="flex gap-1">{etapes.map((e) => <span key={e.id} className={`h-1.5 w-5 rounded-full ${e.etat === "fait" ? "bg-emerald-500" : e.etat === "actuel" ? "bg-brand-600" : "bg-slate-200 dark:bg-slate-700"}`} />)}</div>
+                            <p className="mt-1 text-xs text-slate-500">{a.statut === "Annulé" ? "Annulé" : actuelle ? actuelle.libelle : "Clôturé"}{a.adjudicataireId && ` · ${entreprises.find((e) => e.id === a.adjudicataireId)?.nom}`}</p>
+                          </div>
+                        );
+                      })()}
+                    </td>
                   </tr>
                 );
               })}
@@ -74,6 +91,9 @@ export function AppelsOffres() {
           </Tableau>
         )}
       </Carte>
+
+      {greAGre && <FormulaireContrat projetId={d.projet.id} numeroSuggere={`C-${d.projet.code}-${String(contrats.filter((c) => c.projetId === d.projet!.id).length + 1).padStart(2, "0")}`}
+        onFermer={() => setGreAGre(false)} onEnregistrer={(c) => { ajouter("contrats", c); navigate(`/contrats/${c.id}`); }} />}
 
       {creation && (
         <FormulaireAO projetId={d.projet.id} numeroSuggere={`AO-${d.projet.code}-${String(d.appelsOffres.length + 1).padStart(2, "0")}`}
@@ -102,7 +122,7 @@ export function FormulaireAO({ projetId, numeroSuggere, initial, onFermer, onEnr
 
   return (
     <Modale ouverte onFermer={onFermer} titre={initial ? "Modifier l'appel d'offres" : "Nouvel appel d'offres"}
-      pied={<><Bouton onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!a.numero || !a.objet || !a.cfc} onClick={() => { onEnregistrer(a); onFermer(); }}>Enregistrer</Bouton></>}>
+      pied={<><Bouton libre onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!a.numero || !a.objet || !a.cfc} onClick={() => { onEnregistrer(a); onFermer(); }}>Enregistrer</Bouton></>}>
       <div className="grid grid-cols-2 gap-4">
         <Champ libelle="Numéro"><Saisie value={a.numero} onChange={(e) => maj({ numero: e.target.value })} /></Champ>
         <Champ libelle="Statut"><Liste value={a.statut} onChange={(e) => maj({ statut: e.target.value as StatutAO })}>{STATUTS_AO.map((s) => <option key={s}>{s}</option>)}</Liste></Champ>

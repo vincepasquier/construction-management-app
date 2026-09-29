@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { ChevronRight, Cloud, ExternalLink, File, FileText, Folder, FolderPlus, Home, Link2, LogIn, Plus, RefreshCw, Search, Trash2, Upload } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { etapeCourante } from "../lib/validations";
+import { ChevronRight, FileCheck2, Cloud, ExternalLink, File, FileText, Folder, FolderPlus, Home, Link2, LogIn, Plus, RefreshCw, Search, Trash2, Upload } from "lucide-react";
 import { useProjetActif, useStore } from "../store/useStore";
 import { aujourdhui, formatDate } from "../lib/format";
 import { nouvelId } from "../lib/id";
@@ -31,7 +32,8 @@ export function Documents() {
 
 function Registre() {
   const d = useProjetActif();
-  const { ajouter, modifier, supprimer } = useStore();
+  const { ajouter, modifier, supprimer, personnes } = useStore();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string>("");
   const [edition, setEdition] = useState<DocumentProjet | null>(null);
@@ -61,7 +63,20 @@ function Registre() {
                     {x.url ? <a href={x.url} target="_blank" rel="noreferrer" className="font-medium text-brand-700 hover:underline dark:text-indigo-300">{x.nom}</a> : <span className="font-medium">{x.nom}</span>}
                   </div>
                 </td>
-                <td><Badge>{x.categorie}</Badge></td>
+                <td>
+                  <Badge>{x.categorie}</Badge>
+                  {(() => {
+                    // État de validation du document (dernier circuit non annulé)
+                    const v = d.validations.filter((c) => c.objet.type === "Document" && c.objet.id === x.id && c.statut !== "Annulé").at(-1);
+                    if (!v) return null;
+                    const ec = etapeCourante(v);
+                    return (
+                      <Link to="/validations" className="mt-1 flex items-center gap-1 text-[11px] text-brand-600 hover:underline">
+                        <FileCheck2 size={11} />{v.statut === "En cours" ? `En validation · ${personnes.find((p) => p.id === ec?.personneId)?.nom ?? ""}` : v.statut === "Approuvé" ? `Validé (v${v.version})` : v.statut}
+                      </Link>
+                    );
+                  })()}
+                </td>
                 <td>{x.version}</td>
                 <td className="num">{formatDate(x.date)}</td>
                 <td className="text-slate-500">{x.auteur}</td>
@@ -69,6 +84,7 @@ function Registre() {
                 <td className="text-right whitespace-nowrap">
                   {x.url && <a href={x.url} target="_blank" rel="noreferrer" className="inline-flex p-1 text-slate-400 hover:text-slate-600"><ExternalLink size={14} /></a>}
                   <button onClick={() => setEdition(x)} className="p-1 text-slate-400 hover:text-slate-600"><FileText size={14} /></button>
+                  <button title="Faire valider" onClick={() => navigate(`/validations?type=Document&id=${x.id}`)} className="p-1 text-slate-400 hover:text-brand-600"><FileCheck2 size={14} /></button>
                   <button onClick={() => confirm("Retirer ce document du registre ?") && supprimer("documents", x.id)} className="p-1 text-slate-400 hover:text-rose-600"><Trash2 size={14} /></button>
                 </td>
               </tr>
@@ -78,7 +94,7 @@ function Registre() {
       )}
       {edition && (
         <Modale ouverte onFermer={() => setEdition(null)} titre="Document"
-          pied={<><Bouton onClick={() => setEdition(null)}>Annuler</Bouton><Bouton variante="primaire" disabled={!edition.nom} onClick={() => {
+          pied={<><Bouton libre onClick={() => setEdition(null)}>Annuler</Bouton><Bouton variante="primaire" disabled={!edition.nom} onClick={() => {
             if (d.documents.some((x) => x.id === edition.id)) modifier("documents", edition.id, edition); else ajouter("documents", edition);
             setEdition(null);
           }}>Enregistrer</Bouton></>}>

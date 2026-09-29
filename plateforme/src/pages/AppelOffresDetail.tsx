@@ -1,8 +1,10 @@
 import { useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { BoutonIA } from "../components/BoutonIA";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Award, Download, FileUp, Pencil, Plus, Sparkles, Trash2, Trophy, UserPlus } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useStore } from "../store/useStore";
+import { ParcoursMarche } from "../components/ParcoursMarche";
 import { useUI } from "../store/useUI";
 import { evaluerSoumissions, montantBrutSoumission, montantNetSoumission, positionsManquantes } from "../lib/finance";
 import { aujourdhui, formatCHF, formatCHFPrecis, formatDate, formatNombre } from "../lib/format";
@@ -10,7 +12,7 @@ import { telechargerCSV } from "../lib/csv";
 import { nouvelId } from "../lib/id";
 import { CHAPITRES_CAN, libelleCAN, UNITES } from "../data/can";
 import { libelleCFC } from "../data/cfc";
-import { Badge, BadgeStatut, Bouton, Carte, Champ, cx, EnTetePage, Indicateur, Liste, Modale, Onglets, Saisie, Tableau, Vide } from "../components/ui";
+import { Badge, BadgeStatut, Bouton, Carte, Champ, cx, EnTetePage, Indicateur, Liste, Modale, Onglets, Saisie, Tableau, useLectureSeule, Vide } from "../components/ui";
 import { FormulaireAO } from "./AppelsOffres";
 import type { AppelOffres, Contrat, PositionCAN, Soumission } from "../types";
 
@@ -19,13 +21,14 @@ type Onglet = "descriptif" | "soumissions" | "evaluation";
 export function AppelOffresDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { appelsOffres, entreprises, modifier, supprimer, ajouter, contrats, projets } = useStore();
+  const { appelsOffres, entreprises, modifier, supprimer, ajouter, contrats, projets, factures } = useStore();
   const { ouvrirAssistant } = useUI();
-  const [onglet, setOnglet] = useState<Onglet>("soumissions");
+  const [params] = useSearchParams();
+  const [onglet, setOnglet] = useState<Onglet>((params.get("onglet") as Onglet) ?? "soumissions");
   const [edition, setEdition] = useState(false);
   const [adjudication, setAdjudication] = useState<string | null>(null);
   const ao = appelsOffres.find((a) => a.id === id);
-  if (!ao) return <Carte><Vide titre="Appel d'offres introuvable" action={<Link to="/appels-offres"><Bouton>Retour</Bouton></Link>} /></Carte>;
+  if (!ao) return <Carte><Vide titre="Appel d'offres introuvable" action={<Link to="/appels-offres"><Bouton libre>Retour</Bouton></Link>} /></Carte>;
 
   const maj = (p: Partial<AppelOffres>) => modifier("appelsOffres", ao.id, p);
   const nomEnt = (eid: string) => entreprises.find((e) => e.id === eid)?.nom ?? "?";
@@ -48,16 +51,34 @@ export function AppelOffresDetail() {
 
   return (
     <>
-      <Link to="/appels-offres" className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"><ArrowLeft size={14} /> Appels d'offres</Link>
+      <Link to="/appels-offres" className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"><ArrowLeft size={14} /> Marchés & appels d'offres</Link>
       <EnTetePage
         titre={`${ao.numero} · ${ao.objet}`}
         description={<span className="flex flex-wrap items-center gap-2"><BadgeStatut statut={ao.statut} /> CFC {ao.cfc} {libelleCFC(ao.cfc)} · Procédure {ao.procedure.toLowerCase()} · retour le {formatDate(ao.dateRetour)}</span>}
         actions={<>
           <Bouton icone={<Pencil size={15} />} onClick={() => setEdition(true)}>Modifier</Bouton>
-          <Bouton icone={<Sparkles size={15} />} onClick={() => ouvrirAssistant(`Analyse les soumissions de l'appel d'offres ${ao.numero} (${ao.objet}) : compare les prix, repère les positions anormalement hautes ou basses (offres spéculatives), vérifie la cohérence avec l'estimation et propose une adjudication motivée selon les critères.`)}>Analyse IA</Bouton>
+          <BoutonIA question={`Analyse les soumissions de l'appel d'offres ${ao.numero} (${ao.objet}) : compare les prix, repère les positions anormalement hautes ou basses (offres spéculatives), vérifie la cohérence avec l'estimation et propose une adjudication motivée selon les critères.`}>Analyse IA</BoutonIA>
           <Bouton variante="danger" icone={<Trash2 size={15} />} onClick={() => { if (confirm("Supprimer cet appel d'offres ?")) { supprimer("appelsOffres", ao.id); navigate("/appels-offres"); } }}>Supprimer</Bouton>
         </>}
       />
+
+      <ParcoursMarche ao={ao} contrat={contratExistant} factures={factures}
+        onEtape={(e) => {
+          if (e === "descriptif") setOnglet("descriptif");
+          else if (e === "consultation" || e === "offres") setOnglet("soumissions");
+          else if (e === "adjudication") setOnglet("evaluation");
+          else if (contratExistant) navigate(`/contrats/${contratExistant.id}`);
+        }}
+        actions={{
+          descriptif: { libelle: "Compléter le descriptif", aide: "Saisir ou importer les positions CAN à chiffrer par les entreprises.", faire: () => setOnglet("descriptif") },
+          consultation: { libelle: "Marquer comme publié", aide: "Envoyer le dossier aux entreprises invitées (ou le publier sur simap.ch), puis marquer l'appel d'offres comme publié.", faire: () => maj({ statut: "Publié" }) },
+          offres: { libelle: "Saisir les offres", aide: "Saisir les prix des offres reçues : le comparatif se calcule automatiquement.", faire: () => { setOnglet("soumissions"); maj({ statut: "Évaluation" }); } },
+          adjudication: meilleure
+            ? { libelle: "Adjuger au mieux-disant", aide: `Vérifier l'évaluation puis adjuger (mieux-disant : ${nomEnt(ao.soumissions.find((s) => s.id === meilleure.soumissionId)!.entrepriseId)}). Le contrat est créé automatiquement.`, faire: () => { setOnglet("evaluation"); setAdjudication(meilleure.soumissionId); } }
+            : { libelle: "Compléter les offres", aide: "Aucune offre chiffrée : complétez les prix unitaires.", faire: () => setOnglet("soumissions") },
+          contrat: contratExistant && { libelle: "Ouvrir le contrat", aide: "Faire signer le contrat, puis le marquer comme signé.", faire: () => navigate(`/contrats/${contratExistant.id}`) },
+          facturation: contratExistant && { libelle: "Saisir une facture", aide: "Enregistrer les situations et factures de l'entreprise.", faire: () => navigate(`/contrats/${contratExistant.id}?action=facture`) },
+        }} />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Indicateur libelle="Estimation" valeur={formatCHF(ao.montantEstime)} />
@@ -91,7 +112,7 @@ export function AppelOffresDetail() {
       {edition && <FormulaireAO projetId={ao.projetId} initial={ao} onFermer={() => setEdition(false)} onEnregistrer={(a) => maj(a)} />}
       {adjudication && (
         <Modale ouverte onFermer={() => setAdjudication(null)} titre="Confirmer l'adjudication"
-          pied={<><Bouton onClick={() => setAdjudication(null)}>Annuler</Bouton><Bouton variante="primaire" onClick={() => adjuger(adjudication)}>Adjuger et créer le contrat</Bouton></>}>
+          pied={<><Bouton libre onClick={() => setAdjudication(null)}>Annuler</Bouton><Bouton variante="primaire" onClick={() => adjuger(adjudication)}>Adjuger et créer le contrat</Bouton></>}>
           <p className="text-sm">
             Adjuger <strong>{ao.objet}</strong> à <strong>{nomEnt(ao.soumissions.find((s) => s.id === adjudication)!.entrepriseId)}</strong> pour{" "}
             <strong>{formatCHF(montantNetSoumission(ao, ao.soumissions.find((s) => s.id === adjudication)!))}</strong> HT ?
@@ -157,7 +178,7 @@ function Descriptif({ ao, maj }: { ao: AppelOffres; maj: (p: Partial<AppelOffres
       )}
       {edition && (
         <Modale ouverte onFermer={() => setEdition(null)} titre="Position CAN"
-          pied={<><Bouton onClick={() => setEdition(null)}>Annuler</Bouton><Bouton variante="primaire" disabled={!edition.numero || !edition.libelle} onClick={() => {
+          pied={<><Bouton libre onClick={() => setEdition(null)}>Annuler</Bouton><Bouton variante="primaire" disabled={!edition.numero || !edition.libelle} onClick={() => {
             const p = { ...edition, chapitre: edition.chapitre || edition.numero.slice(0, 3) };
             maj({ positions: ao.positions.some((x) => x.id === p.id) ? ao.positions.map((x) => (x.id === p.id ? p : x)) : [...ao.positions, p] });
             setEdition(null);
@@ -191,6 +212,7 @@ function mediane(xs: number[]) {
 
 function Comparatif({ ao, maj, nomEnt }: { ao: AppelOffres; maj: (p: Partial<AppelOffres>) => void; nomEnt: (id: string) => string }) {
   const { entreprises } = useStore();
+  const lecture = useLectureSeule();
   const [ajout, setAjout] = useState(false);
   const majSoumission = (sid: string, p: Partial<Soumission>) => maj({ soumissions: ao.soumissions.map((s) => (s.id === sid ? { ...s, ...p } : s)) });
   const nets = ao.soumissions.map((s) => montantNetSoumission(ao, s));
@@ -207,7 +229,7 @@ function Comparatif({ ao, maj, nomEnt }: { ao: AppelOffres; maj: (p: Partial<App
   return (
     <Carte titre="Comparatif des prix unitaires" sousTitre="Prix le plus bas en vert · écart > 30 % par rapport à la médiane signalé en orange"
       action={<div className="flex gap-2">
-        {ao.soumissions.length > 0 && <Bouton taille="sm" icone={<Download size={14} />} onClick={exporter}>Export</Bouton>}
+        {ao.soumissions.length > 0 && <Bouton libre taille="sm" icone={<Download size={14} />} onClick={exporter}>Export</Bouton>}
         <Bouton taille="sm" variante="primaire" icone={<UserPlus size={14} />} onClick={() => setAjout(true)} disabled={!disponibles.length}>Saisir une offre</Bouton>
       </div>}>
       {ao.soumissions.length === 0 ? (
@@ -244,7 +266,7 @@ function Comparatif({ ao, maj, nomEnt }: { ao: AppelOffres; maj: (p: Partial<App
                     const anormal = valides.length >= 2 && pu > 0 && Math.abs(pu - med) / med > 0.3;
                     return (
                       <td key={s.id} className={cx("text-right", pu > 0 && pu === min && valides.length > 1 && "bg-emerald-50/70 dark:bg-emerald-950/30", anormal && "bg-amber-50 dark:bg-amber-950/30")}>
-                        <input type="number" step="0.01" value={pu || ""} placeholder="—"
+                        <input disabled={lecture} type="number" step="0.01" value={pu || ""} placeholder="—"
                           onChange={(e) => majSoumission(s.id, { prixUnitaires: { ...s.prixUnitaires, [p.id]: Number(e.target.value) } })}
                           className="num w-24 rounded bg-transparent px-1 text-right outline-none focus:bg-white focus:ring-1 focus:ring-brand-500 dark:focus:bg-slate-900" />
                         <div className="num text-xs text-slate-400">{pu ? formatCHF(pu * p.quantite) : ""}</div>
@@ -257,8 +279,8 @@ function Comparatif({ ao, maj, nomEnt }: { ao: AppelOffres; maj: (p: Partial<App
           </tbody>
           <tfoot className="border-t-2 border-slate-200 dark:border-slate-700 [&_td]:px-4 [&_td]:py-2">
             <tr><td colSpan={2} className="text-slate-500">Total brut</td>{ao.soumissions.map((s) => <td key={s.id} className="num text-right">{formatCHFPrecis(montantBrutSoumission(ao, s))}</td>)}</tr>
-            <tr><td colSpan={2} className="text-slate-500">Rabais %</td>{ao.soumissions.map((s) => <td key={s.id} className="text-right"><input type="number" step="0.1" value={s.rabaisPct} onChange={(e) => majSoumission(s.id, { rabaisPct: Number(e.target.value) })} className="num w-16 rounded bg-transparent px-1 text-right ring-1 ring-slate-200 dark:ring-slate-700" /></td>)}</tr>
-            <tr><td colSpan={2} className="text-slate-500">Escompte %</td>{ao.soumissions.map((s) => <td key={s.id} className="text-right"><input type="number" step="0.1" value={s.escomptePct} onChange={(e) => majSoumission(s.id, { escomptePct: Number(e.target.value) })} className="num w-16 rounded bg-transparent px-1 text-right ring-1 ring-slate-200 dark:ring-slate-700" /></td>)}</tr>
+            <tr><td colSpan={2} className="text-slate-500">Rabais %</td>{ao.soumissions.map((s) => <td key={s.id} className="text-right"><input disabled={lecture} type="number" step="0.1" value={s.rabaisPct} onChange={(e) => majSoumission(s.id, { rabaisPct: Number(e.target.value) })} className="num w-16 rounded bg-transparent px-1 text-right ring-1 ring-slate-200 dark:ring-slate-700" /></td>)}</tr>
+            <tr><td colSpan={2} className="text-slate-500">Escompte %</td>{ao.soumissions.map((s) => <td key={s.id} className="text-right"><input disabled={lecture} type="number" step="0.1" value={s.escomptePct} onChange={(e) => majSoumission(s.id, { escomptePct: Number(e.target.value) })} className="num w-16 rounded bg-transparent px-1 text-right ring-1 ring-slate-200 dark:ring-slate-700" /></td>)}</tr>
             <tr className="font-semibold"><td colSpan={2}>Total net HT</td>{ao.soumissions.map((s, i) => (
               <td key={s.id} className={cx("num text-right", nets[i] === minNet && "text-emerald-600")}>
                 {formatCHFPrecis(nets[i])}
@@ -297,6 +319,7 @@ function Evaluation({ ao, maj, nomEnt, peutAdjuger, onAdjuger }: {
   ao: AppelOffres; maj: (p: Partial<AppelOffres>) => void; nomEnt: (id: string) => string; peutAdjuger: boolean; onAdjuger: (sid: string) => void;
 }) {
   const evals = evaluerSoumissions(ao);
+  const lecture = useLectureSeule();
   const sommePoids = ao.criteres.reduce((s, c) => s + c.poids, 0);
   const majNote = (sid: string, cid: string, v: number) =>
     maj({ soumissions: ao.soumissions.map((s) => (s.id === sid ? { ...s, notes: { ...s.notes, [cid]: Math.max(0, Math.min(5, v)) } } : s)) });
@@ -344,7 +367,7 @@ function Evaluation({ ao, maj, nomEnt, peutAdjuger, onAdjuger }: {
                       {ao.criteres.map((c) => (
                         <td key={c.id} className="text-center">
                           {c.estPrix ? <span className="num">{e.notePrix.toFixed(2)}</span> : (
-                            <input type="number" min={0} max={5} step={0.5} value={s.notes[c.id] ?? ""} onChange={(ev) => majNote(s.id, c.id, Number(ev.target.value))}
+                            <input disabled={lecture} type="number" min={0} max={5} step={0.5} value={s.notes[c.id] ?? ""} onChange={(ev) => majNote(s.id, c.id, Number(ev.target.value))}
                               className="num w-14 rounded px-1 text-center ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700" />
                           )}
                         </td>

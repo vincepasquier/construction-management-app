@@ -1,0 +1,1 @@
+import{S as e,i as t,y as n}from"./ui-kSknt-Xe.js";import{F as r,R as i}from"./index-DbdIdnjC.js";var a=n();function o({question:n,children:o,variante:s}){let{lire:c}=e(`ia`),{ouvrirAssistant:l}=r();return c?(0,a.jsx)(t,{libre:!0,variante:s,icone:(0,a.jsx)(i,{size:15}),onClick:()=>l(n),children:o}):null}export{o as t};

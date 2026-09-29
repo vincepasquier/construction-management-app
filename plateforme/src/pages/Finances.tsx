@@ -1,8 +1,9 @@
 import { Fragment, useMemo, useState } from "react";
-import { ChevronRight, Download, Pencil, Plus, Sparkles, Trash2 } from "lucide-react";
+import { BoutonIA } from "../components/BoutonIA";
+import { ChevronRight, Download, FileUp, Pencil, Plus, Trash2 } from "lucide-react";
+import { ImportChiffrage } from "../components/ImportChiffrage";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useProjetActif, useStore } from "../store/useStore";
-import { useUI } from "../store/useUI";
+import { useDroit, useProjetActif, useStore } from "../store/useStore";
 import { suiviParCFC, totauxSuivi, type LigneSuivi } from "../lib/finance";
 import { formatCHF, formatCompact, formatPct } from "../lib/format";
 import { telechargerCSV } from "../lib/csv";
@@ -15,10 +16,11 @@ import type { BudgetLigne } from "../types";
 export function Finances() {
   const d = useProjetActif();
   const { ajouter, modifier, supprimer } = useStore();
-  const { ouvrirAssistant } = useUI();
   const [onglet, setOnglet] = useState<"suivi" | "budget">("suivi");
   const [ouverts, setOuverts] = useState<Set<string>>(() => new Set(["0", "1", "2", "3", "4", "5", "9"]));
   const [edition, setEdition] = useState<BudgetLigne | null>(null);
+  const [importIA, setImportIA] = useState(false);
+  const droitIA = useDroit("ia");
 
   const suivi = useMemo(() => suiviParCFC(d.budget, d.contrats, d.factures, d.appelsOffres), [d.budget, d.contrats, d.factures, d.appelsOffres]);
   if (!d.projet) return <SansProjet />;
@@ -76,8 +78,9 @@ export function Finances() {
     <>
       <EnTetePage titre="Finances" description="Suivi budgétaire par code des frais de construction (CFC) – montants HT"
         actions={<>
-          <Bouton icone={<Download size={15} />} onClick={exporter}>Export Excel</Bouton>
-          <Bouton icone={<Sparkles size={15} />} onClick={() => ouvrirAssistant("Analyse le suivi financier par CFC : identifie les dépassements probables, les postes à risque, l'utilisation de la réserve et propose des mesures correctives.")}>Analyse IA</Bouton>
+          <Bouton libre icone={<Download size={15} />} onClick={exporter}>Export Excel</Bouton>
+          <BoutonIA question={"Analyse le suivi financier par CFC : identifie les dépassements probables, les postes à risque, l'utilisation de la réserve et propose des mesures correctives."}>Analyse IA</BoutonIA>
+          {droitIA.ecrire && <Bouton icone={<FileUp size={15} />} onClick={() => setImportIA(true)}>Importer un chiffrage (IA)</Bouton>}
           <Bouton variante="primaire" icone={<Plus size={15} />} onClick={() => setEdition({ id: nouvelId("bud"), projetId, cfc: "", libelle: "", montant: 0 })}>Ligne budgétaire</Bouton>
         </>} />
 
@@ -145,6 +148,8 @@ export function Finances() {
         </Carte>
       )}
 
+      {importIA && <ImportChiffrage projetId={projetId} onFermer={() => { setImportIA(false); setOnglet("budget"); }} />}
+
       {edition && (
         <FormulaireBudget initial={edition} onFermer={() => setEdition(null)}
           onEnregistrer={(b) => (d.budget.some((x) => x.id === b.id) ? modifier("budget", b.id, b) : ajouter("budget", b))} />
@@ -161,7 +166,7 @@ function FormulaireBudget({ initial, onFermer, onEnregistrer }: { initial: Budge
   const [b, setB] = useState(initial);
   return (
     <Modale ouverte onFermer={onFermer} titre="Ligne budgétaire"
-      pied={<><Bouton onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!b.cfc || !b.libelle} onClick={() => { onEnregistrer(b); onFermer(); }}>Enregistrer</Bouton></>}>
+      pied={<><Bouton libre onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!b.cfc || !b.libelle} onClick={() => { onEnregistrer(b); onFermer(); }}>Enregistrer</Bouton></>}>
       <div className="grid grid-cols-3 gap-4">
         <Champ libelle="Code CFC">
           <Saisie list="cfc-liste" value={b.cfc} onChange={(e) => setB({ ...b, cfc: e.target.value.trim(), libelle: b.libelle || libelleCFC(e.target.value.trim()) })} placeholder="211" />

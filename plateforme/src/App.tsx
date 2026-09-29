@@ -14,6 +14,11 @@ const Planning = lazy(() => import("./pages/Planning").then((m) => ({ default: m
 const Documents = lazy(() => import("./pages/Documents").then((m) => ({ default: m.Documents })));
 const Ressources = lazy(() => import("./pages/Ressources").then((m) => ({ default: m.Ressources })));
 const Entreprises = lazy(() => import("./pages/Entreprises").then((m) => ({ default: m.Entreprises })));
+const Taches = lazy(() => import("./pages/Taches").then((m) => ({ default: m.Taches })));
+const Risques = lazy(() => import("./pages/Risques").then((m) => ({ default: m.Risques })));
+const Validations = lazy(() => import("./pages/Validations").then((m) => ({ default: m.Validations })));
+const Organigramme = lazy(() => import("./pages/Organigramme").then((m) => ({ default: m.Organigramme })));
+const Acces = lazy(() => import("./pages/Acces").then((m) => ({ default: m.Acces })));
 const Parametres = lazy(() => import("./pages/Parametres").then((m) => ({ default: m.Parametres })));
 
 export function App() {
@@ -32,6 +37,11 @@ export function App() {
           <Route path="documents" element={<Documents />} />
           <Route path="ressources" element={<Ressources />} />
           <Route path="entreprises" element={<Entreprises />} />
+          <Route path="taches" element={<Taches />} />
+          <Route path="risques" element={<Risques />} />
+          <Route path="validations" element={<Validations />} />
+          <Route path="organigramme" element={<Organigramme />} />
+          <Route path="acces" element={<Acces />} />
           <Route path="parametres" element={<Parametres />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

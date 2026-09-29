@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ChatMessage, ID, ParametresSharePoint } from "../types";
+import type { ChatMessage, ID, ModuleApp, ParametresSharePoint } from "../types";
+import { niveau } from "../lib/acces";
 import { cfcCorrespond } from "../data/cfc";
 import { donneesDemo, type DonneesDemo } from "../data/demo";
 
@@ -34,6 +35,7 @@ interface EtatApp extends DonneesDemo {
 const vide: DonneesDemo = {
   projets: [], lots: [], budget: [], entreprises: [], appelsOffres: [], contrats: [],
   factures: [], taches: [], documents: [], personnes: [], affectations: [],
+  organigramme: [], validations: [], risques: [], actions: [],
 };
 
 export const COLLECTIONS = Object.keys(vide) as Collection[];
@@ -78,7 +80,23 @@ export const useStore = create<EtatApp>()(
       reinitialiserDemo: () => set({ ...donneesDemo(), projetActifId: "prj-1", utilisateurId: "per-1", conversations: {} }),
       viderTout: () => set({ ...vide, projetActifId: null, conversations: {} }),
     }),
-    { name: "chantier-plus", version: 1 },
+    {
+      name: "chantier-plus",
+      version: 2,
+      // v1 → v2 : nouveaux modules (organigramme, validations, risques, tâches). Les données
+      // de démonstration correspondantes sont ajoutées pour les projets de démonstration encore présents.
+      migrate: (ancien, version) => {
+        const etat = ancien as Record<string, unknown>;
+        if (version < 2) {
+          const demo = donneesDemo();
+          const projets = new Set(((etat.projets as { id: ID }[]) ?? []).map((p) => p.id));
+          for (const c of ["organigramme", "validations", "risques", "actions"] as const) {
+            if (!Array.isArray(etat[c])) etat[c] = (demo[c] as { projetId: ID }[]).filter((x) => projets.has(x.projetId));
+          }
+        }
+        return etat as unknown as EtatApp;
+      },
+    },
   ),
 );
 
@@ -112,7 +130,23 @@ export function useProjetActif() {
     taches: s.taches.filter((x) => x.projetId === pid && (!filtre || (x.lotId ? lotIds.has(x.lotId) : true))),
     documents: s.documents.filter((x) => x.projetId === pid && (!filtre || !x.cfc || cfcCorrespond(x.cfc, prefixes))),
     affectations: s.affectations.filter((x) => x.projetId === pid),
+    organigramme: s.organigramme.filter((x) => x.projetId === pid),
+    validations: s.validations.filter((x) => x.projetId === pid),
+    risques: s.risques.filter((x) => x.projetId === pid && (!filtre || !x.lotId || lotIds.has(x.lotId))),
+    actions: s.actions.filter((x) => x.projetId === pid && (!filtre || !x.lotId || lotIds.has(x.lotId))),
   };
+}
+
+/** Membre de l'équipe actuellement connecté (sélecteur en haut à droite) */
+export function useUtilisateur() {
+  return useStore((s) => s.personnes.find((p) => p.id === s.utilisateurId));
+}
+
+/** Niveau d'accès de l'utilisateur courant sur un module */
+export function useDroit(module: ModuleApp) {
+  const u = useUtilisateur();
+  const n = niveau(u, module);
+  return { niveau: n, lire: n !== "aucun", ecrire: n === "ecriture" };
 }
 
 export function exporterDonnees(): DonneesDemo {

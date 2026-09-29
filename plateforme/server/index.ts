@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
+import { extraire, SchemaChiffrage, SchemaRisques, SYSTEME_CHIFFRAGE, SYSTEME_RISQUES } from "./extractions";
 
 try {
   process.loadEnvFile();
@@ -32,7 +33,8 @@ Règles :
 - Signale proactivement les risques (dépassements, avenants en attente, factures en retard, tâches critiques).`;
 
 const app = express();
-app.use(express.json({ limit: "2mb" }));
+// Les fichiers (PDF, images) sont transmis en base64 : limite adaptée aux devis scannés
+app.use(express.json({ limit: "30mb" }));
 
 const client = new Anthropic();
 
@@ -94,23 +96,71 @@ app.post("/api/assistant", async (req, res) => {
     envoyer({ type: "fin" });
   } catch (err) {
     if (controle.signal.aborted) return;
-    let message = "Erreur inattendue de l'assistant.";
-    if (err instanceof Anthropic.AuthenticationError) {
-      message = "Clé API Anthropic absente ou invalide. Renseignez ANTHROPIC_API_KEY dans le fichier .env du serveur.";
-    } else if (err instanceof Anthropic.RateLimitError) {
-      message = "Limite de requêtes atteinte. Réessayez dans quelques instants.";
-    } else if (err instanceof Anthropic.APIConnectionError) {
-      message = "Impossible de joindre l'API Anthropic (connexion réseau).";
-    } else if (err instanceof Anthropic.APIError) {
-      message = `Erreur API (${err.status ?? "?"}) : ${err.message}`;
-    } else if (err instanceof Anthropic.AnthropicError) {
-      // Aucune clé ni profil trouvé : le SDK échoue avant même d'appeler l'API
-      message = "Aucune clé API Anthropic configurée. Copiez .env.example vers .env et renseignez ANTHROPIC_API_KEY, puis redémarrez le serveur.";
-    }
+    const message = messageErreur(err);
     console.error("[assistant]", err);
     envoyer({ type: "erreur", message });
   } finally {
     res.end();
+  }
+});
+
+/** Message compréhensible pour l'utilisateur selon le type d'erreur du SDK */
+function messageErreur(err: unknown): string {
+  if (err instanceof Anthropic.AuthenticationError) return "Clé API Anthropic absente ou invalide. Renseignez ANTHROPIC_API_KEY dans le fichier .env du serveur.";
+  if (err instanceof Anthropic.RateLimitError) return "Limite de requêtes atteinte. Réessayez dans quelques instants.";
+  if (err instanceof Anthropic.APIConnectionError) return "Impossible de joindre l'API Anthropic (connexion réseau).";
+  if (err instanceof Anthropic.APIError) return `Erreur API (${err.status ?? "?"}) : ${err.message}`;
+  // Aucune clé ni profil trouvé : le SDK échoue avant même d'appeler l'API
+  if (err instanceof Anthropic.AnthropicError) return "Aucune clé API Anthropic configurée. Copiez .env.example vers .env et renseignez ANTHROPIC_API_KEY, puis redémarrez le serveur.";
+  if (err instanceof Error) return err.message;
+  return "Erreur inattendue de l'assistant.";
+}
+
+// ---------------------------------------------------------------------------
+// Traitements structurés
+// ---------------------------------------------------------------------------
+
+interface CorpsChiffrage {
+  texte?: string;
+  fichier?: { nom: string; type: string; base64: string };
+  consignes?: string;
+}
+
+const IMAGES = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
+
+app.post("/api/ia/chiffrage", async (req, res) => {
+  const { texte, fichier, consignes } = req.body as CorpsChiffrage;
+  const contenu: Anthropic.Beta.BetaContentBlockParam[] = [];
+  if (fichier?.type === "application/pdf") {
+    contenu.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: fichier.base64 }, title: fichier.nom });
+  } else if (fichier && (IMAGES as readonly string[]).includes(fichier.type)) {
+    contenu.push({ type: "image", source: { type: "base64", media_type: fichier.type as (typeof IMAGES)[number], data: fichier.base64 } });
+  }
+  if (texte?.trim()) contenu.push({ type: "text", text: `Contenu du chiffrage${fichier ? ` (${fichier.nom})` : ""} :\n\n${texte}` });
+  if (contenu.length === 0) {
+    res.status(400).json({ erreur: "Aucun contenu à analyser (formats acceptés : Excel, CSV, texte, PDF, image)." });
+    return;
+  }
+  contenu.push({ type: "text", text: `Convertis ce chiffrage en lignes budgétaires CFC.${consignes?.trim() ? `\n\nConsignes de l'utilisateur : ${consignes}` : ""}` });
+  try {
+    res.json({ resultat: await extraire(client, MODELE, SchemaChiffrage, SYSTEME_CHIFFRAGE, contenu) });
+  } catch (err) {
+    console.error("[chiffrage]", err);
+    res.status(500).json({ erreur: messageErreur(err) });
+  }
+});
+
+app.post("/api/ia/risques", async (req, res) => {
+  const { contexte } = req.body as { contexte?: string };
+  if (!contexte) {
+    res.status(400).json({ erreur: "Contexte du projet manquant." });
+    return;
+  }
+  try {
+    res.json({ resultat: await extraire(client, MODELE, SchemaRisques, SYSTEME_RISQUES, [{ type: "text", text: contexte }]) });
+  } catch (err) {
+    console.error("[risques]", err);
+    res.status(500).json({ erreur: messageErreur(err) });
   }
 });
 

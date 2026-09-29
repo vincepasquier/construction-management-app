@@ -1,6 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { AlertTriangle, CalendarClock, FilePlus2, FolderKanban, MapPin, Plus, Wallet } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { projetsAccessibles } from "../lib/acces";
+import { attendDe } from "../lib/validations";
+import { estActif, score } from "../lib/risques";
+import { AlertTriangle, CalendarClock, FileCheck2, FilePlus2, FolderKanban, ListChecks, MapPin, Plus, ShieldAlert, Wallet } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useStore } from "../store/useStore";
 import { indicateursProjet, santeProjet } from "../lib/indicateurs";
@@ -24,13 +27,23 @@ export function Portefeuille() {
   const jour = aujourdhui();
   const donnees = etat as unknown as DonneesDemo;
 
-  const lignes = etat.projets.map((p) => ({ p, i: indicateursProjet(donnees, p.id, jour) }));
+  const utilisateur = etat.personnes.find((x) => x.id === etat.utilisateurId);
+  const mesProjets = projetsAccessibles(utilisateur, etat.projets);
+  const idsProjets = new Set(mesProjets.map((p) => p.id));
+  const lignes = mesProjets.map((p) => ({ p, i: indicateursProjet(donnees, p.id, jour) }));
+
+  // « Mon travail » : ce qui attend l'utilisateur sur l'ensemble de ses projets
+  const code = (projetId: string) => etat.projets.find((p) => p.id === projetId)?.code ?? "";
+  const mesTaches = etat.actions.filter((a) => idsProjets.has(a.projetId) && a.assigneId === etat.utilisateurId && a.statut !== "Terminé")
+    .sort((a, b) => (a.echeance ?? "9").localeCompare(b.echeance ?? "9"));
+  const mesValidations = etat.validations.filter((v) => idsProjets.has(v.projetId) && attendDe(v, etat.utilisateurId));
+  const mesRisques = etat.risques.filter((r) => idsProjets.has(r.projetId) && r.proprietaireId === etat.utilisateurId && estActif(r))
+    .sort((a, b) => score(b) - score(a));
   const total = lignes.reduce(
     (t, { i }) => ({ budget: t.budget + i.totaux.budget, prevision: t.prevision + i.totaux.prevision, facture: t.facture + i.totaux.facture }),
     { budget: 0, prevision: 0, facture: 0 },
   );
   const alertes = lignes.reduce((n, { i }) => n + i.tachesEnRetard.length + i.avenantsEnAttente + i.facturesATraiter, 0);
-  const utilisateur = etat.personnes.find((x) => x.id === etat.utilisateurId);
 
   const ouvrir = (id: string) => { etat.setProjetActif(id); navigate("/projet"); };
 
@@ -43,13 +56,52 @@ export function Portefeuille() {
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Indicateur libelle="Projets actifs" valeur={etat.projets.length} icone={<FolderKanban size={18} />} />
+        <Indicateur libelle="Projets actifs" valeur={mesProjets.length} icone={<FolderKanban size={18} />} />
         <Indicateur libelle="Budget total" valeur={formatCompact(total.budget)} detail="CHF HT" icone={<Wallet size={18} />} />
         <Indicateur libelle="Prévision finale" valeur={formatCompact(total.prevision)}
           detail={`${total.prevision > total.budget ? "+" : ""}${formatCHF(total.prevision - total.budget)} vs budget`}
           tendance={total.prevision > total.budget ? "mauvais" : "bon"} />
         <Indicateur libelle="Points d'attention" valeur={alertes} detail="retards, avenants, factures" tendance={alertes ? "alerte" : "bon"} icone={<AlertTriangle size={18} />} />
       </div>
+
+      {(mesTaches.length > 0 || mesValidations.length > 0 || mesRisques.length > 0) && (
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+          <Carte titre={<span className="flex items-center gap-2"><ListChecks size={16} className="text-brand-600" /> Mes tâches</span>} action={<Link to="/taches" className="text-sm text-brand-600 hover:underline">Tout voir</Link>}>
+            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+              {mesTaches.slice(0, 5).map((a) => (
+                <li key={a.id}><button onClick={() => { etat.setProjetActif(a.projetId); navigate("/taches"); }} className="flex w-full items-center gap-2 px-5 py-2.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <span className="flex-1 truncate">{a.titre}</span>
+                  <span className="text-xs text-slate-400">{code(a.projetId)}</span>
+                  {a.echeance && <span className={`text-xs ${a.echeance < jour ? "font-medium text-rose-600" : "text-slate-500"}`}>{formatDate(a.echeance)}</span>}
+                </button></li>
+              ))}
+              {mesTaches.length === 0 && <li className="px-5 py-6 text-center text-sm text-slate-400">Aucune tâche ouverte</li>}
+            </ul>
+          </Carte>
+          <Carte titre={<span className="flex items-center gap-2"><FileCheck2 size={16} className="text-brand-600" /> À valider</span>} action={<Link to="/validations" className="text-sm text-brand-600 hover:underline">Tout voir</Link>}>
+            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+              {mesValidations.map((v) => (
+                <li key={v.id}><button onClick={() => { etat.setProjetActif(v.projetId); navigate("/validations"); }} className="flex w-full items-center gap-2 px-5 py-2.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <Badge couleur="violet">{v.objet.type}</Badge><span className="flex-1 truncate">{v.titre}</span>
+                  {v.echeance && <span className={`text-xs ${v.echeance < jour ? "font-medium text-rose-600" : "text-slate-500"}`}>{formatDate(v.echeance)}</span>}
+                </button></li>
+              ))}
+              {mesValidations.length === 0 && <li className="px-5 py-6 text-center text-sm text-slate-400">Rien en attente de votre décision</li>}
+            </ul>
+          </Carte>
+          <Carte titre={<span className="flex items-center gap-2"><ShieldAlert size={16} className="text-brand-600" /> Mes risques</span>} action={<Link to="/risques" className="text-sm text-brand-600 hover:underline">Tout voir</Link>}>
+            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+              {mesRisques.slice(0, 5).map((r) => (
+                <li key={r.id}><button onClick={() => { etat.setProjetActif(r.projetId); navigate("/risques"); }} className="flex w-full items-center gap-2 px-5 py-2.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <span className={`h-2.5 w-2.5 rounded-full ${score(r) >= 15 ? "bg-rose-500" : score(r) >= 9 ? "bg-orange-500" : "bg-amber-400"}`} />
+                  <span className="flex-1 truncate">{r.code} {r.titre}</span><span className="text-xs text-slate-400">{code(r.projetId)}</span>
+                </button></li>
+              ))}
+              {mesRisques.length === 0 && <li className="px-5 py-6 text-center text-sm text-slate-400">Aucun risque sous votre responsabilité</li>}
+            </ul>
+          </Carte>
+        </div>
+      )}
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
         {lignes.map(({ p, i }) => {
@@ -98,7 +150,7 @@ export function Portefeuille() {
             </button>
           );
         })}
-        {etat.projets.length === 0 && (
+        {mesProjets.length === 0 && (
           <Carte className="md:col-span-2">
             <div className="flex flex-col items-center py-14 text-center">
               <FilePlus2 className="text-slate-300" size={40} />
@@ -142,7 +194,7 @@ export function FormulaireProjet({ ouverte, onFermer, onEnregistrer, initial }: 
   const maj = (patch: Partial<Projet>) => setP((x) => ({ ...x, ...patch }));
   return (
     <Modale ouverte={ouverte} onFermer={onFermer} titre={initial ? "Modifier le projet" : "Nouveau projet"}
-      pied={<><Bouton onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!p.code || !p.nom} onClick={() => { onEnregistrer(p); onFermer(); }}>Enregistrer</Bouton></>}>
+      pied={<><Bouton libre onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!p.code || !p.nom} onClick={() => { onEnregistrer(p); onFermer(); }}>Enregistrer</Bouton></>}>
       <div className="grid grid-cols-2 gap-4">
         <Champ libelle="Code"><Saisie value={p.code} onChange={(e) => maj({ code: e.target.value })} placeholder="RC601" /></Champ>
         <Champ libelle="Phase SIA"><Liste value={p.phase} onChange={(e) => maj({ phase: e.target.value as PhaseSIA })}>{PHASES.map((x) => <option key={x}>{x}</option>)}</Liste></Champ>

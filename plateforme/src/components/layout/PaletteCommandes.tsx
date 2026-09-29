@@ -4,6 +4,7 @@ import { ArrowRight, FileSignature, Gavel, Search, Sparkles } from "lucide-react
 import { useStore } from "../../store/useStore";
 import { useUI } from "../../store/useUI";
 import { NAVIGATION } from "./navigation";
+import { niveau } from "../../lib/acces";
 
 interface Resultat {
   id: string;
@@ -15,7 +16,8 @@ interface Resultat {
 
 export function PaletteCommandes() {
   const { paletteOuverte, setPalette, ouvrirAssistant } = useUI();
-  const { contrats, appelsOffres, projets, setProjetActif, entreprises } = useStore();
+  const { contrats, appelsOffres, projets, setProjetActif, entreprises, personnes, utilisateurId } = useStore();
+  const utilisateur = personnes.find((p) => p.id === utilisateurId);
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
   const navigate = useNavigate();
@@ -25,7 +27,7 @@ export function PaletteCommandes() {
   const resultats = useMemo<Resultat[]>(() => {
     const aller = (a: string, projetId?: string) => () => { if (projetId) setProjetActif(projetId); navigate(a); fermer(); };
     const r: Resultat[] = [
-      ...NAVIGATION.map((n) => ({ id: n.a, libelle: n.libelle, detail: "Navigation", icone: <n.icone size={16} />, action: aller(n.a) })),
+      ...NAVIGATION.filter((n) => niveau(utilisateur, n.module) !== "aucun").map((n) => ({ id: n.a, libelle: n.libelle, detail: "Navigation", icone: <n.icone size={16} />, action: aller(n.a) })),
       ...projets.map((p) => ({ id: p.id, libelle: `${p.code} · ${p.nom}`, detail: "Projet", icone: <ArrowRight size={16} />, action: aller("/projet", p.id) })),
       ...appelsOffres.map((a) => ({ id: a.id, libelle: `${a.numero} · ${a.objet}`, detail: "Appel d'offres", icone: <Gavel size={16} />, action: aller(`/appels-offres/${a.id}`, a.projetId) })),
       ...contrats.map((c) => ({ id: c.id, libelle: `${c.numero} · ${c.objet}`, detail: entreprises.find((e) => e.id === c.entrepriseId)?.nom ?? "Contrat", icone: <FileSignature size={16} />, action: aller(`/contrats/${c.id}`, c.projetId) })),
@@ -34,7 +36,7 @@ export function PaletteCommandes() {
     const filtres = t ? r.filter((x) => `${x.libelle} ${x.detail}`.toLowerCase().includes(t)) : r.slice(0, 10);
     if (t) filtres.push({ id: "ia", libelle: `Demander à l'assistant : « ${q} »`, detail: "IA", icone: <Sparkles size={16} />, action: () => { ouvrirAssistant(q); fermer(); } });
     return filtres.slice(0, 12);
-  }, [q, contrats, appelsOffres, projets, entreprises]);
+  }, [q, contrats, appelsOffres, projets, entreprises, utilisateur]);
 
   if (!paletteOuverte) return null;
   return (

@@ -44,3 +44,25 @@ body {
 .prose-ia th { background: var(--color-slate-50); font-weight: 600; }
 .dark .prose-ia th { background: var(--color-slate-800); }
 .prose-ia hr { border-color: var(--color-slate-200); }
+
+/* Organigramme : arbre avec traits de liaison */
+.org ul { display: flex; justify-content: center; padding-top: 22px; position: relative; }
+.org li { list-style: none; text-align: center; position: relative; padding: 22px 6px 0; display: flex; flex-direction: column; align-items: center; }
+.org li::before, .org li::after { content: ""; position: absolute; top: 0; right: 50%; width: 50%; height: 22px; border-top: 1.5px solid var(--color-slate-300); }
+.org li::after { right: auto; left: 50%; border-left: 1.5px solid var(--color-slate-300); }
+.org li:only-child::before, .org li:only-child::after { display: none; }
+.org li:only-child { padding-top: 0; }
+.org li:first-child::before, .org li:last-child::after { border: 0 none; }
+.org li:last-child::before { border-right: 1.5px solid var(--color-slate-300); border-radius: 0 6px 0 0; }
+.org li:first-child::after { border-radius: 6px 0 0 0; }
+.org ul ul::before { content: ""; position: absolute; top: 0; left: 50%; height: 22px; border-left: 1.5px solid var(--color-slate-300); }
+.org > ul { padding-top: 0; }
+.dark .org li::before, .dark .org li::after, .dark .org ul ul::before { border-color: var(--color-slate-600); }
+
+/* Impression : seule la zone marquée est imprimée */
+@media print {
+  body * { visibility: hidden; }
+  .zone-impression, .zone-impression * { visibility: visible; }
+  .zone-impression { position: absolute; inset: 0; overflow: visible !important; }
+  .pas-impression { display: none !important; }
+}

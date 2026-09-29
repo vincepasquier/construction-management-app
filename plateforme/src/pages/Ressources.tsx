@@ -128,7 +128,7 @@ export function Ressources() {
         <Modale ouverte onFermer={() => setPersonne(null)} titre="Personne"
           pied={<>
             {personnes.some((p) => p.id === personne.id) && <Bouton variante="fantome" className="mr-auto text-rose-600" onClick={() => { supprimer("personnes", personne.id); setPersonne(null); }}>Supprimer</Bouton>}
-            <Bouton onClick={() => setPersonne(null)}>Annuler</Bouton>
+            <Bouton libre onClick={() => setPersonne(null)}>Annuler</Bouton>
             <Bouton variante="primaire" disabled={!personne.nom} onClick={() => { if (personnes.some((p) => p.id === personne.id)) modifier("personnes", personne.id, personne); else ajouter("personnes", personne); setPersonne(null); }}>Enregistrer</Bouton>
           </>}>
           <div className="grid grid-cols-2 gap-4">
@@ -143,7 +143,7 @@ export function Ressources() {
 
       {affectation && (
         <Modale ouverte onFermer={() => setAffectation(null)} titre="Affectation"
-          pied={<><Bouton onClick={() => setAffectation(null)}>Annuler</Bouton><Bouton variante="primaire" onClick={() => { if (affectations.some((a) => a.id === affectation.id)) modifier("affectations", affectation.id, affectation); else ajouter("affectations", affectation); setAffectation(null); }}>Enregistrer</Bouton></>}>
+          pied={<><Bouton libre onClick={() => setAffectation(null)}>Annuler</Bouton><Bouton variante="primaire" onClick={() => { if (affectations.some((a) => a.id === affectation.id)) modifier("affectations", affectation.id, affectation); else ajouter("affectations", affectation); setAffectation(null); }}>Enregistrer</Bouton></>}>
           <div className="grid grid-cols-2 gap-4">
             <Champ libelle="Personne"><Liste value={affectation.personneId} onChange={(e) => setAffectation({ ...affectation, personneId: e.target.value })}>{personnes.map((p) => <option key={p.id} value={p.id}>{p.nom}</option>)}</Liste></Champ>
             <Champ libelle="Projet"><Liste value={affectation.projetId} onChange={(e) => setAffectation({ ...affectation, projetId: e.target.value })}>{projets.map((p) => <option key={p.id} value={p.id}>{p.code}</option>)}</Liste></Champ>
@@ -159,7 +159,7 @@ export function Ressources() {
         <Modale ouverte onFermer={() => setLot(null)} titre="Lot"
           pied={<>
             {lots.some((l) => l.id === lot.id) && <Bouton variante="fantome" className="mr-auto text-rose-600" onClick={() => { supprimer("lots", lot.id); setLot(null); }}>Supprimer</Bouton>}
-            <Bouton onClick={() => setLot(null)}>Annuler</Bouton>
+            <Bouton libre onClick={() => setLot(null)}>Annuler</Bouton>
             <Bouton variante="primaire" disabled={!lot.nom} onClick={() => { if (lots.some((l) => l.id === lot.id)) modifier("lots", lot.id, lot); else ajouter("lots", lot); setLot(null); }}>Enregistrer</Bouton>
           </>}>
           <div className="grid grid-cols-3 gap-4">

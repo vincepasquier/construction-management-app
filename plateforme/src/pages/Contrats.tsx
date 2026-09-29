@@ -110,7 +110,7 @@ export function FormulaireContrat({ projetId, numeroSuggere, initial, onFermer, 
   const maj = (p: Partial<Contrat>) => setC((x) => ({ ...x, ...p }));
   return (
     <Modale ouverte onFermer={onFermer} titre={initial ? "Modifier le contrat" : "Nouveau contrat"}
-      pied={<><Bouton onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!c.numero || !c.entrepriseId || !c.cfc} onClick={() => { onEnregistrer(c); onFermer(); }}>Enregistrer</Bouton></>}>
+      pied={<><Bouton libre onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!c.numero || !c.entrepriseId || !c.cfc} onClick={() => { onEnregistrer(c); onFermer(); }}>Enregistrer</Bouton></>}>
       <div className="grid grid-cols-2 gap-4">
         <Champ libelle="Numéro"><Saisie value={c.numero} onChange={(e) => maj({ numero: e.target.value })} /></Champ>
         <Champ libelle="Type"><Liste value={c.type} onChange={(e) => maj({ type: e.target.value as TypeContrat, retenuePct: e.target.value === "Mandat" ? 0 : c.retenuePct })}>{TYPES_CONTRAT.map((t) => <option key={t}>{t}</option>)}</Liste></Champ>

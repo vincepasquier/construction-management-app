@@ -1,7 +1,9 @@
 // Jeu de données de démonstration (entièrement fictif) pour découvrir la plateforme.
 import type {
-  Affectation, AppelOffres, BudgetLigne, Contrat, DocumentProjet, Entreprise, Facture, Lot, Personne, Projet, Tache,
+  Action, Affectation, AppelOffres, BudgetLigne, CircuitValidation, Contrat, DocumentProjet, Entreprise, Facture, Lot,
+  NoeudOrganigramme, Personne, Projet, Risque, Tache,
 } from "../types";
+import { genererDepuisProjet } from "../lib/organigramme";
 
 export interface DonneesDemo {
   projets: Projet[];
@@ -15,16 +17,20 @@ export interface DonneesDemo {
   documents: DocumentProjet[];
   personnes: Personne[];
   affectations: Affectation[];
+  organigramme: NoeudOrganigramme[];
+  validations: CircuitValidation[];
+  risques: Risque[];
+  actions: Action[];
 }
 
 export function donneesDemo(): DonneesDemo {
   const personnes: Personne[] = [
-    { id: "per-1", nom: "Claire Rochat", role: "Directeur de projet", email: "c.rochat@exemple.ch", organisation: "Bureau d'ingénieurs", capacite: 100 },
+    { id: "per-1", nom: "Claire Rochat", role: "Directeur de projet", email: "c.rochat@exemple.ch", organisation: "Bureau d'ingénieurs", capacite: 100, acces: { profil: "Administrateur", projets: "tous", modules: {} } },
     { id: "per-2", nom: "Marc Délèze", role: "Responsable de lot", email: "m.deleze@exemple.ch", organisation: "Bureau d'ingénieurs", capacite: 100 },
     { id: "per-3", nom: "Sofia Bianchi", role: "Responsable de lot", email: "s.bianchi@exemple.ch", organisation: "Bureau d'ingénieurs", capacite: 80 },
     { id: "per-4", nom: "Luca Favre", role: "Conducteur de travaux", email: "l.favre@exemple.ch", organisation: "Bureau d'ingénieurs", capacite: 100 },
-    { id: "per-5", nom: "Nadia Perret", role: "Ingénieur", email: "n.perret@exemple.ch", organisation: "Bureau d'ingénieurs", capacite: 60 },
-    { id: "per-6", nom: "Jean Monnier", role: "Maître d'ouvrage", email: "j.monnier@commune-exemple.ch", organisation: "Commune d'Exemple", capacite: 20 },
+    { id: "per-5", nom: "Nadia Perret", role: "Ingénieur", email: "n.perret@exemple.ch", organisation: "Bureau d'ingénieurs", capacite: 60, acces: { profil: "Collaborateur", projets: ["prj-2"], modules: {} } },
+    { id: "per-6", nom: "Jean Monnier", role: "Maître d'ouvrage", email: "j.monnier@commune-exemple.ch", organisation: "Commune d'Exemple", capacite: 20, acces: { profil: "Lecture seule", projets: ["prj-1"], modules: { validations: "ecriture" } } },
   ];
 
   const projets: Projet[] = [
@@ -239,5 +245,105 @@ export function donneesDemo(): DonneesDemo {
     { id: "aff-8", personneId: "per-5", projetId: "prj-2", pourcentage: 60, debut: "2026-03-01", fin: "2027-12-31" },
   ];
 
-  return { projets, lots, budget, entreprises, appelsOffres, contrats, factures, taches, documents, personnes, affectations };
+  const organigramme = [
+    ...genererDepuisProjet(projets[0], lots.filter((l) => l.projetId === "prj-1"), personnes, contrats.filter((c) => c.projetId === "prj-1"), entreprises),
+  ];
+
+  const validations: CircuitValidation[] = [
+    {
+      id: "val-1", projetId: "prj-1", titre: "Plans d'exécution giratoire – indice C", objet: { type: "Document", id: "doc-1" },
+      version: 1, demandeurId: "per-2", statut: "En cours", dateCreation: "2026-09-18", echeance: "2026-10-02",
+      etapes: [
+        { id: "e1", personneId: "per-5", statut: "Approuvé", date: "2026-09-21", commentaire: "Conforme au calcul statique." },
+        { id: "e2", personneId: "per-1", statut: "En attente" },
+        { id: "e3", personneId: "per-6", statut: "En attente" },
+      ],
+      historique: [
+        { date: "2026-09-18", personneId: "per-2", action: "Circuit créé", version: 1 },
+        { date: "2026-09-21", personneId: "per-5", action: "Approuvé", version: 1, commentaire: "Conforme au calcul statique." },
+      ],
+    },
+    {
+      id: "val-2", projetId: "prj-1", titre: "Situation S6 – Routes & Génie SA", objet: { type: "Facture", id: "fac-6", contratId: "ctr-1" },
+      version: 1, demandeurId: "per-4", statut: "En cours", dateCreation: "2026-09-03", echeance: "2026-09-30",
+      etapes: [
+        { id: "e1", personneId: "per-4", statut: "Approuvé", date: "2026-09-08", commentaire: "Métrés contrôlés sur place." },
+        { id: "e2", personneId: "per-2", statut: "En attente" },
+        { id: "e3", personneId: "per-1", statut: "En attente" },
+      ],
+      historique: [
+        { date: "2026-09-03", personneId: "per-4", action: "Circuit créé", version: 1 },
+        { date: "2026-09-08", personneId: "per-4", action: "Approuvé", version: 1, commentaire: "Métrés contrôlés sur place." },
+      ],
+    },
+    {
+      id: "val-3", projetId: "prj-1", titre: "Avenant AV-02 – déplacement du giratoire", objet: { type: "Avenant", id: "av-2", contratId: "ctr-1" },
+      version: 1, demandeurId: "per-2", statut: "En cours", dateCreation: "2026-08-14", echeance: "2026-09-15",
+      etapes: [
+        { id: "e1", personneId: "per-1", statut: "En attente" },
+        { id: "e2", personneId: "per-6", statut: "En attente" },
+      ],
+      historique: [{ date: "2026-08-14", personneId: "per-2", action: "Circuit créé", version: 1 }],
+    },
+    {
+      id: "val-4", projetId: "prj-1", titre: "PV séance de chantier n°28", objet: { type: "Document", id: "doc-3" },
+      version: 2, demandeurId: "per-4", statut: "Approuvé", dateCreation: "2026-09-22",
+      etapes: [{ id: "e1", personneId: "per-1", statut: "Approuvé", date: "2026-09-24" }],
+      historique: [
+        { date: "2026-09-22", personneId: "per-4", action: "Circuit créé", version: 1 },
+        { date: "2026-09-23", personneId: "per-1", action: "Modifications demandées", version: 1, commentaire: "Compléter le point 4 (sécurité)." },
+        { date: "2026-09-23", personneId: "per-4", action: "Version 2 soumise", version: 2 },
+        { date: "2026-09-24", personneId: "per-1", action: "Approuvé", version: 2 },
+      ],
+    },
+  ];
+
+  const r = (n: number, projetId: string, titre: string, categorie: Risque["categorie"], probabilite: number, impact: number, impactFinancier: number,
+    proprietaireId: string, statut: Risque["statut"], mesures: string, description = "", lotId?: string, echeance?: string): Risque => ({
+    id: `rsk-${n}`, projetId, code: `R-${String(n).padStart(2, "0")}`, titre, description, categorie, probabilite, impact, impactFinancier,
+    proprietaireId, statut, mesures, lotId, echeance, dateIdentification: "2026-02-15",
+  });
+  const risques: Risque[] = [
+    r(1, "prj-1", "Conduites existantes non répertoriées", "Technique", 4, 4, 180_000, "per-3", "En traitement",
+      "Sondages complémentaires avant chaque étape ; relevé géoradar du tronçon 2.", "Le cadastre des réseaux est incomplet sur le tronçon 2.", "lot-2", "2026-10-15"),
+    r(2, "prj-1", "Retard de l'avenant AV-02 (giratoire)", "Délais", 3, 4, 90_000, "per-1", "Ouvert",
+      "Obtenir la décision du maître d'ouvrage avant le 15.10 ; préparer une variante sans déplacement.", "", "lot-1", "2026-10-15"),
+    r(3, "prj-1", "Hausse du prix des enrobés", "Financier", 3, 3, 120_000, "per-2", "Ouvert",
+      "Vérifier la clause de renchérissement du contrat ; commander les quantités de l'étape 2 en avance.", "", "lot-1"),
+    r(4, "prj-1", "Intempéries hivernales prolongées", "Délais", 3, 3, 60_000, "per-4", "Ouvert",
+      "Planifier la couche de roulement au printemps ; prévoir des travaux de réseaux en hiver.", ""),
+    r(5, "prj-1", "Opposition des riverains (accès commerces)", "Tiers", 2, 3, 20_000, "per-1", "En traitement",
+      "Séance d'information publique ; signalétique pour les commerces.", ""),
+    r(6, "prj-1", "Sol de mauvaise qualité sur l'étape 2", "Technique", 3, 5, 250_000, "per-2", "Ouvert",
+      "Rapport géotechnique complémentaire ; réserve dédiée dans le CFC 583.", "", "lot-1", "2026-12-01"),
+    r(7, "prj-1", "Accident lors des travaux en fouille", "Sécurité", 2, 5, 0, "per-4", "En traitement",
+      "Contrôles hebdomadaires des blindages ; plan de sécurité SUVA à jour.", ""),
+    r(8, "prj-1", "Purge de sol étape 1", "Technique", 5, 3, 86_500, "per-2", "Survenu", "Traité par l'avenant AV-01.", "", "lot-1"),
+    r(9, "prj-2", "Autorisation CFF pour le fonçage", "Juridique", 3, 5, 300_000, "per-3", "Ouvert",
+      "Dépôt anticipé du dossier ; séance de coordination avec CFF Infrastructure.", "", "lot-6", "2026-11-30"),
+    r(10, "prj-2", "Nappe phréatique haute", "Environnement", 4, 3, 150_000, "per-2", "Ouvert",
+      "Prévoir un épuisement des eaux dans le descriptif ; piézomètres.", "", "lot-5"),
+  ];
+
+  const a = (n: number, projetId: string, titre: string, assigneId: string, statut: Action["statut"], priorite: Action["priorite"], echeance: string, origine?: string, risqueId?: string): Action => ({
+    id: `act-${n}`, projetId, titre, assigneId, creeParId: "per-1", statut, priorite, echeance, origine, risqueId, dateCreation: "2026-09-01",
+  });
+  const actions: Action[] = [
+    a(1, "prj-1", "Commander les sondages complémentaires tronçon 2", "per-3", "En cours", "Haute", "2026-10-03", "Risque R-01", "rsk-1"),
+    a(2, "prj-1", "Préparer la note de décision AV-02 pour la commune", "per-1", "À faire", "Urgente", "2026-10-01", "Risque R-02", "rsk-2"),
+    a(3, "prj-1", "Contrôler la situation S6 de Routes & Génie", "per-2", "À faire", "Haute", "2026-09-30", "Validation"),
+    a(4, "prj-1", "Mettre à jour le plan de signalisation de chantier", "per-4", "En cours", "Normale", "2026-10-10", "PV séance n°28"),
+    a(5, "prj-1", "Relancer l'offre éclairage public (pièces manquantes)", "per-3", "En attente", "Normale", "2026-10-05", "PV séance n°28"),
+    a(6, "prj-1", "Vérifier la clause de renchérissement des enrobés", "per-2", "À faire", "Normale", "2026-10-20", "Risque R-03", "rsk-3"),
+    a(7, "prj-1", "Organiser la séance d'information riverains", "per-1", "Terminé", "Normale", "2026-09-15", "Risque R-05", "rsk-5"),
+    a(8, "prj-1", "Rédiger le PV de la séance n°29", "per-4", "À faire", "Normale", "2026-10-07", "PV séance n°28"),
+    a(9, "prj-2", "Déposer le dossier d'autorisation CFF", "per-3", "En cours", "Urgente", "2026-10-15", "Risque R-09", "rsk-9"),
+    a(10, "prj-2", "Compléter le descriptif CAN du fonçage", "per-5", "En cours", "Haute", "2026-10-08"),
+    a(11, "prj-2", "Implanter les piézomètres", "per-2", "À faire", "Normale", "2026-11-15", "Risque R-10", "rsk-10"),
+  ];
+
+  return {
+    projets, lots, budget, entreprises, appelsOffres, contrats, factures, taches, documents, personnes, affectations,
+    organigramme, validations, risques, actions,
+  };
 }

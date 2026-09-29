@@ -59,7 +59,7 @@ export function Entreprises() {
               if (contrats.some((c) => c.entrepriseId === edition.id)) { alert("Cette entreprise est liée à des contrats."); return; }
               supprimer("entreprises", edition.id); setEdition(null);
             }}>Supprimer</Bouton>}
-            <Bouton onClick={() => setEdition(null)}>Annuler</Bouton>
+            <Bouton libre onClick={() => setEdition(null)}>Annuler</Bouton>
             <Bouton variante="primaire" disabled={!edition.nom} onClick={() => { if (entreprises.some((e) => e.id === edition.id)) modifier("entreprises", edition.id, edition); else ajouter("entreprises", edition); setEdition(null); }}>Enregistrer</Bouton>
           </>}>
           <div className="grid grid-cols-2 gap-4">

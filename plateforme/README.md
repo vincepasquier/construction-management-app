@@ -38,18 +38,23 @@ L'application démarre avec un **jeu de démonstration fictif** (deux projets : 
 
 | Module | Contenu |
 |---|---|
-| **Portefeuille** | Tous les projets : budget, prévision, écart, avancement, santé, points d'attention |
+| **Portefeuille** | Tous les projets accessibles : budget, prévision, écart, avancement, santé ; « mon travail » (mes tâches, validations en attente, mes risques) |
 | **Tableau de bord** | Indicateurs du projet, courbe en S (planifié vs facturé), alertes (retards, avenants, factures échues), lots et responsables, jalons |
-| **Finances CFC** | Arborescence CFC (SN 506 500) : budget, engagé, avenants en attente, facturé, prévision, écart ; budget détaillé ; export Excel |
-| **Appels d'offres** | Descriptif par positions **CAN** (saisie ou import CSV), comparatif des prix unitaires (prix le plus bas, écarts anormaux > 30 % vs médiane, positions non chiffrées), rabais / escompte, **évaluation multicritère** pondérée (notes 0–5, prix proportionnel), adjudication → création automatique du contrat |
-| **Contrats & factures** | Contrats d'entreprise, mandats, fournitures ; avenants (demandé / approuvé / refusé) ; situations, régies, décompte final ; TVA ; retenue de garantie ; contrôle de dépassement |
+| **Finances CFC** | Arborescence CFC (SN 506 500) : budget, engagé, avenants en attente, facturé, prévision, écart ; budget détaillé ; export Excel ; **import d'un chiffrage quelconque par l'IA** (Excel, CSV, PDF, photo, texte) converti en lignes CFC vérifiables avant import |
+| **Marchés & appels d'offres** | Parcours guidé en 7 étapes (descriptif → consultation → offres → adjudication → contrat → facturation → clôture) avec la **prochaine action en un clic**. Descriptif par positions **CAN** (saisie ou import CSV), comparatif des prix unitaires (prix le plus bas, écarts > 30 % vs médiane, positions non chiffrées), rabais / escompte, **évaluation multicritère** pondérée, adjudication → contrat créé automatiquement ; marchés de gré à gré |
+| **Contrats & factures** | Contrats d'entreprise, mandats, fournitures ; avenants ; situations, régies, décompte final ; TVA ; retenue de garantie ; contrôle de dépassement ; « Faire valider » sur factures et avenants |
 | **Planning** | Gantt interactif (glisser pour décaler, étirer pour la durée), dépendances, jalons, retards détectés automatiquement |
-| **Documents** | Registre documentaire (catégories, versions, liens) + navigateur **SharePoint** (parcourir, rechercher, téléverser, créer des dossiers, ajouter au registre) |
-| **Ressources** | Équipe et rôles, plan de charge sur 12 mois (surcharges en rouge), affectations, **organisation des lots** et responsables |
+| **Tâches** | Actions attribuées aux membres : tableau glisser-déposer (à faire / en cours / en attente / terminé), vue **par personne** (avec ses tâches de planning, validations et risques), « mes tâches » ; priorités, échéances, origine (séance, risque…) |
+| **Risques** | Matrice probabilité × impact cliquable, registre, criticité, exposition financière pondérée, **suivi par responsable**, création de tâches de traitement, **suggestions de risques par l'IA** |
+| **Validations** | Circuits de validation séquentiels (documents, factures, avenants) : modèles de circuits, décision (approuver / demander des modifications / refuser) avec commentaire, nouvelles versions, historique ; l'issue met à jour la facture ou l'avenant |
+| **Documents** | Registre documentaire (catégories, versions, liens, état de validation) + navigateur **SharePoint** (parcourir, rechercher, téléverser, créer des dossiers, ajouter au registre) |
+| **Organigramme** | Création guidée (génération depuis le projet, modèle type ou à partir de zéro), édition directe, annuaire des intervenants ; **toujours accessible en un clic** (bouton en haut de l'écran, Ctrl Maj O), imprimable |
+| **Ressources** | Équipe et rôles, plan de charge sur 12 mois (surcharges en rouge), affectations, organisation des lots et responsables |
 | **Entreprises** | Carnet d'adresses, spécialités CFC (suggestions lors des AO), historique contrats / offres |
+| **Gestion des accès** | Profil par membre (administrateur, directeur de projet, responsable de lot, collaborateur, lecture seule, externe), projets accessibles, droits par module (aucun / lecture / modification) avec dérogations |
 | **Assistant IA** | Panneau latéral (Ctrl J) : points de situation, analyse des écarts, comparaison d'offres, lettres d'adjudication, ordres du jour… |
 
-Ergonomie : recherche globale et navigation clavier (**Ctrl K**), thème clair / sombre, filtre **« Mes lots uniquement »** pour les responsables de lot (le sélecteur d'utilisateur en haut à droite permet de tester les rôles).
+Ergonomie : recherche globale et navigation clavier (**Ctrl K**), thème clair / sombre, compteurs dans le menu (validations et tâches en attente), filtre **« Mes lots uniquement »** pour les responsables de lot. Le sélecteur d'utilisateur en haut à droite permet de tester les profils (ex. Jean Monnier, maître d'ouvrage en lecture seule).
 
 ### Règles de calcul (finances)
 
@@ -63,7 +68,7 @@ Les lignes de budget et les contrats doivent utiliser le **même niveau de code 
 
 ## Assistant IA
 
-Le serveur (`server/index.ts`) appelle l'API Claude d'Anthropic ; la clé reste côté serveur (`.env`), elle n'est jamais envoyée au navigateur. À chaque question, un résumé textuel du projet actif (finances CFC, contrats, avenants, factures à traiter, AO et classement des offres, planning, documents) est transmis au modèle. Si le filtre « Mes lots » est actif, seul le périmètre du responsable est transmis.
+Le serveur (`server/index.ts`, `server/extractions.ts`) appelle l'API Claude d'Anthropic ; les imports de chiffrage et suggestions de risques utilisent des réponses structurées (schéma imposé) pour obtenir des données directement exploitables ; la clé reste côté serveur (`.env`), elle n'est jamais envoyée au navigateur. À chaque question, un résumé textuel du projet actif (finances CFC, contrats, avenants, factures à traiter, AO et classement des offres, planning, documents) est transmis au modèle. Si le filtre « Mes lots » est actif, seul le périmètre du responsable est transmis.
 
 ## SharePoint
 
@@ -79,6 +84,7 @@ Dans l'ancienne application : *Export → Session complète (JSON)*. Puis dans C
 
 ## Limites actuelles et suites possibles
 
+- **Droits d'accès** : ils organisent l'interface (menus masqués, lecture seule) mais ne constituent pas une protection tant que les données restent dans le navigateur. La sécurité réelle viendra avec le serveur de données et la connexion Microsoft 365.
 - **Stockage local** : les données sont enregistrées dans le navigateur (export / restauration JSON dans les paramètres). Pour un usage à plusieurs, la prochaine étape est une base de données partagée (PostgreSQL, API) avec authentification Microsoft 365 et droits par rôle.
 - **CAN** : seuls les numéros et titres de chapitres courants sont inclus (le contenu est sous licence CRB). Import des fichiers **SIA 451** à ajouter.
 - **CFC** : extrait des groupes principaux ; compléter selon le référentiel utilisé (ou eCCC-Bât / eCCC-GC).

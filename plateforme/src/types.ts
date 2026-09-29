@@ -206,6 +206,7 @@ export interface Personne {
   organisation: string;
   /** Capacité en % d'un plein temps */
   capacite: number;
+  acces?: AccesPersonne;
 }
 
 export interface Affectation {
@@ -231,4 +232,146 @@ export interface ParametresSharePoint {
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+}
+
+// ---------------------------------------------------------------------------
+// Organigramme
+// ---------------------------------------------------------------------------
+
+export type TypeNoeud =
+  | "Maître d'ouvrage"
+  | "Direction de projet"
+  | "Direction des travaux"
+  | "Lot"
+  | "Mandataire"
+  | "Entreprise"
+  | "Commission"
+  | "Autre";
+
+export interface NoeudOrganigramme {
+  id: ID;
+  projetId: ID;
+  parentId?: ID;
+  type: TypeNoeud;
+  /** Fonction affichée, ex. « Direction de projet » ou « Lot L1 – Génie civil » */
+  titre: string;
+  /** Membre de l'équipe occupant la fonction */
+  personneId?: ID;
+  /** Entreprise ou mandataire (pour les intervenants externes) */
+  entrepriseId?: ID;
+  /** Nom libre si la personne n'est pas dans l'équipe */
+  nomLibre?: string;
+  ordre: number;
+}
+
+// ---------------------------------------------------------------------------
+// Circuits de validation
+// ---------------------------------------------------------------------------
+
+export type DecisionValidation = "Approuvé" | "Refusé" | "Modifications demandées";
+export type StatutEtape = "En attente" | DecisionValidation;
+export type StatutCircuit = "En cours" | "Approuvé" | "Refusé" | "À corriger" | "Annulé";
+export type TypeObjetValidation = "Document" | "Facture" | "Avenant" | "Autre";
+
+export interface EtapeValidation {
+  id: ID;
+  personneId: ID;
+  statut: StatutEtape;
+  date?: string;
+  commentaire?: string;
+}
+
+export interface EvenementValidation {
+  date: string;
+  personneId: ID;
+  action: string;
+  version: number;
+  commentaire?: string;
+}
+
+export interface CircuitValidation {
+  id: ID;
+  projetId: ID;
+  titre: string;
+  objet: { type: TypeObjetValidation; id?: ID; contratId?: ID };
+  url?: string;
+  version: number;
+  demandeurId: ID;
+  etapes: EtapeValidation[];
+  statut: StatutCircuit;
+  dateCreation: string;
+  echeance?: string;
+  historique: EvenementValidation[];
+}
+
+// ---------------------------------------------------------------------------
+// Risques
+// ---------------------------------------------------------------------------
+
+export type CategorieRisque = "Technique" | "Financier" | "Délais" | "Juridique" | "Environnement" | "Sécurité" | "Organisation" | "Tiers";
+export type StatutRisque = "Ouvert" | "En traitement" | "Survenu" | "Clos";
+
+export interface Risque {
+  id: ID;
+  projetId: ID;
+  code: string;
+  titre: string;
+  description: string;
+  categorie: CategorieRisque;
+  /** 1 (rare) à 5 (quasi certain) */
+  probabilite: number;
+  /** 1 (négligeable) à 5 (majeur) */
+  impact: number;
+  /** Conséquence financière estimée si le risque survient (CHF HT) */
+  impactFinancier: number;
+  proprietaireId?: ID;
+  statut: StatutRisque;
+  mesures: string;
+  echeance?: string;
+  lotId?: ID;
+  dateIdentification: string;
+}
+
+// ---------------------------------------------------------------------------
+// Tâches attribuées (actions)
+// ---------------------------------------------------------------------------
+
+export type StatutAction = "À faire" | "En cours" | "En attente" | "Terminé";
+export type PrioriteAction = "Basse" | "Normale" | "Haute" | "Urgente";
+
+export interface Action {
+  id: ID;
+  projetId: ID;
+  titre: string;
+  description?: string;
+  assigneId?: ID;
+  creeParId?: ID;
+  echeance?: string;
+  priorite: PrioriteAction;
+  statut: StatutAction;
+  /** Provenance : séance de chantier, risque, validation… */
+  origine?: string;
+  risqueId?: ID;
+  lotId?: ID;
+  dateCreation: string;
+}
+
+// ---------------------------------------------------------------------------
+// Gestion des accès
+// ---------------------------------------------------------------------------
+
+export type ModuleApp =
+  | "portefeuille" | "finances" | "appelsOffres" | "contrats" | "planning" | "taches" | "risques"
+  | "validations" | "documents" | "organigramme" | "ressources" | "entreprises" | "parametres" | "acces" | "ia";
+
+export type NiveauAcces = "aucun" | "lecture" | "ecriture";
+
+export type ProfilAcces = "Administrateur" | "Directeur de projet" | "Responsable de lot" | "Collaborateur" | "Lecture seule" | "Externe";
+
+export interface AccesPersonne {
+  profil: ProfilAcces;
+  /** Projets accessibles ; « tous » pour l'ensemble du portefeuille */
+  projets: ID[] | "tous";
+  /** Dérogations au profil, module par module */
+  modules: Partial<Record<ModuleApp, NiveauAcces>>;
 }

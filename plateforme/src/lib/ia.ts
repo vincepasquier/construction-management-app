@@ -45,3 +45,16 @@ export async function demanderAssistant(
     }
   }
 }
+
+/** Appel d'un traitement IA à réponse structurée (import de chiffrage, suggestion de risques…) */
+export async function appelIA<T>(route: string, corps: unknown, signal?: AbortSignal): Promise<T> {
+  let r: Response;
+  try {
+    r = await fetch(`/api/ia/${route}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corps), signal });
+  } catch {
+    throw new Error("Serveur de l'assistant injoignable. Vérifiez que l'application a été lancée avec LANCER.bat ou « npm run dev ».");
+  }
+  const json = (await r.json().catch(() => ({}))) as { resultat?: T; erreur?: string };
+  if (!r.ok || !json.resultat) throw new Error(json.erreur ?? `Erreur du serveur (${r.status}).`);
+  return json.resultat;
+}
