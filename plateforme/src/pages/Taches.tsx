@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarClock, CalendarRange, FileCheck2, Plus, ShieldAlert } from "lucide-react";
+import { CalendarClock, CalendarRange, FileCheck2, FileSpreadsheet, Plus, ShieldAlert } from "lucide-react";
+import { ImportPlanner } from "../components/ImportsProjet";
 import { useProjetActif, useStore } from "../store/useStore";
 import { aujourdhui, formatDate } from "../lib/format";
 import { attendDe } from "../lib/validations";
@@ -24,6 +25,7 @@ export function Taches() {
   const [filtrePersonne, setFiltrePersonne] = useState("");
   const [priorite, setPriorite] = useState("");
   const [survol, setSurvol] = useState<StatutAction | null>(null);
+  const [importPlanner, setImportPlanner] = useState(false);
   if (!d.projet) return <SansProjet />;
   const projetId = d.projet.id;
   const jour = aujourdhui();
@@ -58,7 +60,11 @@ export function Taches() {
   return (
     <>
       <EnTetePage titre="Tâches" description="Actions attribuées aux membres du projet, en complément du planning"
-        actions={<Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => setEdition(nouvelleAction(projetId, { assigneId: filtrePersonne || undefined }))}>Tâche</Bouton>} />
+        actions={<>
+          <Bouton icone={<FileSpreadsheet size={15} />} onClick={() => setImportPlanner(true)}>Importer Planner</Bouton>
+          <Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => setEdition(nouvelleAction(projetId, { assigneId: filtrePersonne || undefined }))}>Tâche</Bouton>
+        </>} />
+      {importPlanner && <ImportPlanner onFermer={() => setImportPlanner(false)} />}
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Indicateur libelle="Tâches ouvertes" valeur={ouvertes.length} />

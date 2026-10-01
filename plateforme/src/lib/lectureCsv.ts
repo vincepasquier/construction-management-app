@@ -33,8 +33,14 @@ export async function lireTableau(f: File): Promise<{ sheet: string; data: unkno
   const nom = f.name.toLowerCase();
   if (nom.endsWith(".csv") || nom.endsWith(".txt")) return [{ sheet: f.name, data: lireCsv(await f.text()) }];
   if (nom.endsWith(".xlsx") || nom.endsWith(".xlsm")) {
-    const { default: lireExcel } = await import("read-excel-file/browser");
-    return (await lireExcel(f)) as { sheet: string; data: unknown[][] }[];
+    try {
+      const { default: lireExcel } = await import("read-excel-file/browser");
+      return (await lireExcel(f)) as { sheet: string; data: unknown[][] }[];
+    } catch {
+      // Exports sans adresses de cellules (Planner…) : lecteur de secours
+      const { lireXlsx } = await import("./lectureXlsx");
+      return lireXlsx(new Uint8Array(await f.arrayBuffer()));
+    }
   }
   throw new Error("Format non pris en charge : utilisez un fichier Excel (.xlsx, .xlsm) ou CSV.");
 }

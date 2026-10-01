@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Building2, Mail, Pencil, Phone, Plus, Search } from "lucide-react";
+import { Building2, FileSpreadsheet, Mail, Pencil, Phone, Plus, Search, Users } from "lucide-react";
+import { ImportPartiesPrenantes } from "../components/ImportsProjet";
 import { useStore } from "../store/useStore";
 import { montantContrat } from "../lib/finance";
 import { formatCompact } from "../lib/format";
@@ -12,15 +13,21 @@ export function Entreprises() {
   const { entreprises, contrats, appelsOffres, ajouter, modifier, supprimer } = useStore();
   const [q, setQ] = useState("");
   const [edition, setEdition] = useState<Entreprise | null>(null);
-  const liste = entreprises.filter((e) => `${e.nom} ${e.localite} ${e.specialites.join(" ")}`.toLowerCase().includes(q.toLowerCase()));
+  const [importer, setImporter] = useState(false);
+  const [ouverte, setOuverte] = useState<string | null>(null);
+  const liste = entreprises.filter((e) => `${e.nom} ${e.localite} ${e.specialites.join(" ")} ${(e.contacts ?? []).map((c) => `${c.nom} ${c.fonction ?? ""}`).join(" ")}`.toLowerCase().includes(q.toLowerCase()));
 
   return (
     <>
-      <EnTetePage titre="Entreprises & mandataires" description="Carnet d'adresses, spécialités CFC et historique des marchés"
-        actions={<Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => setEdition({ id: nouvelId("ent"), nom: "", localite: "", contact: "", email: "", telephone: "", specialites: [] })}>Entreprise</Bouton>} />
+      <EnTetePage titre="Entreprises & parties prenantes" description="Carnet d'adresses, interlocuteurs, spécialités CFC et historique des marchés"
+        actions={<>
+          <Bouton icone={<FileSpreadsheet size={15} />} onClick={() => setImporter(true)}>Importer une liste de parties prenantes</Bouton>
+          <Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => setEdition({ id: nouvelId("ent"), nom: "", localite: "", contact: "", email: "", telephone: "", specialites: [] })}>Entreprise</Bouton>
+        </>} />
+      {importer && <ImportPartiesPrenantes onFermer={() => setImporter(false)} />}
       <div className="relative mb-4 max-w-md">
         <Search size={15} className="absolute top-2.5 left-3 text-slate-400" />
-        <Saisie value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, localité ou code CFC…" className="pl-9" />
+        <Saisie value={q} onChange={(e) => setQ(e.target.value)} placeholder="Nom, interlocuteur, localité ou code CFC…" className="pl-9" />
       </div>
       {liste.length === 0 ? <Carte><Vide icone={<Building2 size={22} />} titre="Aucune entreprise" /></Carte> : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -31,7 +38,7 @@ export function Entreprises() {
               <Carte key={e.id} className="p-5">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-semibold text-slate-900 dark:text-white">{e.nom}</h3>
+                    <h3 className="font-semibold text-slate-900 dark:text-white">{e.nom}{e.categorie && <span className="ml-2 align-middle"><Badge couleur={e.categorie === "Autorité" ? "bleu" : "gris"}>{e.categorie}</Badge></span>}</h3>
                     <p className="text-sm text-slate-500">{e.localite}{e.ide && ` · ${e.ide}`}</p>
                   </div>
                   <button onClick={() => setEdition(e)} className="text-slate-300 hover:text-slate-600"><Pencil size={15} /></button>
@@ -42,6 +49,25 @@ export function Entreprises() {
                   {e.email && <a href={`mailto:${e.email}`} className="flex items-center gap-2 hover:text-brand-600"><Mail size={13} />{e.email}</a>}
                   {e.telephone && <a href={`tel:${e.telephone}`} className="flex items-center gap-2 hover:text-brand-600"><Phone size={13} />{e.telephone}</a>}
                 </div>
+                {(e.contacts?.length ?? 0) > 0 && (
+                  <div className="mt-3">
+                    <button onClick={() => setOuverte(ouverte === e.id ? null : e.id)} className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline">
+                      <Users size={13} /> {e.contacts!.length} interlocuteur(s)
+                    </button>
+                    {ouverte === e.id && (
+                      <ul className="mt-2 space-y-2 text-xs">
+                        {e.contacts!.map((c) => (
+                          <li key={c.nom} className="rounded-lg bg-slate-50 p-2 dark:bg-slate-800/50">
+                            <p className="font-medium text-slate-800 dark:text-slate-200">{c.nom}{c.fonction && <span className="font-normal text-slate-500"> · {c.fonction}</span>}</p>
+                            {c.email && <a href={`mailto:${c.email}`} className="block text-slate-600 hover:text-brand-600 dark:text-slate-400">{c.email}</a>}
+                            {c.telephone && <a href={`tel:${c.telephone}`} className="block text-slate-600 hover:text-brand-600 dark:text-slate-400">{c.telephone}</a>}
+                            {c.remarques && <p className="text-slate-500">{c.remarques}</p>}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
                 <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3 text-center dark:border-slate-800">
                   <div><p className="num text-lg font-semibold">{ctr.length}</p><p className="text-xs text-slate-500">contrats</p></div>
                   <div><p className="num text-lg font-semibold">{formatCompact(ctr.reduce((s, c) => s + montantContrat(c), 0))}</p><p className="text-xs text-slate-500">CHF engagés</p></div>

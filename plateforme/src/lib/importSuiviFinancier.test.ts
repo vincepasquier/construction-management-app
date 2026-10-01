@@ -101,8 +101,8 @@ describe("import du classeur de suivi financier", () => {
   });
 
   it("rapproche les noms d'entreprises", () => {
-    expect(cleEntreprise("ANTIGLIO SA")).toBe(cleEntreprise("Antiglio"));
-    expect(cleEntreprise("CSD Ingénieurs SA, succursale de Fribourg")).toBe("csd ingenieurs");
+    expect(cleEntreprise("BETON ROMAND SA")).toBe(cleEntreprise("Béton Romand"));
+    expect(cleEntreprise("Morel Ingénieurs SA, succursale de Sion")).toBe("morel ingenieurs");
     expect(moisDuFichier("CL200133_Suivi_financier_global_20260713.xlsm", "2026-10-01")).toBe("2026-07");
   });
 });

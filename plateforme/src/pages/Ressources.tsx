@@ -52,7 +52,7 @@ export function Ressources() {
                   <td className="px-4 py-2">
                     <div className="flex items-center gap-2.5">
                       <Avatar nom={p.nom} />
-                      <div><p className="font-medium">{p.nom}</p><p className="text-xs text-slate-500">{p.role} · {p.capacite} %</p></div>
+                      <div><p className="font-medium">{p.nom}</p><p className="text-xs text-slate-500">{p.fonction ?? p.role} · {p.capacite} %</p></div>
                     </div>
                   </td>
                   {mois.map((m) => {
@@ -137,6 +137,8 @@ export function Ressources() {
             <Champ libelle="Capacité (%)"><Saisie type="number" value={personne.capacite} onChange={(e) => setPersonne({ ...personne, capacite: Number(e.target.value) })} /></Champ>
             <Champ libelle="E-mail"><Saisie type="email" value={personne.email} onChange={(e) => setPersonne({ ...personne, email: e.target.value })} /></Champ>
             <Champ libelle="Organisation"><Saisie value={personne.organisation} onChange={(e) => setPersonne({ ...personne, organisation: e.target.value })} /></Champ>
+            <Champ libelle="Fonction"><Saisie value={personne.fonction ?? ""} onChange={(e) => setPersonne({ ...personne, fonction: e.target.value || undefined })} placeholder="Ex. Responsable lot CVC" /></Champ>
+            <Champ libelle="Téléphone"><Saisie value={personne.telephone ?? ""} onChange={(e) => setPersonne({ ...personne, telephone: e.target.value || undefined })} /></Champ>
           </div>
         </Modale>
       )}

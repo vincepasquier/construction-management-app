@@ -21,7 +21,7 @@ export function useOccupant(n: NoeudOrganigramme) {
     nom: p?.nom ?? e?.nom ?? n.nomLibre ?? "",
     detail: p ? p.organisation : e ? [e.contact, e.localite].filter(Boolean).join(" · ") : "",
     email: p?.email ?? e?.email,
-    telephone: e?.telephone,
+    telephone: p?.telephone ?? e?.telephone,
     estPersonne: !!p,
   };
 }
