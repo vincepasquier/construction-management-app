@@ -32,8 +32,16 @@ export interface DonneesDemo {
   clotures: Cloture[];
 }
 
+/** Profil du propriétaire de l'application : directeur de projet, modification sur tous les modules */
+export const ID_PROPRIETAIRE = "p20133-vincent-pasquier";
+export const PROPRIETAIRE: Personne = {
+  id: ID_PROPRIETAIRE, nom: "Vincent Pasquier", role: "Directeur de projet", email: "", organisation: "", capacite: 100, fonction: "Chef de projet",
+  acces: { profil: "Directeur de projet", projets: "tous", modules: { parametres: "ecriture", acces: "ecriture" } },
+};
+
 export function donneesDemo(): DonneesDemo {
   const personnes: Personne[] = [
+    PROPRIETAIRE,
     { id: "per-1", nom: "Claire Rochat", role: "Directeur de projet", email: "c.rochat@exemple.ch", organisation: "Bureau d'ingénieurs", capacite: 100, acces: { profil: "Administrateur", projets: "tous", modules: {} } },
     { id: "per-2", nom: "Marc Délèze", role: "Responsable de lot", email: "m.deleze@exemple.ch", organisation: "Bureau d'ingénieurs", capacite: 100 },
     { id: "per-3", nom: "Sofia Bianchi", role: "Responsable de lot", email: "s.bianchi@exemple.ch", organisation: "Bureau d'ingénieurs", capacite: 80 },

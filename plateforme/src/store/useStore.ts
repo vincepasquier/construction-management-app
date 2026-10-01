@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ChatMessage, ID, ModuleApp, ParametresSharePoint } from "../types";
+import type { ChatMessage, ID, ModuleApp, ParametresSharePoint, Personne } from "../types";
 import { niveau } from "../lib/acces";
 import { cfcCorrespond } from "../data/cfc";
-import { donneesDemo, type DonneesDemo } from "../data/demo";
+import { donneesDemo, ID_PROPRIETAIRE, PROPRIETAIRE, type DonneesDemo } from "../data/demo";
 
 export type Collection = keyof DonneesDemo;
 type Element<C extends Collection> = DonneesDemo[C][number];
@@ -46,7 +46,7 @@ export const useStore = create<EtatApp>()(
     (set) => ({
       ...donneesDemo(),
       projetActifId: "prj-1",
-      utilisateurId: "per-1",
+      utilisateurId: ID_PROPRIETAIRE,
       sharePoint: { clientId: "", tenantId: "", hostname: "", sitePath: "", dossierRacine: "Projets" },
       conversations: {},
       vueMesLots: false,
@@ -78,12 +78,12 @@ export const useStore = create<EtatApp>()(
           }
           return patch;
         }),
-      reinitialiserDemo: () => set({ ...donneesDemo(), projetActifId: "prj-1", utilisateurId: "per-1", conversations: {} }),
+      reinitialiserDemo: () => set({ ...donneesDemo(), projetActifId: "prj-1", utilisateurId: ID_PROPRIETAIRE, conversations: {} }),
       viderTout: () => set({ ...vide, projetActifId: null, conversations: {} }),
     }),
     {
       name: "chantier-plus",
-      version: 4,
+      version: 5,
       // Nouveaux modules : les données de démonstration correspondantes sont ajoutées pour les
       // projets de démonstration encore présents, sans toucher aux données existantes.
       migrate: (ancien, version) => {
@@ -104,6 +104,15 @@ export const useStore = create<EtatApp>()(
             etat.budget = (etat.budget as { id: ID; cfc: string; reserve?: boolean }[]).map((b) =>
               b.id.startsWith("bud-") && b.cfc === "583" && b.reserve === undefined ? { ...b, reserve: true } : b);
           }
+        }
+        // v5 : profil du propriétaire (directeur de projet, modification partout), sélectionné par défaut
+        if (version < 5) {
+          const personnes = ((etat.personnes as Personne[]) ?? []).slice();
+          const existant = personnes.find((p) => p.id === ID_PROPRIETAIRE || p.nom.trim().toLowerCase() === PROPRIETAIRE.nom.toLowerCase());
+          if (existant) Object.assign(existant, { role: PROPRIETAIRE.role, acces: PROPRIETAIRE.acces });
+          else personnes.unshift(PROPRIETAIRE);
+          etat.personnes = personnes;
+          etat.utilisateurId = existant?.id ?? ID_PROPRIETAIRE;
         }
         return etat as unknown as EtatApp;
       },
