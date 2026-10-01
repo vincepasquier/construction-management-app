@@ -18,6 +18,9 @@ function totalLot(lot: Brut): number {
 export function importerAncienneSession(json: unknown): Partial<DonneesDemo> & { resume: string } {
   const racine = json as Brut;
   const data = (racine.data ?? racine) as Brut;
+  if (!["estimations", "offres", "commandes", "factures"].some((k) => Array.isArray(data[k]))) {
+    throw new Error("Ce fichier n'est pas un export de l'ancienne application (aucune estimation, offre, commande ni facture).");
+  }
   const prefixe = `imp${Date.now().toString(36)}`;
   const projetId = `${prefixe}-prj`;
   const debut = aujourdhui();

@@ -83,7 +83,7 @@ export const useStore = create<EtatApp>()(
     }),
     {
       name: "chantier-plus",
-      version: 5,
+      version: 6,
       // Nouveaux modules : les données de démonstration correspondantes sont ajoutées pour les
       // projets de démonstration encore présents, sans toucher aux données existantes.
       migrate: (ancien, version) => {
@@ -113,6 +113,13 @@ export const useStore = create<EtatApp>()(
           else personnes.unshift(PROPRIETAIRE);
           etat.personnes = personnes;
           etat.utilisateurId = existant?.id ?? ID_PROPRIETAIRE;
+        }
+        // v6 : retire les projets vides créés en chargeant un fichier de projet avec « Importer une session »
+        if (version < 6 && Array.isArray(etat.projets)) {
+          const utilise = (id: ID) => COLLECTIONS.some((c) => c !== "projets" && Array.isArray(etat[c]) && (etat[c] as { projetId?: ID }[]).some((x) => x.projetId === id));
+          etat.projets = (etat.projets as { id: ID; code: string; description?: string }[]).filter((p) =>
+            !(p.code === "IMPORT" && p.description?.startsWith("Importé depuis l'ancienne application") && !utilise(p.id)));
+          if (!(etat.projets as { id: ID }[]).some((p) => p.id === etat.projetActifId)) etat.projetActifId = (etat.projets as { id: ID }[])[0]?.id ?? null;
         }
         return etat as unknown as EtatApp;
       },

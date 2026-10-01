@@ -9,7 +9,8 @@ import type { DonneesDemo } from "../data/demo";
 import type { ParametresSharePoint } from "../types";
 
 export function Parametres() {
-  const { sharePoint, setSharePoint, remplacerDonnees, fusionnerDonnees, reinitialiserDemo, viderTout, setProjetActif } = useStore();
+  const { sharePoint, setSharePoint, remplacerDonnees, fusionnerDonnees, reinitialiserDemo, viderTout, setProjetActif, projets, projetActifId } = useStore();
+  const projetActif = projets.find((p) => p.id === projetActifId);
   const [sp, setSp] = useState<ParametresSharePoint>(sharePoint);
   const [sante, setSante] = useState<{ ok: boolean; cleConfiguree?: boolean } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -22,6 +23,33 @@ export function Parametres() {
   }, []);
 
   const lireJson = async (f: File) => JSON.parse(await f.text()) as unknown;
+
+  /** Fichier de projet Chantier+ ({ format, donnees }) ? */
+  const estFichierProjet = (j: unknown): j is { donnees: Partial<DonneesDemo> } =>
+    !!j && typeof j === "object" && Array.isArray((j as { donnees?: { projets?: unknown } }).donnees?.projets);
+
+  /** Ajoute ou met à jour les projets d'un fichier, sans toucher aux autres projets */
+  const ajouterProjets = (j: unknown) => {
+    if (!estFichierProjet(j)) throw new Error("Ce fichier n'est pas un fichier de projet Chantier+");
+    const projets = j.donnees.projets ?? [];
+    if (!projets.length) throw new Error("Aucun projet dans ce fichier");
+    const existants = useStore.getState().projets.filter((p) => projets.some((x) => x.id === p.id));
+    if (existants.length && !confirm(`Le projet ${existants.map((p) => p.code).join(", ")} existe déjà : le remplacer par celui du fichier ?`)) return;
+    // Les données existantes de ces projets sont remplacées ; personnes et entreprises sont fusionnées
+    const ids = new Set(projets.map((p) => p.id));
+    useStore.setState((etat) => {
+      const patch: Record<string, unknown> = {};
+      for (const c of COLLECTIONS) {
+        const actuels = etat[c] as { id: string; projetId?: string }[];
+        const ajout = (j.donnees[c] ?? []) as { id: string }[];
+        const nouveaux = new Set(ajout.map((x) => x.id));
+        patch[c] = [...actuels.filter((x) => !nouveaux.has(x.id) && !(x.projetId && ids.has(x.projetId)) && !(c === "projets" && ids.has(x.id))), ...ajout];
+      }
+      return patch;
+    });
+    setProjetActif(projets[0].id);
+    setMessage(`Projet ajouté : ${projets.map((p) => `${p.code} ${p.nom}`).join(", ")}. Les autres projets sont conservés.`);
+  };
 
   return (
     <>
@@ -76,25 +104,7 @@ export function Parametres() {
             <input ref={fichierProjet} type="file" accept=".json" hidden onChange={async (e) => {
               const f = e.target.files?.[0]; if (!f) return;
               try {
-                const j = (await lireJson(f)) as { donnees?: Partial<DonneesDemo> };
-                const projets = j.donnees?.projets ?? [];
-                if (!projets.length) throw new Error("Aucun projet dans ce fichier");
-                const existants = useStore.getState().projets.filter((p) => projets.some((x) => x.id === p.id));
-                if (existants.length && !confirm(`Le projet ${existants.map((p) => p.code).join(", ")} existe déjà : le remplacer par celui du fichier ?`)) return;
-                // Les données existantes de ces projets sont remplacées ; personnes et entreprises sont fusionnées
-                const ids = new Set(projets.map((p) => p.id));
-                useStore.setState((etat) => {
-                  const patch: Record<string, unknown> = {};
-                  for (const c of COLLECTIONS) {
-                    const actuels = etat[c] as { id: string; projetId?: string }[];
-                    const ajout = (j.donnees![c] ?? []) as { id: string }[];
-                    const nouveaux = new Set(ajout.map((x) => x.id));
-                    patch[c] = [...actuels.filter((x) => !nouveaux.has(x.id) && !(x.projetId && ids.has(x.projetId)) && !(c === "projets" && ids.has(x.id))), ...ajout];
-                  }
-                  return patch;
-                });
-                setProjetActif(projets[0].id);
-                setMessage(`Projet ajouté : ${projets.map((p) => `${p.code} ${p.nom}`).join(", ")}. Les autres projets sont conservés.`);
+                ajouterProjets(await lireJson(f));
               } catch (er) { alert(`Import impossible : ${er instanceof Error ? er.message : er}`); }
               e.target.value = "";
             }} />
@@ -109,7 +119,9 @@ export function Parametres() {
             <input ref={fichierAncien} type="file" accept=".json" hidden onChange={async (e) => {
               const f = e.target.files?.[0]; if (!f) return;
               try {
-                const { resume, ...donnees } = importerAncienneSession(await lireJson(f));
+                const j = await lireJson(f);
+                if (estFichierProjet(j)) { ajouterProjets(j); e.target.value = ""; return; }
+                const { resume, ...donnees } = importerAncienneSession(j);
                 fusionnerDonnees(donnees);
                 setProjetActif(donnees.projets![0].id);
                 setMessage(`Import réussi : ${resume}. Complétez la fiche projet (code, dates, maître d'ouvrage).`);
@@ -122,6 +134,20 @@ export function Parametres() {
 
         <Carte titre="Zone sensible" className="lg:col-span-2">
           <div className="flex flex-wrap gap-2 p-5">
+            {projetActif && (
+              <Bouton variante="danger" icone={<Trash2 size={15} />} onClick={() => {
+                if (!confirm(`Supprimer définitivement le projet « ${projetActif.code} ${projetActif.nom} » et toutes ses données (budget, contrats, tâches, documents…) ?`)) return;
+                useStore.setState((etat) => {
+                  const patch: Record<string, unknown> = {};
+                  for (const c of COLLECTIONS) {
+                    patch[c] = (etat[c] as { id: string; projetId?: string }[]).filter((x) => (c === "projets" ? x.id !== projetActif.id : x.projetId !== projetActif.id));
+                  }
+                  const reste = etat.projets.filter((x) => x.id !== projetActif.id);
+                  return { ...patch, projetActifId: reste[0]?.id ?? null };
+                });
+                setMessage(`Projet ${projetActif.code} supprimé.`);
+              }}>Supprimer le projet {projetActif.code}</Bouton>
+            )}
             <Bouton icone={<RotateCcw size={15} />} onClick={() => confirm("Remplacer toutes les données par le jeu de démonstration ?") && reinitialiserDemo()}>Recharger la démonstration</Bouton>
             <Bouton variante="danger" icone={<Trash2 size={15} />} onClick={() => confirm("Supprimer définitivement toutes les données de ce navigateur ? Pensez à exporter une sauvegarde.") && viderTout()}>Tout effacer</Bouton>
           </div>
