@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Cloud, Database, Download, History, RotateCcw, Sparkles, Trash2, Upload } from "lucide-react";
-import { exporterDonnees, useStore } from "../store/useStore";
+import { Cloud, Database, Download, FolderPlus, History, RotateCcw, Sparkles, Trash2, Upload } from "lucide-react";
+import { COLLECTIONS, exporterDonnees, useStore } from "../store/useStore";
 import { telecharger } from "../lib/csv";
 import { importerAncienneSession } from "../lib/importAncien";
 import { aujourdhui } from "../lib/format";
@@ -15,6 +15,7 @@ export function Parametres() {
   const [message, setMessage] = useState<string | null>(null);
   const fichierJson = useRef<HTMLInputElement>(null);
   const fichierAncien = useRef<HTMLInputElement>(null);
+  const fichierProjet = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetch("/api/sante").then((r) => r.json()).then(setSante).catch(() => setSante({ ok: false }));
@@ -72,7 +73,34 @@ export function Parametres() {
               e.target.value = "";
             }} />
             <Bouton icone={<Upload size={15} />} onClick={() => fichierJson.current?.click()}>Restaurer une sauvegarde</Bouton>
+            <input ref={fichierProjet} type="file" accept=".json" hidden onChange={async (e) => {
+              const f = e.target.files?.[0]; if (!f) return;
+              try {
+                const j = (await lireJson(f)) as { donnees?: Partial<DonneesDemo> };
+                const projets = j.donnees?.projets ?? [];
+                if (!projets.length) throw new Error("Aucun projet dans ce fichier");
+                const existants = useStore.getState().projets.filter((p) => projets.some((x) => x.id === p.id));
+                if (existants.length && !confirm(`Le projet ${existants.map((p) => p.code).join(", ")} existe déjà : le remplacer par celui du fichier ?`)) return;
+                // Les données existantes de ces projets sont remplacées ; personnes et entreprises sont fusionnées
+                const ids = new Set(projets.map((p) => p.id));
+                useStore.setState((etat) => {
+                  const patch: Record<string, unknown> = {};
+                  for (const c of COLLECTIONS) {
+                    const actuels = etat[c] as { id: string; projetId?: string }[];
+                    const ajout = (j.donnees![c] ?? []) as { id: string }[];
+                    const nouveaux = new Set(ajout.map((x) => x.id));
+                    patch[c] = [...actuels.filter((x) => !nouveaux.has(x.id) && !(x.projetId && ids.has(x.projetId)) && !(c === "projets" && ids.has(x.id))), ...ajout];
+                  }
+                  return patch;
+                });
+                setProjetActif(projets[0].id);
+                setMessage(`Projet ajouté : ${projets.map((p) => `${p.code} ${p.nom}`).join(", ")}. Les autres projets sont conservés.`);
+              } catch (er) { alert(`Import impossible : ${er instanceof Error ? er.message : er}`); }
+              e.target.value = "";
+            }} />
+            <Bouton icone={<FolderPlus size={15} />} onClick={() => fichierProjet.current?.click()}>Ajouter un projet depuis un fichier</Bouton>
           </div>
+          <p className="px-5 pb-5 -mt-2 text-xs text-slate-500">« Restaurer » remplace toutes les données ; « Ajouter un projet » ajoute ou met à jour les projets du fichier sans toucher aux autres.</p>
         </Carte>
 
         <Carte titre={<span className="flex items-center gap-2"><History size={16} /> Import depuis l'ancienne application</span>} sousTitre="Fichier JSON « Export session » de l'application de suivi financier">

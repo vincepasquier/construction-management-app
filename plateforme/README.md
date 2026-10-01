@@ -1,6 +1,6 @@
 # Chantier+ — plateforme de pilotage de projets d'infrastructure
 
-Application web pour **directeurs de projet** et **responsables de lot** : finances par CFC, appels d'offres selon le CAN, contrats d'entreprise (SIA 118), factures, planning, documents SharePoint, ressources, avec un **assistant IA** (Claude) qui connaît les données du projet.
+Application web pour **directeurs de projet** et **responsables de lot** : suivi financier par position (mutations, prévisions d'atterrissage, clôtures mensuelles), appels d'offres selon le CAN, contrats d'entreprise (SIA 118), factures, planning, documents SharePoint, ressources, avec un **assistant IA** (Claude) qui connaît les données du projet.
 
 ## Démarrage
 
@@ -40,19 +40,19 @@ L'application démarre avec un **jeu de démonstration fictif** (deux projets : 
 |---|---|
 | **Portefeuille** | Tous les projets accessibles : budget, prévision, écart, avancement, santé ; « mon travail » (mes tâches, validations en attente, mes risques) |
 | **Tableau de bord** | Indicateurs du projet, **frise des phases SIA 112** (projet et chaque lot : phase en cours en un clic, dates par phase, vue calendrier), courbe en S, alertes, lots et responsables, jalons |
-| **Finances CFC** | Arborescence CFC (SN 506 500) : budget, engagé, avenants en attente, facturé, prévision, écart ; budget détaillé ; export Excel ; **import d'un chiffrage quelconque par l'IA** (Excel, CSV, PDF, photo, texte) converti en lignes CFC vérifiables avant import |
+| **Finances** | Budget par **position** (lot → position → sous-position → étape, code CFC en attribut, réserve). **Atterrissage = engagé + attendu + reste à engager + ajustements**, scénario défavorable, écart, réserve disponible. **Mutations** équilibrées avec validation ; **prévisions** (estimations internes, plus-values, risques pondérés, opportunités, corrections de commande) ; commandes et offres **réparties sur plusieurs positions**, conversion offre → commande ; **import des factures Power BI** (sur commande / hors commande, affectation guidée) ; **clôtures mensuelles** et graphique en cascade expliquant la variation ; **rapport mensuel** imprimable en PDF ; **import du classeur Excel de suivi financier** avec contrôle des totaux ; import d'un chiffrage par l'IA |
 | **Marchés & appels d'offres** | Parcours guidé en 7 étapes (descriptif → consultation → offres → adjudication → contrat → facturation → clôture) avec la **prochaine action en un clic**. Descriptif par positions **CAN** (saisie ou import CSV), comparatif des prix unitaires (prix le plus bas, écarts > 30 % vs médiane, positions non chiffrées), rabais / escompte, **évaluation multicritère** pondérée, adjudication → contrat créé automatiquement ; marchés de gré à gré |
 | **Import CRBX (SIA 451)** | Le CRBX envoyé aux entreprises crée le descriptif (positions CAN, textes, unités, quantités par subdivision). Les CRBX rentrés (Messerli, BauBit, Sorba…) deviennent des offres, avec l'entreprise reconnue ou ajoutée au carnet, et sont contrôlés : total recalculé ligne par ligne et comparé au total annoncé, positions manquantes ou ajoutées, quantités modifiées, positions non chiffrées. Récapitulatif par chapitre CAN |
 | **Contrats & factures** | Contrats d'entreprise, mandats, fournitures ; avenants ; situations, régies, décompte final ; TVA ; retenue de garantie ; contrôle de dépassement ; « Faire valider » sur factures et avenants |
 | **Planning** | Gantt interactif (glisser pour décaler, étirer pour la durée), dépendances, jalons, retards détectés automatiquement |
-| **Tâches** | Actions attribuées aux membres : tableau glisser-déposer (à faire / en cours / en attente / terminé), vue **par personne** (avec ses tâches de planning, validations et risques), « mes tâches » ; priorités, échéances, origine (séance, risque…) |
+| **Tâches** | **Import d'un plan Planner** (export Excel). Actions attribuées aux membres : tableau glisser-déposer (à faire / en cours / en attente / terminé), vue **par personne** (avec ses tâches de planning, validations et risques), « mes tâches » ; priorités, échéances, origine (séance, risque…) |
 | **Risques** | Matrice probabilité × impact cliquable, registre, criticité, exposition financière pondérée, **suivi par responsable**, création de tâches de traitement, **suggestions de risques par l'IA** |
 | **Validations** | Circuits de validation séquentiels (documents, factures, avenants) : modèles de circuits, décision (approuver / demander des modifications / refuser) avec commentaire, nouvelles versions, historique ; l'issue met à jour la facture ou l'avenant |
 | **Autorisations & foncier** | Permis et approbations des plans (dépôt, enquête, oppositions, décision, validité), **conditions des préavis** avec responsable et échéance (→ tâche en un clic), **servitudes et emprises par parcelle** (propriétaire, statut jusqu'à l'inscription au RF, indemnités), échéances des 60 prochains jours |
 | **Documents** | Registre documentaire (catégories, versions, liens, état de validation) + navigateur **SharePoint** (parcourir, rechercher, téléverser, créer des dossiers, ajouter au registre) |
 | **Organigramme** | Création guidée (génération depuis le projet, modèle type ou à partir de zéro), édition directe, annuaire des intervenants ; **toujours accessible en un clic** (bouton en haut de l'écran, Ctrl Maj O), imprimable |
 | **Ressources** | Équipe et rôles, plan de charge sur 12 mois (surcharges en rouge), affectations, organisation des lots et responsables |
-| **Entreprises** | Carnet d'adresses, spécialités CFC (suggestions lors des AO), historique contrats / offres |
+| **Entreprises & parties prenantes** | Carnet d'adresses avec interlocuteurs, autorités et riverains ; **import de la liste des parties prenantes** (CSV/Excel SharePoint : collaborateurs internes → équipe, autres → contacts) ; spécialités CFC, historique contrats / offres |
 | **Gestion des accès** | Profil par membre (administrateur, directeur de projet, responsable de lot, collaborateur, lecture seule, externe), projets accessibles, droits par module (aucun / lecture / modification) avec dérogations |
 | **Assistant IA** | Panneau latéral (Ctrl J) : points de situation, analyse des écarts, comparaison d'offres, lettres d'adjudication, ordres du jour… |
 
@@ -60,13 +60,26 @@ Ergonomie : recherche globale et navigation clavier (**Ctrl K**), thème clair /
 
 ### Règles de calcul (finances)
 
-- **Montant actualisé** d'un contrat = montant initial + avenants approuvés.
-- **Facturé** = factures contrôlées, approuvées ou payées (hors contestées).
-- **Retenue de garantie** = taux du contrat × acomptes / situations validés (hors décompte final).
-- **Prévision** (coût final probable) d'un code CFC : contrats + avenants en attente s'il y a un contrat ; sinon meilleure offre reçue ; sinon estimation de l'AO ; sinon budget.
-- **Écart** = budget − prévision (négatif = dépassement).
+Par position (sous-position × étape), puis cumulé par lot, étape et projet :
 
-Les lignes de budget et les contrats doivent utiliser le **même niveau de code CFC** (par ex. 461 des deux côtés) pour que la prévision remplace bien le budget.
+- **Budget révisé** = budget initial + mutations **validées** (une mutation ne change pas le total du projet).
+- **Engagé** = commandes (montant initial + avenants approuvés) + factures hors commande.
+- **Attendu** = offres en cours, reçues ou retenues + avenants demandés + meilleure offre des appels d'offres en cours.
+- **Reste à engager** : règle choisie par position — *automatique* (comme le classeur Excel : budget restant tant que rien n'est commandé ni prévu, puis position soldée), *budget restant*, *soldée* ou *montant estimé*.
+- **Ajustements** = estimations internes, plus-values, risques et corrections × probabilité, moins les opportunités pondérées.
+- **Atterrissage** = engagé + attendu + reste à engager + ajustements ; **défavorable** = risques à 100 %, sans opportunités.
+- **Écart** = budget révisé − atterrissage (négatif = dépassement). **Réserve disponible** = budget des positions de réserve − ce qui y est engagé, attendu ou prévu.
+- Une commande sans répartition est imputée sur les positions du même code CFC ; à défaut, elle apparaît sur une position « hors budget ».
+- **Facturé** = factures contrôlées, approuvées ou payées (hors contestées) et factures hors commande ; **retenue de garantie** = taux du contrat × acomptes validés.
+
+### Reprise d'un projet existant
+
+- *Finances › Importer un classeur de suivi* : feuilles BUDGET, MUTATIONS, COMMANDES, OFFRES, IMPORT_SUR_CMD et IMPORT_HORS_CMD ; un tableau compare les totaux du classeur et de Chantier+ et signale les incohérences (montant saisi ≠ montant imputé, numéros en double…). Une clôture de reprise est créée.
+- *Finances › Factures* : export Power BI mensuel (les factures déjà importées sont reconnues).
+- *Entreprises › Importer une liste de parties prenantes* puis *Tâches › Importer Planner*.
+- *Paramètres › Ajouter un projet depuis un fichier* : ajoute ou met à jour un projet complet (.json) sans toucher aux autres.
+
+Les fichiers sont lus dans le navigateur ; ils ne sont envoyés à aucun serveur.
 
 ## Assistant IA
 
@@ -90,6 +103,7 @@ Dans l'ancienne application : *Export → Session complète (JSON)*. Puis dans C
 - **Stockage local** : les données sont enregistrées dans le navigateur (export / restauration JSON dans les paramètres). Pour un usage à plusieurs, la prochaine étape est une base de données partagée (PostgreSQL, API) avec authentification Microsoft 365 et droits par rôle.
 - **CAN / CRBX** : l'import lit les fichiers CRBX / SIA 451 (descriptif et offres). Les textes complets des positions CAN ne figurent pas tous dans ces fichiers (ils proviennent du catalogue CRB sous licence) : certains libellés restent courts. L'export d'un CRBX depuis Chantier+ n'est pas encore disponible.
 - **CFC** : extrait des groupes principaux ; compléter selon le référentiel utilisé (ou eCCC-Bât / eCCC-GC).
+- **Finances** : prévision de trésorerie (répartition du reste à facturer dans le temps) et lecture directe de D365 à venir ; l'import Power BI couvre le besoin en attendant.
 - Pistes : chemin critique calculé, révision des prix (indices), gestion des garanties bancaires, PV de séance, tableau de bord maître d'ouvrage, application mobile de chantier.
 
 ## Structure

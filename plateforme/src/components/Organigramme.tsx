@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Mail, Pencil, Phone, Plus, Trash2 } from "lucide-react";
 import { useStore } from "../store/useStore";
 import { COULEUR_NOEUD, enfants } from "../lib/organigramme";
@@ -62,9 +63,21 @@ function Carte({ n, edition, onAjouter, onModifier, onSupprimer }: { n: NoeudOrg
   );
 }
 
+function Cadre({ liste, ...p }: { liste: NoeudOrganigramme[] } & Proprietes) {
+  return (
+    <div className="flex flex-col gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-2 dark:border-slate-600 dark:bg-slate-800/30">
+      {liste.map((x) => <Carte key={x.id} n={x} {...p} />)}
+    </div>
+  );
+}
+
 function Branche({ n, ...p }: { n: NoeudOrganigramme } & Proprietes) {
   const sous = enfants(p.noeuds, n.id);
-  const feuilles = sous.length > 4 && sous.every((x) => enfants(p.noeuds, x.id).length === 0);
+  const sansSuite = sous.filter((x) => enfants(p.noeuds, x.id).length === 0);
+  const avecSuite = sous.filter((x) => enfants(p.noeuds, x.id).length > 0);
+  const feuilles = sous.length > 4 && !avecSuite.length;
+  // Branches mixtes : les postes sans subordonné sont réunis dans un cadre, à côté des branches
+  const mixte = !feuilles && avecSuite.length > 0 && sansSuite.length >= 3;
   return (
     <li>
       <Carte n={n} {...p} />
@@ -72,10 +85,13 @@ function Branche({ n, ...p }: { n: NoeudOrganigramme } & Proprietes) {
         // Des subordonnés de même niveau sans descendance sont regroupés dans un cadre, pour garder l'arbre compact
         <div className="relative pt-[22px]">
           <span className="absolute top-0 left-1/2 h-[22px] border-l-[1.5px] border-slate-300 dark:border-slate-600" />
-          <div className="flex flex-col gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-2 dark:border-slate-600 dark:bg-slate-800/30">
-            {sous.map((x) => <Carte key={x.id} n={x} {...p} />)}
-          </div>
+          <Cadre liste={sous} {...p} />
         </div>
+      ) : mixte ? (
+        <ul>
+          <li><Cadre liste={sansSuite} {...p} /></li>
+          {avecSuite.map((x) => <Branche key={x.id} n={x} {...p} />)}
+        </ul>
       ) : (
         <ul>{sous.map((x) => <Branche key={x.id} n={x} {...p} />)}</ul>
       ))}
@@ -88,8 +104,20 @@ export function ArbreOrganigramme(p: Proprietes) {
     // Nœuds dont le parent a disparu : affichés comme racines pour ne rien perdre
     p.noeuds.filter((x) => x.parentId && !p.noeuds.some((y) => y.id === x.parentId)),
   );
+  const ref = useRef<HTMLDivElement>(null);
+  // Organigramme plus large que l'écran : la vue s'ouvre centrée sur la racine
+  useEffect(() => {
+    const el = ref.current;
+    let parent = el?.parentElement;
+    while (parent && parent.scrollWidth <= parent.clientWidth) parent = parent.parentElement;
+    const racine = el?.querySelector("li > div");
+    if (!parent || !racine) return;
+    const r = racine.getBoundingClientRect();
+    const pr = parent.getBoundingClientRect();
+    parent.scrollLeft += r.left + r.width / 2 - (pr.left + pr.width / 2);
+  }, [p.noeuds.length]);
   return (
-    <div className={cx("org min-w-max px-6 py-6")}>
+    <div ref={ref} className={cx("org min-w-max px-6 py-6")}>
       <ul>{racines.map((r) => <Branche key={r.id} n={r} {...p} />)}</ul>
     </div>
   );
