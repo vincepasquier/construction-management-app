@@ -7,7 +7,7 @@ import type { ModuleApp } from "../../types";
 export const NAVIGATION = [
   { a: "/", libelle: "Portefeuille", icone: LayoutGrid, groupe: "Général", module: "portefeuille" },
   { a: "/projet", libelle: "Tableau de bord", icone: BarChart3, groupe: "Projet", module: "portefeuille" },
-  { a: "/finances", libelle: "Finances CFC", icone: Wallet, groupe: "Projet", module: "finances" },
+  { a: "/finances", libelle: "Finances", icone: Wallet, groupe: "Projet", module: "finances" },
   { a: "/appels-offres", libelle: "Marchés & appels d'offres", icone: Gavel, groupe: "Projet", module: "appelsOffres" },
   { a: "/contrats", libelle: "Contrats & factures", icone: FileSignature, groupe: "Projet", module: "contrats" },
   { a: "/planning", libelle: "Planning", icone: CalendarRange, groupe: "Projet", module: "planning" },

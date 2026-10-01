@@ -14,6 +14,7 @@ const MODELES: { nom: string; type: TypeObjetValidation; roles: Role[] }[] = [
   { nom: "Facture / situation", type: "Facture", roles: ["Conducteur de travaux", "Responsable de lot", "Directeur de projet"] },
   { nom: "Avenant", type: "Avenant", roles: ["Responsable de lot", "Directeur de projet", "Maître d'ouvrage"] },
   { nom: "PV de séance / courrier", type: "Document", roles: ["Directeur de projet"] },
+  { nom: "Mutation budgétaire", type: "Mutation", roles: ["Directeur de projet", "Maître d'ouvrage"] },
 ];
 
 type Vue = "moi" | "demandes" | "tous";
@@ -52,12 +53,18 @@ export function Validations() {
       const ctr = contrats.find((x) => x.id === c.objet.contratId);
       if (ctr) modifier("contrats", ctr.id, { avenants: ctr.avenants.map((a) => (a.id === c.objet.id ? { ...a, statut: c.statut === "Approuvé" ? "Approuvé" : "Refusé" } : a)) });
     }
+    if (c.objet.type === "Mutation" && c.objet.id) {
+      const dernier = [...c.etapes].reverse().find((e) => e.statut !== "En attente");
+      modifier("mutations", c.objet.id, c.statut === "Approuvé"
+        ? { statut: "Validée", valideurId: dernier?.personneId, dateValidation: aujourdhui() }
+        : { statut: "Refusée", valideurId: dernier?.personneId, dateValidation: aujourdhui() });
+    }
   };
   const enregistrer = (c: CircuitValidation) => { modifier("validations", c.id, c); effets(c); };
 
   return (
     <>
-      <EnTetePage titre="Validations" description="Circuits de validation des documents, factures et avenants"
+      <EnTetePage titre="Validations" description="Circuits de validation des documents, factures, avenants et mutations budgétaires"
         actions={<Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => utilisateurId && setNouveau(brouillon(projetId, utilisateurId, "Document"))}>Nouveau circuit</Bouton>} />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -85,7 +92,11 @@ export function Validations() {
       )}
 
       {nouveau && (
-        <NouveauCircuit initial={nouveau} onFermer={() => setNouveau(null)} onCreer={(c) => { ajouter("validations", c); setVue("demandes"); }}
+        <NouveauCircuit initial={nouveau} onFermer={() => setNouveau(null)} onCreer={(c) => {
+          ajouter("validations", c);
+          if (c.objet.type === "Mutation" && c.objet.id) modifier("mutations", c.objet.id, { statut: "Soumise" });
+          setVue("demandes");
+        }}
           factures={factures.filter((f) => f.projetId === projetId)} personnes={personnes} />
       )}
     </>
@@ -238,6 +249,10 @@ function NouveauCircuit({ initial, onFermer, onCreer, factures, personnes }: {
       const ctr = contratsProjet.find((y) => y.id === f?.contratId);
       return { ...x, objet: { type: "Facture", id: f?.id, contratId: ctr?.id }, titre: f ? `${f.type} ${f.numero} – ${entreprises.find((e) => e.id === ctr?.entrepriseId)?.nom ?? ""}` : x.titre };
     }
+    if (x.objet.type === "Mutation") {
+      const m = d.mutations.find((y) => y.id === valeur);
+      return { ...x, objet: { type: "Mutation", id: m?.id }, titre: m ? `Mutation ${m.numero} – ${m.motif}` : x.titre };
+    }
     if (x.objet.type === "Avenant") {
       const y = avenants.find((z) => z.a.id === valeur);
       return { ...x, objet: { type: "Avenant", id: y?.a.id, contratId: y?.ctr.id }, titre: y ? `Avenant ${y.a.numero} ${y.ctr.numero} – ${y.a.objet}` : x.titre };
@@ -289,11 +304,11 @@ function NouveauCircuit({ initial, onFermer, onCreer, factures, personnes }: {
           <p className="text-sm font-semibold">1. Que faut-il valider ?</p>
           <Champ libelle="Type">
             <Liste value={c.objet.type} onChange={(e) => setC({ ...c, objet: { type: e.target.value as TypeObjetValidation }, titre: "", url: undefined })}>
-              {(["Document", "Facture", "Avenant", "Autre"] as const).map((t) => <option key={t}>{t}</option>)}
+              {(["Document", "Facture", "Avenant", "Mutation", "Autre"] as const).map((t) => <option key={t}>{t}</option>)}
             </Liste>
           </Champ>
           {c.objet.type !== "Autre" && (
-            <Champ libelle={c.objet.type === "Document" ? "Document du registre" : c.objet.type === "Facture" ? "Facture" : "Avenant en attente"}>
+            <Champ libelle={c.objet.type === "Document" ? "Document du registre" : c.objet.type === "Facture" ? "Facture" : c.objet.type === "Mutation" ? "Mutation à valider" : "Avenant en attente"}>
               <Liste value={c.objet.id ?? ""} onChange={(e) => choisirObjet(e.target.value)}>
                 <option value="">Choisir…</option>
                 {c.objet.type === "Document" && d.documents.map((x) => <option key={x.id} value={x.id}>{x.nom} (v{x.version})</option>)}
@@ -302,6 +317,7 @@ function NouveauCircuit({ initial, onFermer, onCreer, factures, personnes }: {
                   return <option key={f.id} value={f.id}>{ctr?.numero} {f.numero} – {formatCHF(f.montantHT)} ({f.statut})</option>;
                 })}
                 {c.objet.type === "Avenant" && avenants.map(({ ctr, a }) => <option key={a.id} value={a.id}>{ctr.numero} {a.numero} – {a.objet}</option>)}
+                {c.objet.type === "Mutation" && d.mutations.filter((m) => m.statut === "Brouillon" || m.statut === "Soumise").map((m) => <option key={m.id} value={m.id}>{m.numero} – {m.motif}</option>)}
               </Liste>
             </Champ>
           )}

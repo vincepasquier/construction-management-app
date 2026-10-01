@@ -56,6 +56,21 @@ export interface Lot {
   datesPhases?: Partial<Record<PhaseSIA, { debut?: string; fin?: string }>>;
 }
 
+/** Règle de calcul du reste à engager d'une position */
+export type ModeResteAEngager =
+  /** Règle du classeur : budget restant tant que rien n'est engagé ni prévu, puis soldée */
+  | "auto"
+  /** Budget révisé − engagé − attendu (jamais négatif) */
+  | "budget"
+  /** Plus rien à engager */
+  | "solde"
+  /** Montant estimé par le responsable */
+  | "saisi";
+
+/**
+ * Position budgétaire. Montant = budget initial approuvé ; les évolutions passent par des mutations.
+ * Structure : lot → position (groupe) → sous-position (libellé) → étape ; le code CFC est un attribut.
+ */
 export interface BudgetLigne {
   id: ID;
   projetId: ID;
@@ -63,6 +78,126 @@ export interface BudgetLigne {
   libelle: string;
   montant: number;
   notes?: string;
+  lotId?: ID;
+  /** Regroupement (« Position 0 » du classeur), ex. « Production de chaleur + CVS » */
+  groupe?: string;
+  /** Étape de réalisation, ex. « 1 » */
+  etape?: string;
+  /** Position de réserve (divers et imprévus) */
+  reserve?: boolean;
+  /** Identifiant d'origine (classeur Excel, ERP…) */
+  refExterne?: string;
+  raeMode?: ModeResteAEngager;
+  raeMontant?: number;
+  raeCommentaire?: string;
+  /** Dernière revue du reste à engager par le responsable */
+  dateRevue?: string;
+}
+
+/** Part d'un montant imputée à une position budgétaire */
+export interface Repartition {
+  budgetId: ID;
+  montant: number;
+}
+
+export type StatutMutation = "Brouillon" | "Soumise" | "Validée" | "Refusée";
+
+/** Transfert de budget entre positions : la somme des lignes est nulle (débits négatifs, crédits positifs) */
+export interface Mutation {
+  id: ID;
+  projetId: ID;
+  numero: string;
+  motif: string;
+  date: string;
+  statut: StatutMutation;
+  demandeurId?: ID;
+  valideurId?: ID;
+  dateValidation?: string;
+  lignes: Repartition[];
+  remarques?: string;
+}
+
+export type TypeOffreAttendue = "Offre ferme" | "Offre indicative" | "Estimation entreprise";
+export type StatutOffreAttendue = "En cours" | "Reçue" | "Retenue" | "Commandée" | "Refusée" | "Expirée";
+
+/** Offre reçue ou attendue, pas encore commandée : alimente l'« attendu » */
+export interface OffreAttendue {
+  id: ID;
+  projetId: ID;
+  numero: string;
+  fournisseur: string;
+  entrepriseId?: ID;
+  description: string;
+  date?: string;
+  type: TypeOffreAttendue;
+  statut: StatutOffreAttendue;
+  montant: number;
+  repartition: Repartition[];
+  contratId?: ID;
+  remarques?: string;
+}
+
+export type TypeAjustement = "Estimation interne" | "Plus-value attendue" | "Risque" | "Opportunité" | "Correction de commande";
+export type StatutAjustement = "Active" | "Convertie" | "Abandonnée";
+
+/** Estimation prévisionnelle qui ajuste l'atterrissage (montant positif ; une opportunité le réduit) */
+export interface Ajustement {
+  id: ID;
+  projetId: ID;
+  type: TypeAjustement;
+  libelle: string;
+  montant: number;
+  /** Probabilité en % (100 par défaut) */
+  probabilite: number;
+  statut: StatutAjustement;
+  repartition: Repartition[];
+  auteurId?: ID;
+  date: string;
+  /** Date prévue d'engagement */
+  echeance?: string;
+  justification?: string;
+  risqueId?: ID;
+  contratId?: ID;
+  dateRevue?: string;
+}
+
+/** Facture sans commande (import Power BI / ERP), affectée à une ou plusieurs positions */
+export interface FactureHorsCommande {
+  id: ID;
+  projetId: ID;
+  numero: string;
+  numeroFournisseur?: string;
+  fournisseur: string;
+  date: string;
+  montantHT: number;
+  paye: boolean;
+  repartition: Repartition[];
+  remarques?: string;
+}
+
+export interface ValeursPosition {
+  initial: number;
+  revise: number;
+  engage: number;
+  attendu: number;
+  rae: number;
+  ajustements: number;
+  atterrissage: number;
+  facture: number;
+  paye: number;
+}
+
+/** Photo mensuelle de l'état financier, non modifiable */
+export interface Cloture {
+  id: ID;
+  projetId: ID;
+  /** Mois clôturé, ex. « 2026-09 » */
+  mois: string;
+  date: string;
+  auteurId?: ID;
+  commentaire: string;
+  positions: Record<ID, ValeursPosition>;
+  totaux: ValeursPosition & { atterrissageDefavorable: number };
 }
 
 export interface Entreprise {
@@ -74,6 +209,18 @@ export interface Entreprise {
   telephone: string;
   ide?: string;
   specialites: string[];
+  /** Interlocuteurs (liste des parties prenantes) */
+  contacts?: ContactEntreprise[];
+  /** Autorité, commune, particulier… (par défaut : entreprise ou bureau) */
+  categorie?: "Entreprise" | "Mandataire" | "Autorité" | "Particulier" | "Autre";
+}
+
+export interface ContactEntreprise {
+  nom: string;
+  fonction?: string;
+  email?: string;
+  telephone?: string;
+  remarques?: string;
 }
 
 export type ProcedureAO = "Ouverte" | "Sélective" | "Sur invitation" | "Gré à gré";
@@ -154,7 +301,7 @@ export interface Avenant {
 }
 
 export type TypeContrat = "Contrat d'entreprise" | "Mandat" | "Fourniture";
-export type StatutContrat = "En préparation" | "Signé" | "En cours" | "Réceptionné" | "Clôturé";
+export type StatutContrat = "En préparation" | "Signé" | "En cours" | "Réceptionné" | "Clôturé" | "Annulé";
 
 export interface Contrat {
   id: ID;
@@ -172,6 +319,9 @@ export interface Contrat {
   retenuePct: number;
   statut: StatutContrat;
   avenants: Avenant[];
+  /** Répartition du montant initial sur les positions budgétaires (sinon : par code CFC) */
+  repartition?: Repartition[];
+  remarques?: string;
 }
 
 export type TypeFacture = "Acompte" | "Situation" | "Régie" | "Décompte final";
@@ -227,6 +377,8 @@ export interface Personne {
   /** Capacité en % d'un plein temps */
   capacite: number;
   acces?: AccesPersonne;
+  fonction?: string;
+  telephone?: string;
 }
 
 export interface Affectation {
@@ -291,7 +443,7 @@ export interface NoeudOrganigramme {
 export type DecisionValidation = "Approuvé" | "Refusé" | "Modifications demandées";
 export type StatutEtape = "En attente" | DecisionValidation;
 export type StatutCircuit = "En cours" | "Approuvé" | "Refusé" | "À corriger" | "Annulé";
-export type TypeObjetValidation = "Document" | "Facture" | "Avenant" | "Autre";
+export type TypeObjetValidation = "Document" | "Facture" | "Avenant" | "Mutation" | "Autre";
 
 export interface EtapeValidation {
   id: ID;

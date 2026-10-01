@@ -8,7 +8,7 @@ import type { AccesPersonne, ID, ModuleApp, NiveauAcces, Personne, ProfilAcces, 
 
 export const MODULES: { id: ModuleApp; libelle: string; description: string }[] = [
   { id: "portefeuille", libelle: "Portefeuille & tableau de bord", description: "Vue d'ensemble des projets" },
-  { id: "finances", libelle: "Finances CFC", description: "Budget, engagements, prévisions" },
+  { id: "finances", libelle: "Finances", description: "Budget, mutations, engagements, prévisions" },
   { id: "appelsOffres", libelle: "Appels d'offres", description: "Descriptifs, offres, adjudications" },
   { id: "contrats", libelle: "Contrats & factures", description: "Contrats, avenants, factures" },
   { id: "planning", libelle: "Planning", description: "Diagramme de Gantt" },

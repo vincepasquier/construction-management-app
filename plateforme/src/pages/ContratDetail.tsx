@@ -10,6 +10,7 @@ import { libelleCFC } from "../data/cfc";
 import { useLectureSeule, BadgeStatut, Bouton, Carte, Champ, EnTetePage, Indicateur, Liste, Modale, Progression, Saisie, Tableau, Vide } from "../components/ui";
 import { FormulaireContrat } from "./Contrats";
 import { ParcoursMarche } from "../components/ParcoursMarche";
+import { RepartitionContrat } from "../components/finances/RepartitionContrat";
 import { etapeCourante } from "../lib/validations";
 import type { Avenant, Facture, StatutFacture, TypeFacture } from "../types";
 
@@ -156,6 +157,8 @@ export function ContratDetail() {
           )}
         </Carte>
       </div>
+
+      <RepartitionContrat c={c} />
 
       {edition && <FormulaireContrat projetId={c.projetId} initial={c} onFermer={() => setEdition(false)} onEnregistrer={(x) => modifier("contrats", c.id, x)} />}
 

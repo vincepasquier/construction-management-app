@@ -36,6 +36,7 @@ const vide: DonneesDemo = {
   projets: [], lots: [], budget: [], entreprises: [], appelsOffres: [], contrats: [],
   factures: [], taches: [], documents: [], personnes: [], affectations: [],
   organigramme: [], validations: [], risques: [], actions: [], autorisations: [], servitudes: [],
+  mutations: [], offres: [], ajustements: [], facturesHorsCommande: [], clotures: [],
 };
 
 export const COLLECTIONS = Object.keys(vide) as Collection[];
@@ -82,17 +83,26 @@ export const useStore = create<EtatApp>()(
     }),
     {
       name: "chantier-plus",
-      version: 3,
+      version: 4,
       // Nouveaux modules : les données de démonstration correspondantes sont ajoutées pour les
       // projets de démonstration encore présents, sans toucher aux données existantes.
       migrate: (ancien, version) => {
         const etat = ancien as Record<string, unknown>;
         // v2 : organigramme, validations, risques, tâches · v3 : autorisations et servitudes
-        if (version < 3) {
+        // v4 : suivi par position (mutations, offres attendues, ajustements, factures hors commande, clôtures)
+        if (version < 4) {
           const demo = donneesDemo();
           const projets = new Set(((etat.projets as { id: ID }[]) ?? []).map((p) => p.id));
-          for (const c of ["organigramme", "validations", "risques", "actions", "autorisations", "servitudes"] as const) {
+          for (const c of [
+            "organigramme", "validations", "risques", "actions", "autorisations", "servitudes",
+            "mutations", "offres", "ajustements", "facturesHorsCommande", "clotures",
+          ] as const) {
             if (!Array.isArray(etat[c])) etat[c] = (demo[c] as { projetId: ID }[]).filter((x) => projets.has(x.projetId));
+          }
+          // Réserve de la démonstration
+          if (version < 4 && Array.isArray(etat.budget)) {
+            etat.budget = (etat.budget as { id: ID; cfc: string; reserve?: boolean }[]).map((b) =>
+              b.id.startsWith("bud-") && b.cfc === "583" && b.reserve === undefined ? { ...b, reserve: true } : b);
           }
         }
         return etat as unknown as EtatApp;
@@ -137,6 +147,11 @@ export function useProjetActif() {
     actions: s.actions.filter((x) => x.projetId === pid && (!filtre || !x.lotId || lotIds.has(x.lotId))),
     autorisations: s.autorisations.filter((x) => x.projetId === pid && (!filtre || !x.lotId || lotIds.has(x.lotId))),
     servitudes: s.servitudes.filter((x) => x.projetId === pid && (!filtre || !x.lotId || lotIds.has(x.lotId))),
+    mutations: s.mutations.filter((x) => x.projetId === pid),
+    offres: s.offres.filter((x) => x.projetId === pid),
+    ajustements: s.ajustements.filter((x) => x.projetId === pid),
+    facturesHorsCommande: s.facturesHorsCommande.filter((x) => x.projetId === pid),
+    clotures: s.clotures.filter((x) => x.projetId === pid).sort((a, b) => a.mois.localeCompare(b.mois)),
   };
 }
 

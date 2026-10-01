@@ -1,5 +1,4 @@
-import type { AppelOffres, BudgetLigne, Contrat, Facture, Soumission, Tache } from "../types";
-import { cheminCFC } from "../data/cfc";
+import type { AppelOffres, Contrat, Facture, Soumission, Tache } from "../types";
 
 // ---------------------------------------------------------------------------
 // Contrats
@@ -92,107 +91,6 @@ export function evaluerSoumissions(ao: AppelOffres): Evaluation[] {
   evals.sort((a, b) => b.total - a.total);
   evals.forEach((e, i) => (e.rang = i + 1));
   return evals;
-}
-
-// ---------------------------------------------------------------------------
-// Suivi budgétaire par CFC
-// ---------------------------------------------------------------------------
-
-export interface LigneSuivi {
-  cfc: string;
-  budget: number;
-  engage: number;
-  enAttente: number;
-  facture: number;
-  paye: number;
-  prevision: number;
-  ecart: number;
-}
-
-const vide = (cfc: string): LigneSuivi => ({
-  cfc, budget: 0, engage: 0, enAttente: 0, facture: 0, paye: 0, prevision: 0, ecart: 0,
-});
-
-/**
- * Calcule le suivi pour chaque code CFC « feuille » (budget, contrat ou AO), puis agrège sur
- * tous les niveaux parents. La prévision (coût final probable) d'une feuille vaut :
- *   – contrats engagés + avenants en attente s'il existe au moins un contrat,
- *   – sinon la meilleure offre reçue d'un appel d'offres en cours,
- *   – sinon le montant estimé de l'appel d'offres,
- *   – sinon le budget.
- */
-export function suiviParCFC(
-  budget: BudgetLigne[],
-  contrats: Contrat[],
-  factures: Facture[],
-  aos: AppelOffres[],
-): Map<string, LigneSuivi> {
-  const feuilles = new Map<string, LigneSuivi>();
-  const get = (cfc: string) => {
-    if (!feuilles.has(cfc)) feuilles.set(cfc, vide(cfc));
-    return feuilles.get(cfc)!;
-  };
-
-  for (const b of budget) get(b.cfc).budget += b.montant;
-
-  const aContrat = new Set<string>();
-  for (const c of contrats) {
-    const l = get(c.cfc);
-    l.engage += montantContrat(c);
-    l.enAttente += avenantsEnAttente(c);
-    const f = factureDuContrat(c, factures);
-    l.facture += f.facture;
-    l.paye += f.paye;
-    aContrat.add(c.cfc);
-  }
-
-  const aoParCfc = new Map<string, number>();
-  for (const ao of aos) {
-    if (ao.statut === "Annulé" || ao.statut === "Adjugé") continue;
-    const montants = ao.soumissions.map((s) => montantNetSoumission(ao, s)).filter((m) => m > 0);
-    const estimation = montants.length ? Math.min(...montants) : ao.montantEstime;
-    if (estimation > 0) aoParCfc.set(ao.cfc, (aoParCfc.get(ao.cfc) ?? 0) + estimation);
-    get(ao.cfc);
-  }
-
-  for (const l of feuilles.values()) {
-    if (aContrat.has(l.cfc)) l.prevision = l.engage + l.enAttente;
-    else if (aoParCfc.has(l.cfc)) l.prevision = aoParCfc.get(l.cfc)!;
-    else l.prevision = l.budget;
-    l.ecart = l.budget - l.prevision;
-  }
-
-  // Agrégation sur les niveaux parents (1, 2, 3 chiffres…)
-  const arbre = new Map<string, LigneSuivi>();
-  for (const f of feuilles.values()) {
-    for (const code of cheminCFC(f.cfc)) {
-      const n = arbre.get(code) ?? vide(code);
-      n.budget += f.budget;
-      n.engage += f.engage;
-      n.enAttente += f.enAttente;
-      n.facture += f.facture;
-      n.paye += f.paye;
-      n.prevision += f.prevision;
-      n.ecart += f.ecart;
-      arbre.set(code, n);
-    }
-  }
-  return arbre;
-}
-
-export function totauxSuivi(suivi: Map<string, LigneSuivi>): LigneSuivi {
-  const t = vide("Total");
-  for (const [code, l] of suivi) {
-    if (code.length !== 1) continue;
-    t.budget += l.budget;
-    t.engage += l.engage;
-    t.enAttente += l.enAttente;
-    t.facture += l.facture;
-    t.paye += l.paye;
-    t.prevision += l.prevision;
-    t.ecart += l.ecart;
-  }
-  return t;
 }
 
 // ---------------------------------------------------------------------------

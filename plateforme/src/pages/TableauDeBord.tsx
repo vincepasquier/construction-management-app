@@ -4,24 +4,27 @@ import { Link } from "react-router-dom";
 import { AlertTriangle, CalendarClock, Diamond, FileWarning, Pencil, Receipt } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useProjetActif, useStore } from "../store/useStore";
-import { avancementPlanning, courbeEnS, suiviParCFC, tachesEnRetard, totauxSuivi } from "../lib/finance";
+import { avancementPlanning, courbeEnS, tachesEnRetard } from "../lib/finance";
+import { totaux as totauxBudget } from "../lib/budget";
+import { useBudget } from "../components/finances/useBudget";
 import { aujourdhui, formatCHF, formatCompact, formatDate, formatPct } from "../lib/format";
 import { Avatar, Badge, Bouton, Carte, EnTetePage, Indicateur, Progression } from "../components/ui";
 import { SansProjet } from "../components/SansProjet";
 import { FrisePhases } from "../components/FrisePhases";
 import { FormulaireProjet } from "./Portefeuille";
-import { cfcCorrespond, libelleCFC } from "../data/cfc";
+import { libelleCFC } from "../data/cfc";
 
 export function TableauDeBord() {
   const d = useProjetActif();
   const { personnes, entreprises, modifier } = useStore();
   const [edition, setEdition] = useState(false);
+  const budget = useBudget();
   if (!d.projet) return <SansProjet />;
   const p = d.projet;
   const jour = aujourdhui();
 
-  const suivi = suiviParCFC(d.budget, d.contrats, d.factures, d.appelsOffres);
-  const t = totauxSuivi(suivi);
+  const tb = budget.totaux;
+  const t = { budget: tb.revise, engage: tb.engage, facture: tb.facture, paye: tb.paye, prevision: tb.atterrissage, ecart: tb.ecart };
   const courbe = courbeEnS(p.dateDebut, p.dateFin, t.prevision, d.factures, jour);
   const retards = tachesEnRetard(d.taches, jour);
   const jalons = d.taches.filter((x) => x.jalon && x.fin >= jour).sort((a, b) => a.fin.localeCompare(b.fin)).slice(0, 4);
@@ -53,10 +56,10 @@ export function TableauDeBord() {
       {d.filtreActif && <p className="-mt-3 mb-4 text-sm text-brand-600">Vue filtrée sur vos lots : {d.lots.map((l) => l.code).join(", ")}</p>}
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Indicateur libelle="Budget" valeur={formatCompact(t.budget)} detail="CHF HT" />
+        <Indicateur libelle="Budget révisé" valeur={formatCompact(t.budget)} detail="CHF HT" />
         <Indicateur libelle="Engagé" valeur={formatCompact(t.engage)} detail={`${formatPct(t.budget ? (t.engage / t.budget) * 100 : 0, 0)} du budget`} />
         <Indicateur libelle="Facturé" valeur={formatCompact(t.facture)} detail={`Payé ${formatCompact(t.paye)}`} />
-        <Indicateur libelle="Prévision finale" valeur={formatCompact(t.prevision)}
+        <Indicateur libelle="Atterrissage" valeur={formatCompact(t.prevision)}
           detail={`Écart ${t.ecart >= 0 ? "+" : ""}${formatCHF(t.ecart)} (${ecartPct.toFixed(1)} %)`} tendance={t.ecart < 0 ? "mauvais" : "bon"} />
       </div>
 
@@ -98,28 +101,23 @@ export function TableauDeBord() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <Carte className="lg:col-span-2" titre="Lots" sousTitre="Budget et prévision par lot" action={<Link to="/finances" className="text-sm font-medium text-brand-600 hover:underline">Détail CFC →</Link>}>
+        <Carte className="lg:col-span-2" titre="Lots" sousTitre="Budget révisé et atterrissage par lot" action={<Link to="/finances" className="text-sm font-medium text-brand-600 hover:underline">Suivi financier →</Link>}>
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {d.lots.map((l) => {
-              const dansLot = (x: { cfc: string; lotId?: string }) => (x.lotId ? x.lotId === l.id : cfcCorrespond(x.cfc, l.cfc));
-              const contratsLot = d.contrats.filter(dansLot);
-              const tl = totauxSuivi(suiviParCFC(
-                d.budget.filter((b) => cfcCorrespond(b.cfc, l.cfc)), contratsLot,
-                d.factures.filter((f) => contratsLot.some((c) => c.id === f.contratId)), d.appelsOffres.filter(dansLot),
-              ));
-              const { budget, prevision, facture } = tl;
+              const tl = totauxBudget(budget.positions.filter((x) => x.lotId === l.id));
+              const { revise: budgetLot, atterrissage: prevision, facture } = tl;
               const resp = nomPers(l.responsableId);
               const taches = d.taches.filter((x) => x.lotId === l.id);
               return (
                 <div key={l.id} className="flex flex-wrap items-center gap-4 px-5 py-3.5">
                   <div className="w-56 min-w-0">
                     <p className="truncate text-sm font-medium text-slate-900 dark:text-white"><span className="text-slate-400">{l.code}</span> {l.nom}</p>
-                    <p className="truncate text-xs text-slate-500">CFC {l.cfc.map((c) => `${c} ${libelleCFC(c)}`).join(" · ")}</p>
+                    {l.cfc.length > 0 && <p className="truncate text-xs text-slate-500">CFC {l.cfc.map((c) => `${c} ${libelleCFC(c)}`).join(" · ")}</p>}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-500">{resp && <Avatar nom={resp} taille={22} />}{resp ?? "Non attribué"}</div>
                   <div className="ml-auto grid w-full grid-cols-3 gap-4 text-right text-sm sm:w-auto sm:min-w-[330px]">
-                    <div><p className="text-xs text-slate-500">Budget</p><p className="num">{formatCompact(budget)}</p></div>
-                    <div><p className="text-xs text-slate-500">Prévision</p><p className={`num ${prevision > budget ? "text-rose-600" : ""}`}>{formatCompact(prevision)}</p></div>
+                    <div><p className="text-xs text-slate-500">Budget</p><p className="num">{formatCompact(budgetLot)}</p></div>
+                    <div><p className="text-xs text-slate-500">Prévision</p><p className={`num ${prevision > budgetLot + 0.5 ? "text-rose-600" : ""}`}>{formatCompact(prevision)}</p></div>
                     <div><p className="text-xs text-slate-500">Avancement</p><p className="num">{formatPct(avancementPlanning(taches), 0)}</p></div>
                   </div>
                   <Progression valeur={prevision ? (facture / prevision) * 100 : 0} couleur={p.couleur} />

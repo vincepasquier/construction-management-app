@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { AppelOffres, Contrat, Facture, Tache } from "../types";
 import {
-  avancementPlanning, evaluerSoumissions, factureDuContrat, montantContrat, montantNetSoumission, suiviParCFC, tachesEnRetard, totauxSuivi,
+  avancementPlanning, evaluerSoumissions, factureDuContrat, montantContrat, montantNetSoumission, tachesEnRetard,
 } from "./finance";
+import { calculerBudget, totaux } from "./budget";
 import { importerAncienneSession } from "./importAncien";
 import { donneesDemo } from "../data/demo";
 import { construireContexte } from "./contexteIA";
@@ -65,21 +66,24 @@ describe("appels d'offres", () => {
   });
 });
 
-describe("suivi par CFC", () => {
-  it("agrège les niveaux et calcule la prévision selon la priorité contrat > offre > budget", () => {
+describe("projets sans répartition (imputation par CFC)", () => {
+  it("calcule l'atterrissage selon la priorité contrat > offre > budget", () => {
     const budget = [
       { id: "b1", projetId: "p", cfc: "211", libelle: "", montant: 120_000 },
       { id: "b2", projetId: "p", cfc: "461", libelle: "", montant: 30_000 },
       { id: "b3", projetId: "p", cfc: "583", libelle: "", montant: 10_000 },
     ];
-    const s = suiviParCFC(budget, [contrat({ avenants: [{ id: "a", numero: "1", date: "", objet: "", montant: 8_000, statut: "Demandé" }] })], [], [ao]);
-    expect(s.get("211")!.prevision).toBe(108_000);
-    expect(s.get("461")!.prevision).toBe(40_000);
-    expect(s.get("583")!.prevision).toBe(10_000);
-    expect(s.get("2")!.budget).toBe(120_000);
-    const t = totauxSuivi(s);
-    expect(t.budget).toBe(160_000);
-    expect(t.prevision).toBe(158_000);
+    const ps = calculerBudget({
+      budget, lots: [], contrats: [contrat({ avenants: [{ id: "a", numero: "1", date: "", objet: "", montant: 8_000, statut: "Demandé" }] })],
+      factures: [], facturesHorsCommande: [], offres: [], ajustements: [], mutations: [], appelsOffres: [ao],
+    });
+    const at = (id: string) => ps.find((p) => p.id === id)!.atterrissage;
+    expect(at("b1")).toBe(108_000);
+    expect(at("b2")).toBe(40_000);
+    expect(at("b3")).toBe(10_000);
+    const t = totaux(ps);
+    expect(t.revise).toBe(160_000);
+    expect(t.atterrissage).toBe(158_000);
     expect(t.ecart).toBe(2_000);
   });
 });

@@ -1,12 +1,15 @@
 // Construit un résumé textuel du projet actif, transmis à l'assistant IA comme contexte.
-import type { Action, Autorisation, Servitude, AppelOffres, BudgetLigne, CircuitValidation, Contrat, DocumentProjet, Entreprise, Facture, Lot, Personne, Projet, Risque, Tache } from "../types";
+import type {
+  Action, Ajustement, Autorisation, Servitude, AppelOffres, BudgetLigne, CircuitValidation, Cloture, Contrat, DocumentProjet, Entreprise,
+  Facture, FactureHorsCommande, Lot, Mutation, OffreAttendue, Personne, Projet, Risque, Tache,
+} from "../types";
 import { criticite, estActif, score } from "./risques";
 import { etapeCourante } from "./validations";
-import { libelleCFC } from "../data/cfc";
 import {
   avancementPlanning, avenantsEnAttente, evaluerSoumissions, factureDuContrat, montantContrat,
-  positionsManquantes, suiviParCFC, tachesEnRetard, totauxSuivi,
+  positionsManquantes, tachesEnRetard,
 } from "./finance";
+import { calculerBudget, effetAjustement, equilibreMutation, grouper, reserve, STATUTS_OFFRE_ACTIFS, totaux } from "./budget";
 
 interface Donnees {
   projet: Projet;
@@ -24,6 +27,11 @@ interface Donnees {
   validations?: CircuitValidation[];
   autorisations?: Autorisation[];
   servitudes?: Servitude[];
+  mutations?: Mutation[];
+  offres?: OffreAttendue[];
+  ajustements?: Ajustement[];
+  facturesHorsCommande?: FactureHorsCommande[];
+  clotures?: Cloture[];
 }
 
 const chf = (v: number) => `${Math.round(v).toLocaleString("de-CH")} CHF`;
@@ -31,8 +39,14 @@ const chf = (v: number) => `${Math.round(v).toLocaleString("de-CH")} CHF`;
 export function construireContexte(d: Donnees, aujourdhui: string): string {
   const nomEnt = (id?: string) => d.entreprises.find((e) => e.id === id)?.nom ?? "?";
   const nomPers = (id?: string) => d.personnes.find((p) => p.id === id)?.nom ?? "—";
-  const suivi = suiviParCFC(d.budget, d.contrats, d.factures, d.appelsOffres);
-  const t = totauxSuivi(suivi);
+  const positions = calculerBudget({
+    budget: d.budget, lots: d.lots, contrats: d.contrats, factures: d.factures, appelsOffres: d.appelsOffres,
+    facturesHorsCommande: d.facturesHorsCommande ?? [], offres: d.offres ?? [], ajustements: d.ajustements ?? [], mutations: d.mutations ?? [],
+  });
+  const t = totaux(positions);
+  const res = reserve(positions);
+  const nomLot = (id?: string) => { const l = d.lots.find((x) => x.id === id); return l ? `${l.code} ${l.nom}` : "Hors lot"; };
+  const nomPos = (id: string) => { const p = positions.find((x) => x.id === id); return p ? `${p.ligne.groupe ? `${p.ligne.groupe} / ` : ""}${p.ligne.libelle}${p.ligne.etape ? ` [Ét. ${p.ligne.etape}]` : ""}` : "?"; };
   const lignes: string[] = [];
 
   lignes.push(`# Projet ${d.projet.code} – ${d.projet.nom}`);
@@ -45,11 +59,38 @@ export function construireContexte(d: Donnees, aujourdhui: string): string {
   for (const l of d.lots) lignes.push(`- ${l.code} ${l.nom} (CFC ${l.cfc.join(", ")}) – responsable : ${nomPers(l.responsableId)}${l.phase ? ` – phase SIA ${l.phase}` : ""}`);
 
   lignes.push(`\n## Synthèse financière (HT)`);
-  lignes.push(`Budget ${chf(t.budget)} · Engagé ${chf(t.engage)} · Avenants en attente ${chf(t.enAttente)} · Facturé ${chf(t.facture)} · Payé ${chf(t.paye)} · Prévision ${chf(t.prevision)} · Écart ${chf(t.ecart)}`);
-  lignes.push(`\n| CFC | Libellé | Budget | Engagé | En attente | Facturé | Prévision | Écart |\n|---|---|---|---|---|---|---|---|`);
-  for (const [code, l] of [...suivi].sort(([a], [b]) => a.localeCompare(b))) {
-    if (code.length < 2 && suivi.size > 12) continue;
-    lignes.push(`| ${code} | ${libelleCFC(code)} | ${chf(l.budget)} | ${chf(l.engage)} | ${chf(l.enAttente)} | ${chf(l.facture)} | ${chf(l.prevision)} | ${chf(l.ecart)} |`);
+  lignes.push(`Règles : budget révisé = initial + mutations validées ; atterrissage = engagé (commandes + avenants approuvés + factures hors commande) + attendu (offres actives, avenants demandés, AO en cours) + reste à engager + ajustements pondérés ; écart = révisé − atterrissage (négatif = dépassement).`);
+  lignes.push(`Budget initial ${chf(t.initial)} · Mutations ${chf(t.mutations)} · Budget révisé ${chf(t.revise)} · Engagé ${chf(t.engage)} · Attendu ${chf(t.attendu)} · Reste à engager ${chf(t.rae)} · Ajustements ${chf(t.ajustements)} · Atterrissage probable ${chf(t.atterrissage)} (défavorable ${chf(t.atterrissageDefavorable)}) · Écart ${chf(t.ecart)} · Facturé ${chf(t.facture)} · Payé ${chf(t.paye)}`);
+  if (res.nombre) lignes.push(`Réserve (divers et imprévus) : révisée ${chf(res.revise)}, consommée ${chf(res.consomme)}, restante ${chf(res.restant)}`);
+  lignes.push(`\n| Lot | Révisé | Engagé | Attendu | Reste à engager | Ajustements | Atterrissage | Écart | Facturé |\n|---|---|---|---|---|---|---|---|---|`);
+  for (const g of grouper(positions, (p) => p.lotId ?? "")) {
+    const x = g.totaux;
+    lignes.push(`| ${nomLot(g.cle)} | ${chf(x.revise)} | ${chf(x.engage)} | ${chf(x.attendu)} | ${chf(x.rae)} | ${chf(x.ajustements)} | ${chf(x.atterrissage)} | ${chf(x.ecart)} | ${chf(x.facture)} |`);
+  }
+  lignes.push(`\n### Positions\n| Lot | Position | CFC | Révisé | Engagé | Attendu | Reste à eng. | Ajust. | Atterrissage | Écart | Facturé |\n|---|---|---|---|---|---|---|---|---|---|---|`);
+  for (const p of positions.filter((x) => Math.abs(x.revise) + Math.abs(x.atterrissage) > 0.5).slice(0, 200)) {
+    lignes.push(`| ${d.lots.find((l) => l.id === p.lotId)?.code ?? ""} | ${nomPos(p.id)}${p.ligne.reserve ? " (réserve)" : ""}${p.virtuelle ? " (hors budget)" : ""} | ${p.ligne.cfc} | ${chf(p.revise)} | ${chf(p.engage)} | ${chf(p.attendu)} | ${chf(p.rae)} | ${chf(p.ajustements)} | ${chf(p.atterrissage)} | ${chf(p.ecart)} | ${chf(p.facture)} |`);
+  }
+  if (d.mutations?.length) {
+    lignes.push(`\n## Mutations budgétaires`);
+    for (const m of d.mutations) lignes.push(`- ${m.numero} (${m.date}, ${m.statut}) : ${m.motif} – ${chf(equilibreMutation(m).debits)} ; ${m.lignes.map((l) => `${l.montant > 0 ? "+" : ""}${chf(l.montant)} ${nomPos(l.budgetId)}`).join(" ; ")}`);
+  }
+  const offresActives = (d.offres ?? []).filter((o) => STATUTS_OFFRE_ACTIFS.has(o.statut));
+  if (offresActives.length) {
+    lignes.push(`\n## Offres attendues (non commandées)`);
+    for (const o of offresActives) lignes.push(`- ${o.numero} ${o.fournisseur} : ${o.description} – ${chf(o.montant)} (${o.statut}) → ${o.repartition.map((r) => nomPos(r.budgetId)).join(", ") || "non répartie"}`);
+  }
+  const ajActifs = (d.ajustements ?? []).filter((a) => a.statut === "Active");
+  if (ajActifs.length) {
+    lignes.push(`\n## Estimations prévisionnelles et ajustements`);
+    for (const a of ajActifs) lignes.push(`- ${a.type} : ${a.libelle} – ${chf(a.montant)} à ${a.probabilite} % (effet ${chf(effetAjustement(a).probable)}) → ${a.repartition.map((r) => nomPos(r.budgetId)).join(", ")}${a.justification ? ` – ${a.justification}` : ""}`);
+  }
+  const hcNonAffectees = (d.facturesHorsCommande ?? []).filter((f) => !f.repartition.length);
+  if (hcNonAffectees.length) lignes.push(`\n${hcNonAffectees.length} facture(s) hors commande non affectée(s) pour ${chf(hcNonAffectees.reduce((x, f) => x + f.montantHT, 0))}.`);
+  const derniere = d.clotures?.at(-1);
+  if (derniere) {
+    lignes.push(`\n## Dernière clôture (${derniere.mois})`);
+    lignes.push(`Atterrissage ${chf(derniere.totaux.atterrissage)} → aujourd'hui ${chf(t.atterrissage)} (engagé ${chf(t.engage - derniere.totaux.engage)}, attendu ${chf(t.attendu - derniere.totaux.attendu)}, reste à engager ${chf(t.rae - derniere.totaux.rae)}, ajustements ${chf(t.ajustements - derniere.totaux.ajustements)}).${derniere.commentaire ? ` Commentaire : ${derniere.commentaire}` : ""}`);
   }
 
   lignes.push(`\n## Contrats`);

@@ -1,9 +1,11 @@
 // Jeu de données de démonstration (entièrement fictif) pour découvrir la plateforme.
 import type {
-  Action, Affectation, AppelOffres, BudgetLigne, CircuitValidation, Contrat, DocumentProjet, Entreprise, Facture, Lot,
-  NoeudOrganigramme, Personne, Projet, Risque, Servitude, Tache, Autorisation,
+  Action, Affectation, Ajustement, AppelOffres, BudgetLigne, CircuitValidation, Cloture, Contrat, DocumentProjet, Entreprise,
+  Facture, FactureHorsCommande, Lot, Mutation, NoeudOrganigramme, OffreAttendue, Personne, Projet, Risque, Servitude, Tache,
+  Autorisation,
 } from "../types";
 import { genererDepuisProjet } from "../lib/organigramme";
+import { calculerBudget, photographier } from "../lib/budget";
 
 export interface DonneesDemo {
   projets: Projet[];
@@ -23,6 +25,11 @@ export interface DonneesDemo {
   actions: Action[];
   autorisations: Autorisation[];
   servitudes: Servitude[];
+  mutations: Mutation[];
+  offres: OffreAttendue[];
+  ajustements: Ajustement[];
+  facturesHorsCommande: FactureHorsCommande[];
+  clotures: Cloture[];
 }
 
 export function donneesDemo(): DonneesDemo {
@@ -86,6 +93,7 @@ export function donneesDemo(): DonneesDemo {
     ["prj-2", "583", "Réserve pour imprévus", 600_000],
   ].map(([projetId, cfc, libelle, montant], i) => ({
     id: `bud-${i + 1}`, projetId: projetId as string, cfc: cfc as string, libelle: libelle as string, montant: montant as number,
+    ...(cfc === "583" ? { reserve: true } : {}),
   }));
 
   const entreprises: Entreprise[] = [
@@ -388,8 +396,66 @@ export function donneesDemo(): DonneesDemo {
     sv(8, "prj-2", "CFF 5012", "CFF SA", "Droit de superficie", "À négocier", 0, "fonçage 40 m", "2026-12-31"),
   ];
 
+  // Suivi financier par position : mutations, offres attendues et estimations prévisionnelles
+  const mutations: Mutation[] = [
+    {
+      id: "mut-1", projetId: "prj-1", numero: "M-01", motif: "Purge de sol (avenant AV-01) financée par la réserve", date: "2026-04-22",
+      statut: "Validée", demandeurId: "per-2", valideurId: "per-1", dateValidation: "2026-04-24",
+      lignes: [{ budgetId: "bud-14", montant: -86_500 }, { budgetId: "bud-6", montant: 86_500 }],
+    },
+    {
+      id: "mut-2", projetId: "prj-1", numero: "M-02", motif: "Éclairage : candélabres supplémentaires au giratoire", date: "2026-09-28",
+      statut: "Soumise", demandeurId: "per-3", lignes: [{ budgetId: "bud-14", montant: -30_000 }, { budgetId: "bud-9", montant: 30_000 }],
+    },
+  ];
+  const offres: OffreAttendue[] = [
+    {
+      id: "off-1", projetId: "prj-1", numero: "OF-2026-118", fournisseur: "Paysages & Jardins SA", entrepriseId: "ent-6", description: "Plantations et espaces verts",
+      date: "2026-09-18", type: "Offre ferme", statut: "Reçue", montant: 132_400, repartition: [{ budgetId: "bud-10", montant: 132_400 }],
+    },
+    {
+      id: "off-2", projetId: "prj-1", numero: "OF-2026-121", fournisseur: "Signalisation Romande Sàrl", description: "Marquage et signalisation verticale",
+      date: "2026-09-25", type: "Offre indicative", statut: "En cours", montant: 128_000, repartition: [{ budgetId: "bud-11", montant: 128_000 }],
+    },
+  ];
+  const ajustements: Ajustement[] = [
+    {
+      id: "aj-1", projetId: "prj-1", type: "Risque", libelle: "Matériaux d'excavation pollués (type B)", montant: 120_000, probabilite: 30, statut: "Active",
+      repartition: [{ budgetId: "bud-4", montant: 120_000 }], auteurId: "per-2", date: "2026-06-15", justification: "Sondages S4 et S7 : HAP au-dessus du seuil B. Évacuation en décharge type B à prévoir sur environ 600 m3.",
+      dateRevue: "2026-09-10",
+    },
+    {
+      id: "aj-2", projetId: "prj-1", type: "Plus-value attendue", libelle: "Enrobé : révision des prix (indice bitume)", montant: 38_000, probabilite: 80, statut: "Active",
+      repartition: [{ budgetId: "bud-6", montant: 38_000 }], auteurId: "per-2", date: "2026-08-20", echeance: "2026-12-31",
+      justification: "Clause de révision des prix du contrat C-RC601-01, indice bitume +14 % depuis l'offre.", dateRevue: "2026-08-20",
+    },
+    {
+      id: "aj-3", projetId: "prj-1", type: "Opportunité", libelle: "Réutilisation des bordures granit existantes", montant: 25_000, probabilite: 50, statut: "Active",
+      repartition: [{ budgetId: "bud-1", montant: 25_000 }], auteurId: "per-4", date: "2026-07-02", justification: "Environ 40 % des bordures récupérables après démontage soigné.",
+      dateRevue: "2026-07-02",
+    },
+  ];
+  const facturesHorsCommande: FactureHorsCommande[] = [
+    {
+      id: "fhc-1", projetId: "prj-1", numero: "FHC-0412", fournisseur: "Laboratoire Géotest SA", date: "2026-05-12", montantHT: 8_450, paye: true,
+      repartition: [{ budgetId: "bud-4", montant: 8_450 }], remarques: "Analyses de sol complémentaires",
+    },
+  ];
+
+  // Clôture d'août : avant la réception de l'offre de plantations et l'ajustement sur l'enrobé
+  const base = {
+    budget, lots, contrats, factures: factures.filter((x) => x.date < "2026-09-01"), facturesHorsCommande, appelsOffres: [],
+    mutations: mutations.filter((m) => m.statut === "Validée"), offres: [], ajustements: ajustements.filter((a) => a.id !== "aj-2"),
+  };
+  const clotures: Cloture[] = [{
+    id: "clo-1", projetId: "prj-1", mois: "2026-08", date: "2026-09-02", auteurId: "per-1",
+    commentaire: "Avenant AV-02 (giratoire) en attente de décision de la commune. Réserve encore confortable.",
+    ...photographier(calculerBudget({ ...base, budget: budget.filter((b) => b.projetId === "prj-1"), contrats: contrats.filter((c) => c.projetId === "prj-1") })),
+  }];
+
   return {
     projets, lots, budget, entreprises, appelsOffres, contrats, factures, taches, documents, personnes, affectations,
     organigramme, validations, risques, actions, autorisations, servitudes,
+    mutations, offres, ajustements, facturesHorsCommande, clotures,
   };
 }
