@@ -604,7 +604,7 @@ footer{margin-top:36px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
 <li>Essais de plaque pour la pelle 40 t, barrière anti-turbidité, déplacement des cibles C7/C8 (dans la zone à ouvrir).</li></ul></div></details>
 <details class="fiche" data-zone="lac"><summary><span class="n">5</span><h3>Palplanches, fouille de l'amorce, ouverture de l'écran 7</h3></summary><div class="fiche-body">
 <p>Batardeau étanche et étayé, fouille à sec (≈ +528.2 côté station, ≈ +526.2 côté rive) et écran 7 ouvert.</p>
-<ul><li>Forage d'ameublissement (hors R6, 6 semaines), fonçage (R6 C1, 5 j) en fin d'ameublissement, terrassement de l'amorce depuis +532.80 et renforcement de l'enceinte en parallèle (R6 C2 et C3, ramenés de 14 à 10 j).</li>
+<ul><li>Forage d'ameublissement (hors R6, 4 semaines), fonçage (R6 C1, 5 j) en fin d'ameublissement, terrassement de l'amorce depuis +532.80 et renforcement de l'enceinte en parallèle (R6 C2 et C3, ramenés de 14 à 10 j).</li>
 <li>Côté rive, la fouille descend à ≈ 4.6 m sous le niveau du lac : soulèvement du fond, pompage, eaux décantées et neutralisées (SIA 431).</li>
 <li>Ouverture de l'écran 7 au sciage ou au carottage ; géophones (SN 640 312a) et cibles quotidiennes pendant la démolition.</li>
 <li><b>Jalon M3</b> : fouille réceptionnée, enceinte renforcée, passe-murs dégagés.</li></ul></div></details>
@@ -681,27 +681,27 @@ footer{margin-top:36px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
 <script>
 (function(){
 'use strict';
-var NS='http://www.w3.org/2000/svg', KEY='phasage-englisberg-v4';
+var NS='http://www.w3.org/2000/svg', KEY='phasage-englisberg-v5';
 var PH=['Préparation','Décaissement de la grave','Fouille amont et DN1000','Batteries RTP/PE','Plateforme et installation côté lac','Palplanches, fouille, ouverture écran 7','Conduites terrestres et lacustres','Remblai, retrait des palplanches, repli'];
 var ZN={prep:{l:'Préparation',c:'var(--prep)'},amont:{l:'Côté amont',c:'var(--amont)'},lac:{l:'Côté lac',c:'var(--lac)'},eau:{l:'Lacustre (Lot 4)',c:'var(--eau)'}};
 var DEF=[
  {id:'A0',ph:0,z:'prep',l:'Plans, méthodes, autorisations, commandes',d:30,p:'',end0:true,r6:'',desc:"Plans manquants (paroi clouée, batardeau, recépage et démolition des pieux), méthodes des entreprises, autorisations (travaux lacustres, remorquage, rejets, pêche), commandes à long délai.",vig:['Autorisations lacustres à déposer en premier.',"M0 : accord écrit de l'ingénieur structure (la station butonne la paroi)."]},
  {id:'A1',ph:1,z:'amont',l:"Décaissement de la grave du chemin d'accès",d:5,p:'M0',r6:'',desc:"Retrait de la couche de grave entre l'écran 1 et le flanc de colline (≈ +537.4 → ≈ +535.5), mise en dépôt pour réemploi.",vig:["Rampe est coupée : accès par l'ouest.",'Relevé des cibles C1/C2 avant et après.']},
- {id:'A2a',ph:2,z:'amont',l:'Fouille amont blindée, paroi clouée',d:3,p:'A1',r6:'',desc:"Fouille jusqu'à ≈ +533.8, dégagement des extrémités des fourreaux FD ; paroi clouée par passes si elle n'existe pas.",vig:['OTConst : fouille de plus de 1.50 m étayée ou talutée.','Cibles C1/C2 deux fois par semaine.']},
- {id:'A2b',ph:2,z:'amont',l:'Pose 2 × DN1000, coudes préfabriqués',d:4,p:'A2a',r6:'',desc:"Pose sur lit de pose entre les passe-murs et les fourreaux existants, soudures sous tente avec procès-verbaux, traversées de l'écran 1 (S33/S34).",vig:['Temps de refroidissement des soudures DN1000.']},
- {id:'A2c',ph:2,z:'amont',l:'Étanchéité, calibrage, relevé',d:2,p:'A2b',r6:'',desc:"Étanchéité des traversées et passe-murs, calibre passé sur toute la longueur, câble de tirage laissé en place, relevé du géomètre.",vig:['Calibrer avant de remblayer, tant que les raccords sont accessibles.']},
- {id:'A2d',ph:2,z:'amont',l:'Enrobage, remblai, rampe rétablie',d:3,p:'A2c',r6:'',desc:"Enrobage sans pierres, compactage léger par couches de 30 cm, remblai en grave, rampe rétablie.",vig:['Pas de compacteur lourd au-dessus des tubes.']},
- {id:'A3a',ph:3,z:'amont',l:"Assemblage des batteries sur l'autre rive",d:12,p:'A1+3',r6:'',desc:"Assemblage des deux batteries RTP/PE sur la rive opposée (colliers, entretoises, tête de tirage avec émerillon et fusible mécanique), préparation de la flottaison.",vig:['Une batterie par forage, amenées l\'une après l\'autre.']},
+ {id:'A2a',ph:2,z:'amont',l:'Fouille amont blindée, paroi clouée',d:10,p:'A1',r6:'',desc:"Fouille jusqu'à ≈ +533.8, dégagement des extrémités des fourreaux FD ; paroi clouée par passes si elle n'existe pas.",vig:['OTConst : fouille de plus de 1.50 m étayée ou talutée.','Cibles C1/C2 deux fois par semaine.']},
+ {id:'A2b',ph:2,z:'amont',l:'Pose 2 × DN1000, coudes préfabriqués',d:5,p:'A2a',r6:'',desc:"Pose sur lit de pose entre les passe-murs et les fourreaux existants, soudures sous tente avec procès-verbaux, traversées de l'écran 1 (S33/S34).",vig:['Temps de refroidissement des soudures DN1000.']},
+ {id:'A2c',ph:2,z:'amont',l:'Étanchéité, calibrage, relevé',d:0,p:'A2b',r6:'',desc:"Étanchéité des traversées et passe-murs, calibre passé sur toute la longueur, câble de tirage laissé en place, relevé du géomètre.",vig:['Calibrer avant de remblayer, tant que les raccords sont accessibles.']},
+ {id:'A2d',ph:2,z:'amont',l:'Enrobage, remblai, rampe rétablie',d:4,p:'A2c',r6:'',desc:"Enrobage sans pierres, compactage léger par couches de 30 cm, remblai en grave, rampe rétablie.",vig:['Pas de compacteur lourd au-dessus des tubes.']},
+ {id:'A3a',ph:3,z:'amont',l:"Assemblage des batteries sur l'autre rive",d:15,p:'A1+3',r6:'',desc:"Assemblage des deux batteries RTP/PE sur la rive opposée (colliers, entretoises, tête de tirage avec émerillon et fusible mécanique), préparation de la flottaison.",vig:['Une batterie par forage, amenées l\'une après l\'autre.']},
  {id:'A3b',ph:3,z:'amont',l:'Terrassement à ≈ +532.80 (couloir + emprise du batardeau)',d:5,p:'A2d',r6:'',desc:"Abaissement de la plateforme entre la rive et la station au niveau de la dalle N-1 (+532.80) : couloir des batteries dans l'axe des fourreaux et, dans la même passe, emprise du futur batardeau. Pas de remblai ensuite.",vig:['Terrassement en bord de lac : talus, pompage, barrière anti-turbidité.','Avance sur le terrassement de l\'amorce (phase 5).']},
  {id:'A3c',ph:3,z:'amont',l:'Recépage des pieux sécants (écran 6)',d:4,p:'A3b',r6:'',desc:"Recépage définitif des pieux de l'écran 6 dans l'axe des forages à ≈ +532.80, au sciage, pour aligner le couloir sur la dalle N-1.",vig:["Accord de l'ingénieur structure avant la première coupe.",'Cibles relevées avant et après.']},
- {id:'A3d',ph:3,z:'amont',l:'Ouverture du mur fusible, guidages',d:2,p:'A3c',r6:'',desc:"Ouverture du mur fusible (axe B, ≈ 5 m), rouleaux sur la dalle N-1 et dans le hall, rehausse jusqu'aux passe-murs (+534.20), entonnoirs à l'entrée des fourreaux.",vig:['Protéger les arêtes du mur et des passe-murs.']},
+ {id:'A3d',ph:3,z:'amont',l:'Ouverture du mur fusible, guidages',d:0,p:'A3c',r6:'',desc:"Ouverture du mur fusible (axe B, ≈ 5 m), rouleaux sur la dalle N-1 et dans le hall, rehausse jusqu'aux passe-murs (+534.20), entonnoirs à l'entrée des fourreaux.",vig:['Protéger les arêtes du mur et des passe-murs.']},
  {id:'A3e',ph:3,z:'amont',l:'Batterie FD1 : remorquage et tirage',d:2,p:'A3a, A3d',r6:'',desc:"Remorquage depuis l'autre rive, mise en ligne dans le couloir, tirage d'une traite au treuil de la centrale (Intro₃, +577.05), dynamomètre enregistreur.",vig:['Fenêtre de vent faible pour le remorquage.',"Ne pas s'arrêter en cours de tirage."]},
  {id:'A3f',ph:3,z:'amont',l:'Batterie FD2 : remorquage et tirage',d:2,p:'A3e',r6:'',desc:"Même opération pour le second forage (Intro₄).",vig:['Fenêtre de vent faible pour le remorquage.']},
- {id:'A3g',ph:3,z:'amont',l:'Essais de pression et coulis annulaire',d:5,p:'A3f',r6:'',desc:"Essais PE et RTP, contrôle de continuité, remplissage annulaire au coulis depuis le point bas (station), évents côté centrale.",vig:["Conduites remplies d'eau pendant l'injection (flottaison)."]},
+ {id:'A3g',ph:3,z:'amont',l:'Essais de pression et coulis annulaire',d:0,p:'A3f',r6:'',desc:"Essais PE et RTP, contrôle de continuité, remplissage annulaire au coulis depuis le point bas (station), évents côté centrale.",vig:["Conduites remplies d'eau pendant l'injection (flottaison)."]},
  {id:'A3h',ph:3,z:'amont',l:'Fermeture du mur fusible',d:3,p:'A3g',r6:'',desc:"Maçonnerie et étanchéité du mur fusible.",vig:[]},
  {id:'A4a',ph:4,z:'lac',l:'Plateforme à +532.80, risberme, implantation',d:3,p:'A3h',r6:'',desc:"Réglage de la plateforme déjà abaissée à +532.80 (pas de remblai du couloir), risberme hors d'eau, implantation du batardeau, essais de plaque, barrière anti-turbidité, déplacement des cibles C7/C8.",vig:['À +532.80, la plateforme n\'est qu\'à ≈ 0.7 m au-dessus du niveau haut du lac (≈ 532.1).']},
  {id:'A4b',ph:4,z:'lac',l:"Mobilisation de l'inventaire terrestre",d:5,p:'A3h',r6:'R6 B2',desc:"Installation du Lot 4 en rive : containers, pelles, protection des eaux.",vig:[]},
- {id:'A5a',ph:5,z:'lac',l:"Forage d'ameublissement",d:30,p:'A4a, A4b',r6:'hors R6',desc:"Forages le long des rideaux latéraux et du rideau de tête, comblement au sable (6 semaines).",vig:['Géophones actifs sur la station et la paroi.']},
+ {id:'A5a',ph:5,z:'lac',l:"Forage d'ameublissement",d:20,p:'A4a, A4b',r6:'hors R6',desc:"Forages le long des rideaux latéraux et du rideau de tête, comblement au sable.",vig:['Géophones actifs sur la station et la paroi.']},
  {id:'A5b',ph:5,z:'lac',l:'Fonçage des palplanches',d:5,p:'A5a-3',r6:'R6 C1',desc:"Fonçage depuis la station vers le lac, rideau de tête en dernier (pelle 40 t selon R6).",vig:['Seuils de vibration fixés avant le premier fonçage (SN 640 312a).']},
  {id:'A5c',ph:5,z:'lac',l:"Terrassement de l'amorce en rive",d:10,p:'A5b',r6:'R6 C2',desc:"Excavation par passes depuis +532.80 (les ≈ 2.7 m supérieurs sont déjà terrassés en phase 3 : 14 j au R6, ramené à 10 j, à confirmer), pompage, décantation et neutralisation des eaux.",vig:['Fond à ≈ 4.6 m sous le lac côté rive : contrôle du soulèvement.','Rejets selon SIA 431.']},
  {id:'A5d',ph:5,z:'lac',l:"Renforcement de l'enceinte de palplanches",d:10,p:'A5c DD',r6:'R6 C3',desc:"Cadres (liernes et butons) posés au fil de l'excavation.",vig:[]},
@@ -716,7 +716,7 @@ var DEF=[
  {id:'A6m',ph:6,z:'lac',l:'Ouverture du rideau de tête',d:2,p:'A6g, A6e',r6:'hors R6',desc:"Retrait ou découpe des palplanches du rideau de tête pour relier la fouille à la souille et faire entrer les conduites lacustres jusqu'aux brides.",vig:["La fouille se remplit jusqu'au niveau du lac : pompage arrêté.",'Géophones actifs.']},
  {id:'A6h',ph:6,z:'eau',l:'Noyage des aspirations, raccordement aux amorces',d:15,p:'A6m, A6c',r6:'R6 E2',desc:"Fouille et souille ouvertes : immersion contrôlée avec purge d'air, raccordement aux brides des amorces par plongeurs.",vig:['Fenêtre météo, vent.']},
  {id:'A6i',ph:6,z:'eau',l:'Noyage des refoulements, raccordement aux amorces',d:15,p:'A6h',r6:'R6 E3',desc:"Même opération pour les deux conduites de refoulement.",vig:[]},
- {id:'A6l',ph:6,z:'eau',l:'Essais de pression avant remblai',d:3,p:'A6i',r6:'hors R6',desc:"Essais par conduite, brides et raccords encore visibles, extrémités lacustres obturées avant la pose des crépines ; relevé as-built.",vig:[]},
+ {id:'A6l',ph:6,z:'eau',l:'Essais de pression avant remblai',d:0,p:'A6i',r6:'hors R6',desc:"Essais par conduite, brides et raccords encore visibles, extrémités lacustres obturées avant la pose des crépines ; relevé as-built.",vig:[]},
  {id:'A6k',ph:6,z:'eau',l:"Pose des crépines d'aspiration et de refoulement",d:5,p:'A6l',r6:'R6 E4',desc:"Crépines et diffuseurs selon détails Groupe E (plan 406).",vig:[]},
  {id:'A6j',ph:6,z:'eau',l:'Remblayage de la souille',d:10,p:'A6l',r6:'R6 D6',desc:"Recouvrement des conduites lacustres dans la souille, en même temps que le remblai de la fouille.",vig:[]},
  {id:'A7a',ph:7,z:'lac',l:'Remblayage de la fouille',d:5,p:'A6l',r6:'R6 C4',desc:"Une fois tout raccordé et éprouvé : enrobage et remblai par couches, cadres déposés au fil du remblai.",vig:["Fouille noyée : sous le niveau du lac, gravier propre mis en place sans compactage, à valider avec l'ingénieur."]},
@@ -724,13 +724,7 @@ var DEF=[
  {id:'A7c',ph:7,z:'lac',l:'Remise en état de la rive',d:5,p:'A7b',r6:'R6 C6',desc:"Rive et plateforme remises en état, bassin de décantation retiré.",vig:[]},
  {id:'A7d',ph:7,z:'eau',l:'Repli des installations et finitions',d:9,p:'A6k, A6j, A7c',r6:'R6 B4',desc:"Repli du Lot 4, retrait de la barrière anti-turbidité et du ponton.",vig:[]}
 ];
-var DEFAULT_HOL=[
- '26.03.2027 Vendredi saint','29.03.2027 Lundi de Pâques','06.05.2027 Ascension','17.05.2027 Lundi de Pentecôte','27.05.2027 Fête-Dieu',
- '19.07.2027-06.08.2027 Vacances d\'été du bâtiment (exemple, à confirmer)',
- '01.11.2027 Toussaint','08.12.2027 Immaculée Conception',
- '24.12.2027-07.01.2028 Fêtes de fin d\'année (exemple, à confirmer)',
- '14.04.2028 Vendredi saint','17.04.2028 Lundi de Pâques','25.05.2028 Ascension','05.06.2028 Lundi de Pentecôte','15.06.2028 Fête-Dieu','15.08.2028 Assomption'
-].join('\n');
+var DEFAULT_HOL="26.03.2027 Vendredi saint\n29.03.2027 Lundi de Pâques\n06.05.2027 Ascension\n17.05.2027 Lundi de Pentecôte\n27.05.2027 Fête-Dieu\n19.07.2027-06.08.2027 Vacances d'été du bâtiment (exemple, à confirmer)\n01.11.2027 Toussaint\n08.12.2027 Immaculée Conception\n24.12.2027-07.01.2028 Fêtes de fin d'année (exemple, à confirmer)\n14.04.2028 Vendredi saint\n17.04.2028 Lundi de Pâques\n25.05.2028 Ascension\n05.06.2028 Lundi de Pentecôte\n15.06.2028 Fête-Dieu\n15.08.2028 Assomption";
 function E(S,id){return S[id]?S[id].e:0;}
 var MILES=[
  {id:'M0',l:'Bâtiment prêt',c:"Dalle RdC bétonnée, butons +536.90 déposés, accord de l'ingénieur structure.",t:function(S){return 0;}},
@@ -744,8 +738,8 @@ var MILES=[
 ];
 
 /* ---------- état persistant ---------- */
-function defaults(){return {v:4,tasks:{},anchor:{task:'A6a',date:'2027-04-05'},holidays:DEFAULT_HOL,t:0,speed:5,dock:1};}
-var cfg=(function(){try{var r=JSON.parse(localStorage.getItem(KEY));if(r&&r.v===4){var d=defaults();for(var k in r)d[k]=r[k];return d;}}catch(e){}return defaults();})();
+function defaults(){return {v:5,tasks:{},anchor:{task:'A1',date:'2027-03-15'},holidays:DEFAULT_HOL,t:0,speed:5,dock:1};}
+var cfg=(function(){try{var r=JSON.parse(localStorage.getItem(KEY));if(r&&r.v===5){var d=defaults();for(var k in r)d[k]=r[k];return d;}}catch(e){}return defaults();})();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(cfg));}catch(e){}}
 function tasks(){return DEF.map(function(t){var o={};for(var k in t)o[k]=t[k];var c=cfg.tasks[t.id];if(c){if(c.d!==undefined&&c.d!==null&&!isNaN(c.d))o.d=c.d;if(typeof c.p==='string')o.p=c.p;}return o;});}
 
@@ -843,7 +837,7 @@ function applyAll(t){
 /* ---------- étapes et temps ---------- */
 var T=+cfg.t||0,STEPS=[],selId=null;
 function buildSteps(){
-  var S=SCHED.S,arr=SCHED.list.filter(function(t){return !t.end0;}).map(function(t,i){var r=S[t.id];return {t:r.s+Math.max(0.5,(r.e-r.s)*0.5),id:t.id,o:i,s:r.s};});
+  var S=SCHED.S,arr=SCHED.list.filter(function(t){return !t.end0;}).map(function(t,i){var r=S[t.id];return {t:r.e>r.s?r.s+Math.max(0.5,(r.e-r.s)*0.5):r.s,id:t.id,o:i,s:r.s};});
   arr.sort(function(a,b){return a.s-b.s||a.o-b.o;});
   arr.forEach(function(a){if(a.t>=S[a.id].e&&S[a.id].e>S[a.id].s)a.t=S[a.id].e-0.01;});
   STEPS=[{t:0,label:'État initial (M0)'}].concat(arr).concat([{t:SCHED.end,label:'Fin des travaux'}]);
@@ -925,6 +919,7 @@ function renderGantt(){
   rows.forEach(function(r){
     if(r.ph!==undefined){hb.push('<line class="sep" x1="0" y1="'+y+'" x2="'+W+'" y2="'+y+'"/><text x="8" y="'+(y+14)+'" class="t-s t-b">'+r.ph+' · '+PH[r.ph]+'</text>');y+=PH_H;return;}
     var t=r.t,s=S[t.id],cy=y+RH/2,bx=X(s.s),bw=Math.max((s.e-s.s)*k,3);
+    if(s.e<=s.s){hb.push('<g class="bar" data-id="'+t.id+'" data-y="'+y+'"><text x="18" y="'+(cy+4)+'" class="t-m t-3 lbl">'+t.id+'</text><text x="52" y="'+(cy+4)+'" class="t-s lbl">'+esc(t.l.length>36?t.l.slice(0,35)+'…':t.l)+' (0 j)</text><rect class="vis z-'+t.z+'" x="'+(bx-3.5)+'" y="'+(cy-3.5)+'" width="7" height="7" transform="rotate(45 '+bx+' '+cy+')"/></g>');y+=RH;return;}
     hb.push('<g class="bar" data-id="'+t.id+'" data-y="'+y+'"><text x="18" y="'+(cy+4)+'" class="t-m t-3 lbl">'+t.id+'</text><text x="52" y="'+(cy+4)+'" class="t-s lbl">'+esc(t.l.length>42?t.l.slice(0,41)+'…':t.l)+'</text><rect class="vis z-'+t.z+'" x="'+bx+'" y="'+(cy-5.5)+'" width="'+bw+'" height="11" rx="3"/>'+(SCHED.err[t.id]?'<text x="'+(bx+bw+4)+'" y="'+(cy+4)+'" class="t-s" style="fill:var(--warn)">!</text>':'')+'</g>');
     y+=RH;
   });
@@ -982,7 +977,7 @@ function updateTable(){var S=SCHED.S;document.querySelectorAll('#tasks tr[data-i
   tr.querySelector('[data-k=e]').textContent=jlab(r.e)+(de?' · '+fd(de,'s')+'.'+String(de.getFullYear()).slice(2):'');
   tr.querySelector('[data-k=x]').textContent=(SCHED.err[id]||[]).join(' · ');
   var c=cfg.tasks[id],d=document.getElementById('d-'+id),p=document.getElementById('p-'+id);
-  if(d)d.classList.toggle('changed',!!(c&&c.d!==undefined));if(p){p.classList.toggle('changed',!!(c&&typeof c.p==='string'));p.classList.toggle('bad',!!SCHED.err[id]);}
+  var df=DEF.filter(function(x){return x.id===id;})[0];if(d)d.classList.toggle('changed',!!(c&&c.d!==undefined&&c.d!==df.d));if(p){p.classList.toggle('changed',!!(c&&typeof c.p==='string'&&c.p!==df.p));p.classList.toggle('bad',!!SCHED.err[id]);}
   tr.classList.toggle('cur',st(id,T).run);});}
 
 /* ---------- calage ---------- */
@@ -994,9 +989,9 @@ document.getElementById('anchorDate').addEventListener('change',function(){cfg.a
 /* ---------- boutons ---------- */
 document.getElementById('bStrict').addEventListener('click',function(){cfg.tasks={};save();fillInputs();recalc();});
 function download(name,text,type){var b=new Blob([text],{type:type}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);}
-document.getElementById('bExpJ').addEventListener('click',function(){download('phasage-englisberg.json',JSON.stringify({v:4,tasks:cfg.tasks,anchor:cfg.anchor,holidays:cfg.holidays},null,2),'application/json');});
+document.getElementById('bExpJ').addEventListener('click',function(){download('phasage-englisberg.json',JSON.stringify({v:5,tasks:cfg.tasks,anchor:cfg.anchor,holidays:cfg.holidays},null,2),'application/json');});
 function msg(m){var s=document.getElementById('msg');s.textContent=m;setTimeout(function(){s.textContent='';},6000);}
-document.getElementById('fImp').addEventListener('change',function(){var f=this.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{var o=JSON.parse(rd.result);if(o.v!==4)throw 0;cfg.tasks=o.tasks||{};if(o.anchor)cfg.anchor=o.anchor;if(typeof o.holidays==='string')cfg.holidays=o.holidays;save();document.getElementById('holidays').value=cfg.holidays;renderAnchor();fillInputs();recalc();msg('');}catch(e){msg("Fichier non reconnu : exporter d'abord un fichier JSON depuis cette version de l'outil.");}};rd.readAsText(f);this.value='';});
+document.getElementById('fImp').addEventListener('change',function(){var f=this.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{var o=JSON.parse(rd.result);if(o.v!==4&&o.v!==5)throw 0;cfg.tasks=o.tasks||{};if(o.anchor)cfg.anchor=o.anchor;if(typeof o.holidays==='string')cfg.holidays=o.holidays;save();document.getElementById('holidays').value=cfg.holidays;renderAnchor();fillInputs();recalc();msg('');}catch(e){msg("Fichier non reconnu : exporter d'abord un fichier JSON depuis cette version de l'outil.");}};rd.readAsText(f);this.value='';});
 document.getElementById('bExpC').addEventListener('click',function(){var S=SCHED.S,L=['Phase;Réf.;Intervention;Programme R6;Durée (j ouvrés);Prédécesseurs;Début (J);Fin (J);Date début;Date fin'];
   SCHED.list.forEach(function(t){var r=S[t.id],ds=dateOf(r.s),de=endDay(r);L.push([t.ph,t.id,'"'+t.l.replace(/"/g,'""')+'"',t.r6,String(t.d).replace('.',','),'"'+(t.end0?'fin à M0':t.p)+'"',String(Math.round(r.s*10)/10).replace('.',','),String(Math.round(r.e*10)/10).replace('.',','),ds?fd(ds):'',de?fd(de):''].join(';'));});
   download('phasage-englisberg.csv','﻿'+L.join('\r\n'),'text/csv;charset=utf-8');});
