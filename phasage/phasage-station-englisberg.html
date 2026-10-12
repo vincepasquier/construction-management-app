@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sofia+Sans+Condensed:wght@600;700;800&family=Sofia+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
 <style>
-/* Mise en page : poste de pilotage. Plan dynamique à gauche, état du chantier à droite, coupe, Gantt et tableau éditable dessous, barre de lecture fixée en bas. */
+/* Mise en page : poste de pilotage. Plan et coupe côte à côte, état du chantier sous la coupe, Gantt ancré en bas d'écran pour glisser dans le temps. */
 :root{
   --paper:#eef2f4; --sheet:#ffffff; --sheet-2:#f3f6f8;
   --ink:#13202b; --ink-2:#475665; --ink-3:#7a8693; --rule:#d2dae0;
@@ -51,89 +51,89 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html{scroll-padding-bottom:110px}
 body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.5 var(--f-body);-webkit-font-smoothing:antialiased}
-.wrap{max-width:1320px;margin:0 auto;padding-inline:clamp(16px,3vw,32px);padding-block:20px 140px}
+.wrap{max-width:1600px;margin:0 auto;padding-inline:clamp(12px,2.4vw,28px);padding-block:16px 24px}
 h1,h2,h3,h4{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
-h1{font-size:clamp(26px,3.6vw,38px);font-weight:800}
-h2{font-size:24px;font-weight:700}
-h3{font-size:19px;font-weight:700}
+h1{font-size:clamp(24px,3vw,34px);font-weight:800}
+h2{font-size:22px;font-weight:700}
+h3{font-size:18px;font-weight:700}
 h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2)}
 p{margin:0}
 .mono{font-family:var(--f-mono);font-size:.88em;font-variant-numeric:tabular-nums}
-a{color:var(--lac-ink)}
 button,input,select,textarea{font:inherit;color:var(--ink)}
 :focus-visible{outline:2px solid var(--lac);outline-offset:2px}
-.btn{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:5px 10px;font-size:13.5px;cursor:pointer;color:var(--ink)}
+.btn{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:5px 10px;font-size:13.5px;cursor:pointer;color:var(--ink);white-space:nowrap}
 .btn:hover{border-color:var(--ink-3)}
-.btn.primary{background:var(--ink);color:var(--sheet);border-color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--sheet);border-color:var(--ink);font-weight:600}
+.btn.play{min-width:150px}
 select{max-width:100%}
-.calage,.calage > *,.calage .row > *{min-width:0}
-.calage .row select{flex:1 1 200px;width:100%}
 input[type=date],input[type=number],input[type=text],select,textarea{background:var(--sheet);border:1px solid var(--rule);border-radius:4px;padding:4px 7px;font-size:13.5px}
-section.block{margin-top:34px;display:grid;gap:14px}
-section.block > *,.stage > *,.head > *{min-width:0}
-.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;border-bottom:1.5px solid var(--ink);padding-bottom:7px}
+section.block{margin-top:30px;display:grid;gap:12px}
+section.block > *,.stage > *,.head > *,.right > *{min-width:0}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;border-bottom:1.5px solid var(--ink);padding-bottom:6px}
 .sec-head .ref{font:500 12px var(--f-mono);color:var(--ink-3)}
 .note{font-size:13.5px;color:var(--ink-2);max-width:90ch}
 
 /* en-tête */
-.head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 28px;align-items:end;border:1.5px solid var(--ink);background:var(--sheet);padding:16px 20px}
-.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);display:block;margin-bottom:6px}
-.head .sub{color:var(--ink-2);font-size:14px;margin-top:6px}
-.calage{display:grid;gap:6px;font-size:13.5px}
+.head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 28px;align-items:end;border:1.5px solid var(--ink);background:var(--sheet);padding:14px 18px}
+.eyebrow{font:600 11.5px/1.3 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);display:block;margin-bottom:5px}
+.head .sub{color:var(--ink-2);font-size:14px;margin-top:5px}
+.calage{display:grid;gap:6px;font-size:13.5px;min-width:0}
+.calage > *{min-width:0}
 .calage .row{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
-.calage b{font-family:var(--f-mono);font-weight:600}
+.calage .row > *{min-width:0}
+.calage .row select{flex:1 1 220px;width:100%}
 @media (max-width:900px){.head{grid-template-columns:1fr}}
 
-/* scène : plan + panneau */
-.stage{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start;margin-top:16px}
-@media (max-width:980px){.stage{grid-template-columns:1fr}}
-.viewbox{background:var(--sheet);border:1px solid var(--rule)}
+/* barre de lecture au-dessus des vues */
+.stage-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-top:14px}
+.stage-bar h2{margin-right:6px}
+.stage-bar .ctl{display:flex;gap:6px;flex-wrap:wrap}
+.sb-date{font:500 13px var(--f-mono);color:var(--ink-2)}
+.sb-date b{color:var(--ink);font-size:14px}
+
+/* vues côte à côte */
+.stage{display:grid;grid-template-columns:minmax(0,0.82fr) minmax(0,1.18fr);gap:14px;align-items:start;margin-top:10px}
+.right{display:grid;gap:14px}
+@media (max-width:1000px){.stage{grid-template-columns:1fr}}
+.viewbox{background:var(--sheet);border:1px solid var(--rule);position:relative}
 .viewbox svg{display:block;width:100%;height:auto}
-.viewcap{display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 12px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink-2)}
+.vtitle{position:absolute;top:8px;right:10px;font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);background:var(--sheet);padding:1px 5px;border:1px solid var(--rule)}
+.viewcap{display:flex;flex-wrap:wrap;gap:4px 14px;padding:7px 10px;border-top:1px solid var(--rule);font-size:12px;color:var(--ink-2)}
 .viewcap span{display:inline-flex;align-items:center;gap:6px}
 .sw{width:18px;height:9px;display:inline-block;border-radius:2px}
-.panel{background:var(--sheet);border:1px solid var(--rule);padding:14px 16px;display:grid;gap:14px;align-content:start}
-.p-day{font:800 34px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+#coupeWrap svg{min-width:640px}
+.panel{background:var(--sheet);border:1px solid var(--rule);padding:12px 14px;display:grid;gap:12px;align-content:start}
+.p-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px}
+.p-day{font:800 30px/1 var(--f-display);font-variant-numeric:tabular-nums}
 .p-cal{font:500 14px var(--f-mono);color:var(--ink-2)}
 .p-step{font-size:14px;color:var(--ink-2)}
 .p-step b{color:var(--ink)}
-.runs{display:grid;gap:10px}
-.run{border:1px solid var(--rule);padding:10px 12px;display:grid;gap:6px;background:var(--sheet-2)}
+.pcols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:760px){.pcols{grid-template-columns:1fr}}
+.pcols > div{display:grid;gap:10px;align-content:start;min-width:0}
+.runs{display:grid;gap:8px}
+.run{border:1px solid var(--rule);padding:9px 11px;display:grid;gap:5px;background:var(--sheet-2)}
 .run.sel{border-color:var(--ink)}
 .run-h{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--ink-2)}
 .chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);border-radius:3px;padding:0 6px;font-size:12px;color:var(--ink-2);background:var(--sheet);white-space:nowrap}
 .chip .dot{width:8px;height:8px;border-radius:50%}
-.run b{font-size:15px}
+.run b{font-size:14.5px}
 .pbar{height:6px;background:var(--rule);border-radius:3px;overflow:hidden}
 .pbar i{display:block;height:100%;border-radius:3px}
-.run p{font-size:13.5px;color:var(--ink-2)}
-.vig{margin:0;padding-left:18px;font-size:13px;display:grid;gap:3px;list-style:square}
+.run p{font-size:13px;color:var(--ink-2)}
+.vig{margin:0;padding-left:18px;font-size:12.5px;display:grid;gap:3px;list-style:square}
 .empty{font-size:14px;color:var(--ink-2)}
-.state{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);font-size:13.5px}
-.state dt,.state dd{margin:0;padding:5px 0;border-top:1px solid var(--rule)}
-.state dt{color:var(--ink-2);padding-right:12px}
+.state{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);font-size:13px}
+.state dt,.state dd{margin:0;padding:4px 0;border-top:1px solid var(--rule)}
+.state dt{color:var(--ink-2);padding-right:10px}
 .state dd.att::before{content:"▲ ";color:var(--warn);font-size:11px}
 .state dd.ok::before{content:"● ";color:var(--eau);font-size:11px}
-.milestone{border:1.5px solid var(--ink);padding:9px 11px;font-size:13.5px;display:grid;gap:3px}
+.milestone{border:1.5px solid var(--ink);padding:8px 10px;font-size:13px;display:grid;gap:3px}
 .milestone .k{font:600 11px var(--f-mono);text-transform:uppercase;letter-spacing:.06em}
 
-/* coupe, gantt */
-.scroll{overflow-x:auto}
-#coupeWrap svg{display:block;width:100%;min-width:760px;height:auto}
-.gantt{background:var(--sheet);border:1px solid var(--rule)}
-#gantt{display:block;min-width:980px;width:100%;height:auto;cursor:crosshair}
-#gantt .grid{stroke:var(--rule);stroke-width:1}
-#gantt .gmonth{stroke:var(--ink-3);stroke-width:1}
-#gantt .sep{stroke:var(--rule);stroke-width:1}
-#gantt .mline{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:3 4}
-#gantt .cur{stroke:var(--warn);stroke-width:2}
-#gantt .hol{fill:var(--sheet-2)}
-#gantt .z-prep{fill:var(--prep)}#gantt .z-amont{fill:var(--amont)}#gantt .z-lac{fill:var(--lac)}#gantt .z-eau{fill:var(--eau)}
-#gantt .bar{cursor:pointer}
-#gantt .bar:hover rect.vis,#gantt .bar.sel rect.vis{stroke:var(--ink);stroke-width:1.6}
-#gantt .row-hi{fill:var(--lac-wash)}
+/* textes et aplats des schémas */
 svg text{font-family:var(--f-body);fill:var(--ink)}
 svg .t{font-size:12.5px}
 svg .t-s{font-size:11.5px}
@@ -141,7 +141,6 @@ svg .t-m{font-family:var(--f-mono);font-size:10.5px}
 svg .t-b{font-weight:700}
 svg .t-2{fill:var(--ink-2)}
 svg .t-3{fill:var(--ink-3)}
-svg .t-badge{font-size:12px;font-weight:700;fill:var(--on-accent)}
 svg .halo{paint-order:stroke;stroke:var(--sheet);stroke-width:3.5px;stroke-linejoin:round}
 svg .wip{filter:drop-shadow(0 0 2px var(--glow)) drop-shadow(0 0 4px var(--glow))}
 .f-water{fill:var(--water)}.f-earth{fill:var(--earth)}.f-gravel{fill:var(--gravel)}.f-gdot{fill:var(--gravel-dot)}.s-gdot{stroke:var(--gravel-dot)}
@@ -156,7 +155,7 @@ svg .wip{filter:drop-shadow(0 0 2px var(--glow)) drop-shadow(0 0 4px var(--glow)
 .tscroll{overflow-x:auto;background:var(--sheet);border:1px solid var(--rule)}
 table{border-collapse:collapse;width:100%;font-size:13.5px}
 th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:middle}
-th{font:600 10.5px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);background:var(--sheet-2);position:sticky;top:0}
+th{font:600 10.5px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);background:var(--sheet-2)}
 td.num{font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr.ph td{background:var(--sheet-2);font:700 13px var(--f-display);letter-spacing:.02em;border-bottom:1px solid var(--ink-3)}
 tr.cur td{background:var(--lac-wash)}
@@ -167,10 +166,11 @@ tr.cur td{background:var(--lac-wash)}
 td .r6{font:500 11px var(--f-mono);color:var(--ink-3)}
 td.err{color:var(--warn);font-size:12px;min-width:120px}
 .lbl{min-width:240px}
-.legend-preds{font-size:13px;color:var(--ink-2);display:grid;gap:4px;max-width:96ch}
+.legend-preds{font-size:13px;color:var(--ink-2);display:grid;gap:4px;max-width:100ch}
 .legend-preds code{font-family:var(--f-mono);font-size:12.5px;background:var(--sheet-2);padding:0 4px;border:1px solid var(--rule);border-radius:3px}
 textarea{width:100%;min-height:170px;font-family:var(--f-mono);font-size:12.5px;line-height:1.5}
 .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}
+.cols > *{min-width:0}
 @media (max-width:900px){.cols{grid-template-columns:1fr}}
 
 /* fiches */
@@ -186,22 +186,38 @@ details.fiche[open] > summary::after{content:"–"}
 .fiche-body{padding:4px 14px 14px 48px;display:grid;gap:10px;font-size:14px;max-width:110ch}
 .fiche-body ul{margin:0;padding-left:18px;display:grid;gap:4px;list-style:square}
 ol.questions{margin:0;padding-left:24px;display:grid;gap:10px;max-width:96ch;font-size:14.5px}
-.sources td{font-size:13px}
+footer{margin-top:36px;padding-top:12px;border-top:1.5px solid var(--ink);font-size:13px;color:var(--ink-2)}
 
-/* barre de lecture */
-.playbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--sheet);border-top:1.5px solid var(--ink);padding:8px clamp(12px,3vw,32px) calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 18px rgba(0,0,0,.08)}
-.pb-in{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px 14px;align-items:center}
-.pb-btns{display:flex;gap:6px;align-items:center}
-.pb-btns .btn{min-width:38px;padding:5px 8px;font-size:14px}
-.pb-mid{display:grid;gap:3px;min-width:0}
-.pb-track{position:relative;height:20px}
+/* Gantt ancré en bas */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--sheet);border-top:1.5px solid var(--ink);box-shadow:0 -6px 18px rgba(0,0,0,.10)}
+.dock-bar{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:6px clamp(12px,2.4vw,28px)}
+.dock-bar .ctl{display:flex;gap:5px;align-items:center}
+.dock-bar .ctl .btn{padding:4px 9px}
+.db-mid{display:grid;gap:2px;min-width:0}
 #tslider{width:100%;margin:0;accent-color:var(--ink)}
-.pb-label{font:500 12.5px var(--f-mono);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pb-label b{color:var(--ink)}
-.pb-right{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--ink-2)}
-@media (max-width:760px){.pb-in{grid-template-columns:1fr}.pb-right{justify-content:space-between}}
-footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-size:13px;color:var(--ink-2)}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.db-label{font:500 12px var(--f-mono);color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.db-label b{color:var(--ink)}
+.db-right{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--ink-2)}
+@media (max-width:760px){.dock-bar{grid-template-columns:1fr}.db-right{justify-content:space-between}}
+.dock-body{height:var(--dock-h,28vh);overflow:auto;border-top:1px solid var(--rule);overscroll-behavior:contain}
+.dock[data-size="0"] .dock-body{display:none}
+.dock[data-size="2"] .dock-body{--dock-h:58vh}
+.g-head{position:sticky;top:0;z-index:2;background:var(--sheet);border-bottom:1px solid var(--rule)}
+#gHead,#gBody{display:block;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+#gHead{cursor:ew-resize}
+#gBody{cursor:ew-resize}
+#gBody .grid,#gHead .grid{stroke:var(--rule);stroke-width:1}
+#gHead .gmonth{stroke:var(--ink-3);stroke-width:1}
+#gBody .sep{stroke:var(--rule);stroke-width:1}
+#gBody .mline{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:3 4}
+.cur{stroke:var(--warn);stroke-width:2}
+.curknob{fill:var(--warn)}
+#gBody .z-prep{fill:var(--prep)}#gBody .z-amont{fill:var(--amont)}#gBody .z-lac{fill:var(--lac)}#gBody .z-eau{fill:var(--eau)}
+#gBody .bar text.lbl{cursor:pointer}
+#gBody .bar:hover rect.vis,#gBody .bar.sel rect.vis{stroke:var(--ink);stroke-width:1.6}
+#gBody .bar.run rect.vis{filter:drop-shadow(0 0 2px var(--glow))}
+#gBody .lblzone{fill:var(--sheet)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
@@ -211,19 +227,26 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
   <div>
     <span class="eyebrow">Groupe E · CADFR – Centrale ZI Englisberg · Lots 2, 3 et 4</span>
     <h1>Phasage de la station de pompage d'Englisberg</h1>
-    <p class="sub">Plan et coupe animés étape par étape. Durées et liens modifiables dans le tableau ; le calendrier se recalcule en jours ouvrés.</p>
+    <p class="sub">Plan et coupe animés étape par étape. Glisser dans le Gantt en bas de l'écran pour avancer dans le temps ; durées et liens modifiables plus bas.</p>
   </div>
   <div class="calage">
-    <div class="row"><label for="anchorTask">Calage :</label>
-      <select id="anchorTask"></select></div>
-    <div class="row"><label for="anchorDate">commence le</label><input type="date" id="anchorDate">
-      <span id="m0info" class="mono"></span></div>
+    <div class="row"><label for="anchorTask">Calage :</label><select id="anchorTask"></select></div>
+    <div class="row"><label for="anchorDate">commence le</label><input type="date" id="anchorDate"><span id="m0info" class="mono"></span></div>
   </div>
 </header>
 
+<div class="stage-bar">
+  <h2>Plan et coupe</h2>
+  <div class="ctl">
+    <button type="button" class="btn" data-act="prev">◀ Étape</button>
+    <button type="button" class="btn primary play" data-act="play">▶ Lire le phasage</button>
+    <button type="button" class="btn" data-act="next">Étape ▶</button>
+  </div>
+  <span class="sb-date" id="sbDate"></span>
+</div>
+
 <div class="stage">
-  <div>
-    <div class="viewbox"><svg id="planSvg" viewBox="0 0 580.0 780.0" role="img" aria-label="Plan du chantier, état à la date choisie">
+  <div class="viewbox"><span class="vtitle">Plan</span><svg id="planSvg" viewBox="0 0 580.0 780.0" role="img" aria-label="Plan du chantier, état à la date choisie">
 <defs>
 <pattern id="p-gravel" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" class="f-gravel"/><circle cx="2.5" cy="2.5" r="0.9" class="f-gdot"/><circle cx="7.5" cy="7.5" r="0.9" class="f-gdot"/></pattern>
 <pattern id="p-grave" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" class="f-grave"/><circle cx="1.5" cy="1.5" r="1" class="f-gdot"/><circle cx="4.5" cy="4.5" r="1" class="f-gdot"/></pattern>
@@ -298,9 +321,9 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
 <rect x="246.6" y="511.0" width="9.0" height="35.0" rx="3" fill="none" class="s-ink3" stroke-width="1" stroke-dasharray="3 2"/>
 <rect x="271.5" y="511.0" width="9.0" height="35.0" rx="3" fill="none" class="s-ink3" stroke-width="1" stroke-dasharray="3 2"/>
 <rect x="296.4" y="511.0" width="9.0" height="35.0" rx="3" fill="none" class="s-ink3" stroke-width="1" stroke-dasharray="3 2"/>
-<rect x="267.0" y="505.0" width="50.5" height="4.5" fill="url(#p-brick)" class="s-amont" stroke-width="1" data-hide="A3b:s"/>
-<rect x="267.0" y="505.0" width="50.5" height="4.5" fill="none" class="s-warn" stroke-width="1.6" stroke-dasharray="4 3" data-vis="A3b:s" data-hide="A3e:e" data-wip="A3b A3c A3d"/>
-<rect x="267.0" y="505.0" width="50.5" height="4.5" fill="url(#p-brick)" class="s-amont" stroke-width="1" data-vis="A3e:s" data-wip="A3e" data-clip="A3e" data-dir="e"/>
+<rect x="267.0" y="505.0" width="50.5" height="4.5" fill="url(#p-brick)" class="s-amont" stroke-width="1" data-hide="A3d:s"/>
+<rect x="267.0" y="505.0" width="50.5" height="4.5" fill="none" class="s-warn" stroke-width="1.6" stroke-dasharray="4 3" data-vis="A3d:s" data-hide="A3h:e" data-wip="A3d A3e A3f A3g"/>
+<rect x="267.0" y="505.0" width="50.5" height="4.5" fill="url(#p-brick)" class="s-amont" stroke-width="1" data-vis="A3h:s" data-wip="A3h" data-clip="A3h" data-dir="e"/>
 <line x1="318.5" y1="507.2" x2="372.0" y2="507.2" class="s-ink3"/>
 <polygon points="240.0,606.5 375.0,606.5 374.0,647.0 363.3,647.4 265.2,657.4 240.0,658.0" fill="url(#p-grave)" class="s-amont" stroke-width="0.8" data-hide="A1:e" data-wip="A1" data-unclip="A1" data-dir="e"/>
 <polygon points="240.0,606.5 375.0,606.5 374.0,647.0 363.3,647.4 265.2,657.4 240.0,658.0" class="f-decais s-amont" stroke-width="1" stroke-dasharray="4 3" data-vis="A1:s" data-hide="A2d:e"/>
@@ -323,13 +346,16 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
 <path d="M300.0 588.5 L300.0 612.0 Q300.0 652.5 318.0 673.0" pathLength="1" fill="none" class="s-amont" stroke-width="10" data-vis="A2b:s" data-wip="A2c" data-draw="A2b"/>
 <path d="M336.0 655.0 L465.0 780.0" fill="none" class="s-amont" stroke-width="10" opacity="0.42"/>
 <path d="M315.0 588.5 L315.0 610.0 Q315.0 634.6 336.0 655.0" pathLength="1" fill="none" class="s-amont" stroke-width="10" data-vis="A2b:s" data-wip="A2c" data-draw="A2b"/>
-<path d="M300.0 588.5 L300.0 612.0 Q300.0 652.5 318.0 673.0 L412.0 780.0" pathLength="1" fill="none" class="s-coulis" stroke-width="7" data-vis="A3d:s" data-draw="A3d"/>
-<path d="M300.0 588.5 L300.0 612.0 Q300.0 652.5 318.0 673.0 L412.0 780.0" pathLength="1" fill="none" class="s-ink" stroke-width="2.4" data-vis="A3c:s" data-wip="A3c" data-draw="A3c"/>
-<path d="M315.0 588.5 L315.0 610.0 Q315.0 634.6 336.0 655.0 L465.0 780.0" pathLength="1" fill="none" class="s-coulis" stroke-width="7" data-vis="A3d:s" data-draw="A3d"/>
-<path d="M315.0 588.5 L315.0 610.0 Q315.0 634.6 336.0 655.0 L465.0 780.0" pathLength="1" fill="none" class="s-ink" stroke-width="2.4" data-vis="A3c:s" data-wip="A3c" data-draw="A3c"/>
-<g data-vis="A3a:s" data-hide="A3c:e"><rect x="325.0" y="354.0" width="195.0" height="52.0" class="f-sheet s-amont" stroke-width="1.2" stroke-dasharray="4 3"/><rect x="325.0" y="366.0" width="195.0" height="30.0" fill="url(#p-bundle)" data-wip="A3a" data-clip="A3a" data-dir="e"/><circle cx="350.0" cy="341.0" r="6" class="f-sheet s-amont" stroke-width="2"/><circle cx="350.0" cy="341.0" r="1.6" class="f-amont"/><circle cx="390.0" cy="341.0" r="6" class="f-sheet s-amont" stroke-width="2"/><circle cx="390.0" cy="341.0" r="1.6" class="f-amont"/><circle cx="430.0" cy="341.0" r="6" class="f-sheet s-amont" stroke-width="2"/><circle cx="430.0" cy="341.0" r="1.6" class="f-amont"/><text x="327.0" y="418.0" class="t-s halo">aire de préparation des batteries</text></g>
-<path d="M325.0 394.0 L315.0 394.0 L315.0 586.0" fill="none" class="s-amont" stroke-width="2.2" stroke-dasharray="6 4" marker-end="url(#mk-amont)" data-vis="A3b:s" data-hide="A3c:e" data-wip="A3c"/>
-<path d="M325.0 374.0 L300.0 374.0 L300.0 586.0" fill="none" class="s-amont" stroke-width="2.2" stroke-dasharray="6 4" marker-end="url(#mk-amont)" data-vis="A3b:s" data-hide="A3c:e" data-wip="A3c"/>
+<path d="M300.0 588.5 L300.0 612.0 Q300.0 652.5 318.0 673.0 L412.0 780.0" pathLength="1" fill="none" class="s-coulis" stroke-width="7" data-vis="A3g:s" data-draw="A3g"/>
+<path d="M300.0 588.5 L300.0 612.0 Q300.0 652.5 318.0 673.0 L412.0 780.0" pathLength="1" fill="none" class="s-ink" stroke-width="2.4" data-vis="A3e:s" data-wip="A3e" data-draw="A3e"/>
+<path d="M315.0 588.5 L315.0 610.0 Q315.0 634.6 336.0 655.0 L465.0 780.0" pathLength="1" fill="none" class="s-coulis" stroke-width="7" data-vis="A3g:s" data-draw="A3g"/>
+<path d="M315.0 588.5 L315.0 610.0 Q315.0 634.6 336.0 655.0 L465.0 780.0" pathLength="1" fill="none" class="s-ink" stroke-width="2.4" data-vis="A3f:s" data-wip="A3f" data-draw="A3f"/>
+<polygon points="286.0,208.0 330.0,204.0 330.0,445.0 286.0,439.0" class="f-decais s-amont" stroke-width="1.3" stroke-dasharray="4 3" data-vis="A3b:s" data-hide="A4a:e" data-wip="A3b A4a" data-clip="A3b" data-dir="n" data-fadeout="A4a"/>
+<g data-vis="A3c:s" data-wip="A3c" data-clip="A3c" data-dir="e"><circle cx="289.0" cy="439.3" r="3.9" class="f-amontwash s-amont" stroke-width="1.6"/><circle cx="295.5" cy="440.2" r="3.9" class="f-amontwash s-amont" stroke-width="1.6"/><circle cx="302.0" cy="441.1" r="3.9" class="f-amontwash s-amont" stroke-width="1.6"/><circle cx="308.5" cy="442.0" r="3.9" class="f-amontwash s-amont" stroke-width="1.6"/><circle cx="315.0" cy="442.9" r="3.9" class="f-amontwash s-amont" stroke-width="1.6"/><circle cx="321.5" cy="443.8" r="3.9" class="f-amontwash s-amont" stroke-width="1.6"/><circle cx="328.0" cy="444.7" r="3.9" class="f-amontwash s-amont" stroke-width="1.6"/></g>
+<path d="M300.0 0.0 L300.0 586.0" fill="none" class="s-ink" stroke-width="2.6" data-vis="A3e:s" data-hide="A3e:e" data-wip="A3e"/>
+<path d="M292.0 18.0 h16 l-4 8 h-8 z" class="f-ink" data-vis="A3e:s" data-hide="A3e:e"/>
+<path d="M315.0 0.0 L315.0 586.0" fill="none" class="s-ink" stroke-width="2.6" data-vis="A3f:s" data-hide="A3f:e" data-wip="A3f"/>
+<path d="M307.0 18.0 h16 l-4 8 h-8 z" class="f-ink" data-vis="A3f:s" data-hide="A3f:e"/>
 <g ><circle cx="256.0" cy="602.3" r="7.5" fill="none" class="s-glow" stroke-width="3"  data-ring="A1 A2a A2b A2c A2d"/><circle cx="256.0" cy="602.3" r="3.2" class="f-sheet s-ink" stroke-width="1.6"/><line x1="251.0" y1="602.3" x2="261.0" y2="602.3" class="s-ink" stroke-width="1"/><text x="247.0" y="606.3" text-anchor="end" class="t-m t-b halo">C1·C2</text></g>
 <g ><circle cx="366.7" cy="539.0" r="7.5" fill="none" class="s-glow" stroke-width="3"  data-ring="A5a A5b A5e A7b"/><circle cx="366.7" cy="539.0" r="3.2" class="f-sheet s-ink" stroke-width="1.6"/><line x1="361.7" y1="539.0" x2="371.7" y2="539.0" class="s-ink" stroke-width="1"/><text x="375.7" y="543.0" text-anchor="start" class="t-m t-b halo">C3·C4</text></g>
 <g ><circle cx="146.0" cy="544.0" r="7.5" fill="none" class="s-glow" stroke-width="3"  data-ring="A5a A5b A5e A7b"/><circle cx="146.0" cy="544.0" r="3.2" class="f-sheet s-ink" stroke-width="1.6"/><line x1="141.0" y1="544.0" x2="151.0" y2="544.0" class="s-ink" stroke-width="1"/><text x="137.0" y="548.0" text-anchor="end" class="t-m t-b halo">C5·C6</text></g>
@@ -343,13 +369,14 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
 <text x="8.0" y="380.0" class="t-s t-2 halo">plateforme en grave +535.50</text>
 <text x="8.0" y="502.0" class="t-s t-b halo">Station de pompage</text>
 <text x="8.0" y="516.0" class="t-m t-2 halo">Lot 2 · RdC +536.50</text>
-<text x="170.0" y="489.0" class="t-s t-2">bâche côté lac</text>
+<text x="170.0" y="484.0" class="t-s t-2">dalle N-1 +532.80</text>
+<text x="170.0" y="498.0" class="t-m t-3">sur la bâche, sans mur au-dessus</text>
 <text x="170.0" y="566.0" class="t-s t-2">hall des pompes</text>
-<text x="170.0" y="578.0" class="t-m t-3">dalle +532.80</text>
+<text x="170.0" y="578.0" class="t-m t-3">sol +532.80 · murs jusqu'au RdC</text>
 <text x="374.0" y="511.2" class="t-s t-b halo">mur fusible (axe B, ≈ 5 m)</text>
-<text x="374.0" y="525.0" class="t-s halo" data-hide="A3b:s">briques, fermé</text>
-<text x="374.0" y="525.0" class="t-s halo" data-vis="A3b:s" data-hide="A3e:s">ouvert pour les tirages</text>
-<text x="374.0" y="525.0" class="t-s halo" data-vis="A3e:s">refermé</text>
+<text x="374.0" y="525.0" class="t-s halo" data-hide="A3d:s">briques, fermé</text>
+<text x="374.0" y="525.0" class="t-s halo" data-vis="A3d:s" data-hide="A3h:s">ouvert pour les tirages</text>
+<text x="374.0" y="525.0" class="t-s halo" data-vis="A3h:s">refermé</text>
 <text x="152.0" y="426.0" class="t-s t-2 halo">écran 7</text>
 <text x="150.0" y="617.5" class="t-s t-2 halo">écran 1</text>
 <text x="234.0" y="629.0" text-anchor="end" class="t-s halo" data-hide="A1:e">grave (chemin d'accès)</text>
@@ -363,7 +390,7 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
 <text x="292.0" y="713.0" text-anchor="end" class="t-s halo">paroi clouée</text>
 <text x="366.0" y="740.0" text-anchor="end" class="t-s t-b halo">fourreaux FD1 / FD2 existants</text>
 <text x="366.0" y="754.0" text-anchor="end" class="t-s halo">→ centrale +577.05 (≈ 130 m)</text>
-<text x="366.0" y="768.0" text-anchor="end" class="t-s t-b halo" data-vis="A3b:s" data-hide="A3c:e">treuil de tirage à la centrale</text>
+<text x="366.0" y="768.0" text-anchor="end" class="t-s t-b halo" data-vis="A3e:s" data-hide="A3f:e">treuil de tirage à la centrale</text>
 <text x="455.0" y="698.0" class="t-s t-2 halo">flanc de colline</text>
 <text x="288.0" y="130.0" class="t-s t-b halo" data-vis="A5b:s" data-hide="A7b:e">batardeau ≈ 38 m</text>
 <text x="288.0" y="143.0" class="t-s halo" data-vis="A5b:s" data-hide="A7b:e">palplanches + cadres</text>
@@ -373,24 +400,24 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
 <text x="210.0" y="14.0" text-anchor="end" class="t-s halo" data-vis="A6i:s">refoulements → diffuseurs</text>
 <text x="270.0" y="14.0" class="t-s halo" data-vis="A6h:s">aspirations + gaine → crépines</text>
 <text x="166.0" y="355.0" text-anchor="end" class="t-s halo" data-vis="A4a:s" data-hide="A7c:e">plateforme / risberme (ph. 4)</text>
+<text x="336.0" y="26.0" class="t-s halo" data-vis="A3a:s" data-hide="A3e:s">batteries assemblées sur l'autre rive ↑</text>
+<text x="336.0" y="26.0" class="t-s t-b halo" data-vis="A3e:s" data-hide="A3e:e">batterie FD1 remorquée puis tirée</text>
+<text x="336.0" y="26.0" class="t-s t-b halo" data-vis="A3f:s" data-hide="A3f:e">batterie FD2 remorquée puis tirée</text>
+<text x="336.0" y="260.0" class="t-s t-b halo" data-vis="A3b:s" data-hide="A4a:e">couloir d'introduction ≈ +532.80</text>
+<text x="336.0" y="273.0" class="t-s halo" data-vis="A3b:s" data-hide="A4a:e">aligné sur la dalle N-1</text>
+<text x="339.0" y="423.0" class="t-s halo" data-vis="A3c:s" data-hide="A4a:e">pieux recépés à ≈ +532.80</text>
 <g><circle cx="535.0" cy="55.0" r="15" class="f-sheet s-ink3" stroke-width="1"/><path d="M527.5 45.6 L538.1 52.5 L531.9 57.5 Z" class="f-ink"/><text x="521.3" y="41.8" text-anchor="middle" class="t-m t-b">N</text></g>
 <g><rect x="465.0" y="141.0" width="50" height="4" class="f-ink"/><rect x="515.0" y="141.0" width="50" height="4" class="f-sheet s-ink" stroke-width="1"/><text x="465.0" y="137.0" class="t-m">0</text><text x="565.0" y="137.0" text-anchor="middle" class="t-m">10 m</text></g>
 </svg>
-      <div class="viewcap">
-        <span><i class="sw" style="background:var(--amont)"></i>côté amont (Lots 2–3)</span>
-        <span><i class="sw" style="background:var(--lac)"></i>côté lac (Lots 2–4)</span>
-        <span><i class="sw" style="background:var(--warn)"></i>à démolir / coupé</span>
-        <span><i class="sw" style="background:var(--glow)"></i>en cours</span>
-        <span>plan à l'échelle, orientation du plan 300-002</span>
-      </div>
+    <div class="viewcap">
+      <span><i class="sw" style="background:var(--amont)"></i>côté amont (Lots 2–3)</span>
+      <span><i class="sw" style="background:var(--lac)"></i>côté lac (Lots 2–4)</span>
+      <span><i class="sw" style="background:var(--warn)"></i>à démolir, coupé</span>
+      <span><i class="sw" style="background:var(--glow)"></i>en cours</span>
     </div>
   </div>
-  <aside class="panel" id="panel" aria-live="polite"></aside>
-</div>
-
-<section class="block" id="coupe">
-  <div class="sec-head"><h2>Coupe lac → station → colline</h2><span class="ref">coupe développée · altitudes des profils 41-402 et 51-302 · verticale ×1.3</span></div>
-  <div class="viewbox scroll" id="coupeWrap"><svg id="coupeSvg" viewBox="0 0 960 470" role="img" aria-label="Coupe développée lac, station, colline à la date choisie">
+  <div class="right">
+    <div class="viewbox"><span class="vtitle">Coupe lac → colline</span><div class="scroll" id="coupeWrap"><svg id="coupeSvg" viewBox="0 0 860 470" role="img" aria-label="Coupe développée lac, station, colline à la date choisie">
 <defs>
 <pattern id="c-gravel" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" class="f-gravel"/><circle cx="2" cy="2" r="0.9" class="f-gdot"/><circle cx="6" cy="6" r="0.9" class="f-gdot"/></pattern>
 <pattern id="c-grave" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" class="f-grave"/><circle cx="1.5" cy="1.5" r="1" class="f-gdot"/><circle cx="4.5" cy="4.5" r="1" class="f-gdot"/></pattern>
@@ -400,7 +427,7 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
 <pattern id="c-brick" width="8" height="4.5" patternUnits="userSpaceOnUse"><rect width="8" height="4.5" class="f-brick"/><path d="M0 2.25 H8 M4 0 V2.25 M0 2.25 V4.5" class="s-sheet" stroke-width="0.7"/></pattern>
 <marker id="c-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="f-ink"/></marker>
 </defs>
-<rect width="960" height="470" class="f-sheet"/>
+<rect width="860" height="470" class="f-sheet"/>
 <line x1="52" y1="449.0" x2="52" y2="31.0" class="s-ink3" stroke-width="1"/>
 <line x1="48" y1="449.0" x2="52" y2="449.0" class="s-ink3"/>
 <text x="45" y="453.0" text-anchor="end" class="t-m t-3">515</text>
@@ -419,108 +446,108 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
 <line x1="48" y1="64.0" x2="52" y2="64.0" class="s-ink3"/>
 <text x="45" y="68.0" text-anchor="end" class="t-m t-3">550</text>
 <text x="8" y="25.0" class="t-m t-3">alt. [m]</text>
-<polygon points="60.0,321.1 121.5,305.8 203.5,280.7 285.5,270.4 367.5,264.1 449.5,258.1 502.8,253.2 593.0,236.5 593.0,242.2 732.4,242.2 810.0,242.2 835.7,130.0 836.5,129.0 881.6,82.0 920.2,51.0 937.4,35.4 937.4,449.0 60.0,449.0" class="f-earth"/>
-<polygon points="60.0,273.0 264.6,273.0 203.5,280.7 121.5,305.8 60.0,321.1" class="f-water"/>
-<line x1="60.0" y1="273.0" x2="264.6" y2="273.0" class="s-lac" stroke-width="1.5"/>
-<polygon points="483.9,254.9 519.2,223.5 593.0,223.5 593.0,236.5 502.8,253.2" fill="url(#c-gravel)"/>
-<polygon points="281.4,270.9 285.5,270.4 367.5,264.1 449.5,258.1 483.9,254.9 519.2,223.5 593.0,223.5 593.0,303.5 502.8,303.5 449.5,281.8 367.5,304.2 285.5,324.7 281.4,325.8" class="f-sheet"  data-vis="A5c:s" data-hide="A7a:e" data-clip="A5c" data-dir="s"/>
-<polygon points="281.4,270.9 285.5,270.4 367.5,264.1 449.5,258.1 483.9,254.9 519.2,223.5 593.0,223.5 593.0,303.5 502.8,303.5 449.5,281.8 367.5,304.2 285.5,324.7 281.4,325.8" fill="url(#c-hlac)" class="s-lac" stroke-width="0.8" data-vis="A5c:s" data-wip="A5c" data-clip="A5c" data-dir="s" data-fadeout="A7a"/>
-<polygon points="281.4,270.9 285.5,270.4 367.5,264.1 449.5,258.1 483.9,254.9 519.2,223.5 593.0,223.5 593.0,303.5 502.8,303.5 449.5,281.8 367.5,304.2 285.5,324.7 281.4,325.8" fill="url(#c-remblai)" data-vis="A7a:s" data-wip="A7a" data-clip="A7a" data-dir="n"/>
-<line x1="264.6" y1="273.0" x2="593.0" y2="273.0" class="s-lac" stroke-width="1.2" stroke-dasharray="5 4"/>
-<path d="M281.4 258.7 L281.4 372.0" pathLength="1" fill="none" class="s-lac" stroke-width="3.2" data-vis="A5b:s" data-draw="A5b@0.85-1" data-erase="A7b@0.85-1"/>
-<line x1="281.4" y1="372.0" x2="281.4" y2="398.4" class="s-lac" stroke-width="3.2" stroke-dasharray="3 3" data-vis="A5b:e" data-hide="A7b:s"/>
-<path d="M60.0 367.6 L121.5 359.2 L203.5 339.0 L285.5 318.1 L367.5 297.6 L391.3 291.1" pathLength="1" fill="none" class="s-lac" stroke-width="8.8" stroke-linejoin="round" data-vis="A6h:s" data-wip="A6l" data-draw="A6h"/>
-<path d="M607.8 296.9 L502.8 296.9 L449.5 275.2 L391.3 291.1" pathLength="1" fill="none" class="s-lac" stroke-width="8.8" stroke-linejoin="round" data-vis="A6g:s" data-wip="A6l" data-draw="A6g"/>
-<path d="M607.8 270.4 L552.0 270.4 L449.5 275.2" pathLength="1" fill="none" class="s-lac" stroke-width="8.8" stroke-linejoin="round" data-vis="A6g:s" data-wip="A6l" data-draw="A6g"/>
-<g data-vis="A6g:e"><line x1="389.1" y1="282.1" x2="389.1" y2="300.1" class="s-ink" stroke-width="1.6"/><line x1="393.5" y1="282.1" x2="393.5" y2="300.1" class="s-ink" stroke-width="1.6"/></g>
-<rect x="593.0" y="310.4" width="6.6" height="106.7" class="f-pile"/>
-<rect x="593.0" y="223.5" width="6.6" height="86.9" class="f-pile" data-hide="A4a:s"/>
-<rect x="593.0" y="223.5" width="6.6" height="86.9" fill="url(#c-hwarn)" class="s-warn" stroke-width="1" data-vis="A4a:s" data-hide="A5e:e" data-wip="A5e" data-fadeout="A5e"/>
-<rect x="593.0" y="223.5" width="6.6" height="86.9" fill="none" class="s-warn" stroke-width="1" stroke-dasharray="3 2" data-vis="A5e:e"/>
-<rect x="599.6" y="223.5" width="8.2" height="144.1" fill="url(#c-gravel)"/>
-<rect x="717.6" y="223.5" width="8.2" height="144.1" fill="url(#c-gravel)"/>
-<rect x="607.8" y="212.5" width="109.9" height="155.1" class="f-sheet2 s-ink" stroke-width="1.6"/>
-<rect x="611.4" y="218.0" width="33.2" height="140.8" class="f-bache"/>
-<line x1="607.8" y1="214.5" x2="717.6" y2="214.5" class="s-ink" stroke-width="4"/>
-<line x1="607.8" y1="364.6" x2="717.6" y2="364.6" class="s-ink" stroke-width="6"/>
-<rect x="644.7" y="253.2" width="68.1" height="6.6" class="f-ink"/>
-<rect x="644.7" y="259.8" width="3.7" height="99.0" class="f-ink"/>
-<rect x="644.7" y="214.7" width="3.7" height="38.5" fill="url(#c-brick)" class="s-amont" stroke-width="0.8" data-hide="A3b:s"/>
-<rect x="644.7" y="214.7" width="3.7" height="38.5" fill="none" class="s-warn" stroke-width="1.4" stroke-dasharray="3 2" data-vis="A3b:s" data-hide="A3e:e" data-wip="A3b A3c A3d"/>
-<rect x="644.7" y="214.7" width="3.7" height="38.5" fill="url(#c-brick)" class="s-amont" stroke-width="0.8" data-vis="A3e:s" data-wip="A3e" data-clip="A3e" data-dir="n"/>
-<circle cx="607.8" cy="270.4" r="3.6" class="f-sheet s-ink" stroke-width="1.4"/>
-<circle cx="607.8" cy="296.9" r="3.6" class="f-sheet s-ink" stroke-width="1.4"/>
-<rect x="725.8" y="241.1" width="6.6" height="176.0" class="f-pile"/>
-<rect x="725.8" y="203.0" width="6.6" height="26.0" class="f-pile"/>
-<polygon points="732.4,223.5 777.5,223.5 777.5,190.0 797.2,170.7 811.9,154.5 835.7,130.0 810.0,242.2 732.4,242.2" class="f-earth" data-hide="A2a:e" data-unclip="A2a" data-dir="s"/>
-<polygon points="732.4,202.6 767.7,199.6 777.5,190.0 777.5,223.5 732.4,223.5" fill="url(#c-grave)" class="s-amont" stroke-width="0.8" data-hide="A1:e" data-wip="A1" data-unclip="A1" data-dir="s"/>
-<polygon points="732.4,202.6 767.7,199.6 777.5,190.0 777.5,223.5 732.4,223.5 797.2,170.7 811.9,154.5 835.7,130.0 810.0,242.2" fill="none" class="s-amont" stroke-width="1.2" stroke-dasharray="4 3" data-vis="A2a:s" data-hide="A2d:e" data-wip="A2a A2b A2c"/>
-<polygon points="732.4,242.2 810.0,242.2 819.6,200.4 732.4,202.6" fill="url(#c-remblai)" data-vis="A2d:s" data-wip="A2d" data-clip="A2d" data-dir="n"/>
-<line x1="809.5" y1="244.4" x2="835.7" y2="130.0" class="s-ink" stroke-width="2.2"/>
-<line x1="813.9" y1="225.3" x2="833.9" y2="230.3" class="s-ink" stroke-width="1.2"/>
-<line x1="818.2" y1="206.3" x2="838.2" y2="211.3" class="s-ink" stroke-width="1.2"/>
-<line x1="822.6" y1="187.2" x2="842.6" y2="192.2" class="s-ink" stroke-width="1.2"/>
-<line x1="827.0" y1="168.1" x2="847.0" y2="173.1" class="s-ink" stroke-width="1.2"/>
-<line x1="831.3" y1="149.1" x2="851.3" y2="154.1" class="s-ink" stroke-width="1.2"/>
-<path d="M781.6 232.1 L809.5 230.2 L839.0 225.7 L881.6 217.3 L920.2 205.9 L937.4 200.4" fill="none" class="s-amont" stroke-width="11" opacity="0.45" stroke-linejoin="round"/>
-<path d="M717.6 237.8 L732.4 235.0 L781.6 232.1" pathLength="1" fill="none" class="s-amont" stroke-width="11" stroke-linejoin="round" data-vis="A2b:s" data-wip="A2c" data-draw="A2b"/>
-<path d="M717.6 237.8 L732.4 235.0 L781.6 232.1 L809.5 230.2 L839.0 225.7 L881.6 217.3 L920.2 205.9 L937.4 200.4" pathLength="1" fill="none" class="s-coulis" stroke-width="7" stroke-linejoin="round" data-vis="A3d:s" data-draw="A3d"/>
-<path d="M717.6 237.8 L732.4 235.0 L781.6 232.1 L809.5 230.2 L839.0 225.7 L881.6 217.3 L920.2 205.9 L937.4 200.4" pathLength="1" fill="none" class="s-ink" stroke-width="2.2" data-vis="A3c:s" data-wip="A3c" data-draw="A3c"/>
-<path d="M614.3 237.8 L716.0 237.8" fill="none" class="s-amont" stroke-width="2" stroke-dasharray="6 4" data-vis="A3b:s" data-hide="A3c:e"/>
-<text x="66" y="266.0" class="t-m t-2 halo">lac ≈ 531.00 (profil)</text>
+<polygon points="56.0,287.0 77.5,280.7 163.5,270.4 249.5,264.1 335.5,258.1 391.4,253.2 486.0,236.5 486.0,242.2 632.2,242.2 713.6,242.2 740.6,130.0 741.4,129.0 788.7,82.0 829.1,51.0 847.2,35.4 847.2,449.0 56.0,449.0" class="f-earth"/>
+<polygon points="56.0,273.0 141.6,273.0 77.5,280.7 56.0,287.0" class="f-water"/>
+<line x1="56.0" y1="273.0" x2="141.6" y2="273.0" class="s-lac" stroke-width="1.5"/>
+<polygon points="371.6,254.9 408.6,223.5 486.0,223.5 486.0,236.5 391.4,253.2" fill="url(#c-gravel)"/>
+<polygon points="159.2,270.9 163.5,270.4 249.5,264.1 335.5,258.1 371.6,254.9 408.6,223.5 486.0,223.5 486.0,303.5 391.4,303.5 335.5,281.8 249.5,304.2 163.5,324.7 159.2,325.8" class="f-sheet"  data-vis="A5c:s" data-hide="A7a:e" data-clip="A5c" data-dir="s"/>
+<polygon points="159.2,270.9 163.5,270.4 249.5,264.1 335.5,258.1 371.6,254.9 408.6,223.5 486.0,223.5 486.0,303.5 391.4,303.5 335.5,281.8 249.5,304.2 163.5,324.7 159.2,325.8" fill="url(#c-hlac)" class="s-lac" stroke-width="0.8" data-vis="A5c:s" data-wip="A5c" data-clip="A5c" data-dir="s" data-fadeout="A7a"/>
+<polygon points="159.2,270.9 163.5,270.4 249.5,264.1 335.5,258.1 371.6,254.9 408.6,223.5 486.0,223.5 486.0,303.5 391.4,303.5 335.5,281.8 249.5,304.2 163.5,324.7 159.2,325.8" fill="url(#c-remblai)" data-vis="A7a:s" data-wip="A7a" data-clip="A7a" data-dir="n"/>
+<line x1="141.6" y1="273.0" x2="486.0" y2="273.0" class="s-lac" stroke-width="1.2" stroke-dasharray="5 4"/>
+<path d="M159.2 258.7 L159.2 372.0" pathLength="1" fill="none" class="s-lac" stroke-width="3.2" data-vis="A5b:s" data-draw="A5b@0.85-1" data-erase="A7b@0.85-1"/>
+<line x1="159.2" y1="372.0" x2="159.2" y2="398.4" class="s-lac" stroke-width="3.2" stroke-dasharray="3 3" data-vis="A5b:e" data-hide="A7b:s"/>
+<polygon points="373.6,253.2 408.6,223.5 486.0,223.5 486.0,253.2" class="f-sheet s-amont" stroke-width="1.2" stroke-dasharray="4 3" data-vis="A3b:s" data-hide="A4a:e" data-wip="A3b A4a" data-clip="A3b" data-dir="s" data-fadeout="A4a"/>
+<line x1="228.0" y1="253.2" x2="540.2" y2="253.2" class="s-amont" stroke-width="1.6" stroke-dasharray="6 4" data-vis="A3b:s" data-hide="A4a:s"/>
+<path d="M107.6 273.0 L159.2 273.0 L228.0 269.7 L373.6 252.6 L540.2 252.6 L603.0 246.6 L611.6 237.8 L616.7 237.8" fill="none" class="s-ink" stroke-width="2.4" stroke-linejoin="round" data-vis="A3e:s" data-hide="A3f:e" data-wip="A3e A3f"/>
+<path d="M77.5 266.0 h22 l-5 9 h-12 z" class="f-ink" data-vis="A3e:s" data-hide="A3f:e"/>
+<path d="M56.0 344.1 L77.5 339.0 L163.5 318.1 L249.5 297.6 L274.4 291.1" pathLength="1" fill="none" class="s-lac" stroke-width="8.8" stroke-linejoin="round" data-vis="A6h:s" data-wip="A6l" data-draw="A6h"/>
+<path d="M501.5 296.9 L391.4 296.9 L335.5 275.2 L274.4 291.1" pathLength="1" fill="none" class="s-lac" stroke-width="8.8" stroke-linejoin="round" data-vis="A6g:s" data-wip="A6l" data-draw="A6g"/>
+<path d="M501.5 270.4 L443.0 270.4 L335.5 275.2" pathLength="1" fill="none" class="s-lac" stroke-width="8.8" stroke-linejoin="round" data-vis="A6g:s" data-wip="A6l" data-draw="A6g"/>
+<g data-vis="A6g:e"><line x1="272.2" y1="282.1" x2="272.2" y2="300.1" class="s-ink" stroke-width="1.6"/><line x1="276.6" y1="282.1" x2="276.6" y2="300.1" class="s-ink" stroke-width="1.6"/></g>
+<rect x="486.0" y="310.4" width="6.9" height="106.7" class="f-pile"/>
+<rect x="486.0" y="223.5" width="6.9" height="86.9" class="f-pile" data-hide="A4a:s"/>
+<rect x="484.7" y="221.9" width="9.5" height="31.4" class="f-sheet s-amont" stroke-width="1.3" stroke-dasharray="3 2" data-vis="A3c:s" data-hide="A4a:s" data-wip="A3c" data-clip="A3c" data-dir="s"/>
+<rect x="486.0" y="223.5" width="6.9" height="86.9" fill="url(#c-hwarn)" class="s-warn" stroke-width="1" data-vis="A4a:s" data-hide="A5e:e" data-wip="A5e" data-fadeout="A5e"/>
+<rect x="486.0" y="223.5" width="6.9" height="86.9" fill="none" class="s-warn" stroke-width="1" stroke-dasharray="3 2" data-vis="A5e:e"/>
+<rect x="492.9" y="223.5" width="8.6" height="144.1" fill="url(#c-gravel)"/>
+<rect x="616.7" y="223.5" width="8.6" height="144.1" fill="url(#c-gravel)"/>
+<rect x="501.5" y="253.2" width="115.2" height="114.4" class="f-sheet2 s-ink" stroke-width="1.6"/>
+<rect x="505.3" y="259.8" width="34.8" height="99.0" class="f-bache"/>
+<rect x="540.2" y="259.8" width="3.9" height="99.0" class="f-ink"/>
+<line x1="501.5" y1="364.6" x2="616.7" y2="364.6" class="s-ink" stroke-width="6"/>
+<rect x="540.2" y="212.5" width="76.5" height="40.7" class="f-sheet2 s-ink" stroke-width="1.6"/>
+<line x1="540.2" y1="214.5" x2="616.7" y2="214.5" class="s-ink" stroke-width="4"/>
+<rect x="501.5" y="253.2" width="115.2" height="6.6" class="f-ink"/>
+<rect x="540.2" y="214.7" width="3.9" height="38.5" fill="url(#c-brick)" class="s-amont" stroke-width="0.8" data-hide="A3d:s"/>
+<rect x="540.2" y="214.7" width="3.9" height="38.5" fill="none" class="s-warn" stroke-width="1.4" stroke-dasharray="3 2" data-vis="A3d:s" data-hide="A3h:e" data-wip="A3d A3e A3f A3g"/>
+<rect x="540.2" y="214.7" width="3.9" height="38.5" fill="url(#c-brick)" class="s-amont" stroke-width="0.8" data-vis="A3h:s" data-wip="A3h" data-clip="A3h" data-dir="n"/>
+<circle cx="501.5" cy="270.4" r="3.6" class="f-sheet s-ink" stroke-width="1.4"/>
+<circle cx="501.5" cy="296.9" r="3.6" class="f-sheet s-ink" stroke-width="1.4"/>
+<rect x="625.3" y="241.1" width="6.9" height="176.0" class="f-pile"/>
+<rect x="625.3" y="203.0" width="6.9" height="26.0" class="f-pile"/>
+<polygon points="632.2,223.5 679.5,223.5 679.5,190.0 700.1,170.7 715.6,154.5 740.6,130.0 713.6,242.2 632.2,242.2" class="f-earth" data-hide="A2a:e" data-unclip="A2a" data-dir="s"/>
+<polygon points="632.2,202.6 669.2,199.6 679.5,190.0 679.5,223.5 632.2,223.5" fill="url(#c-grave)" class="s-amont" stroke-width="0.8" data-hide="A1:e" data-wip="A1" data-unclip="A1" data-dir="s"/>
+<polygon points="632.2,202.6 669.2,199.6 679.5,190.0 679.5,223.5 632.2,223.5 700.1,170.7 715.6,154.5 740.6,130.0 713.6,242.2" fill="none" class="s-amont" stroke-width="1.2" stroke-dasharray="4 3" data-vis="A2a:s" data-hide="A2d:e" data-wip="A2a A2b A2c"/>
+<polygon points="632.2,242.2 713.6,242.2 723.6,200.4 632.2,202.6" fill="url(#c-remblai)" data-vis="A2d:s" data-wip="A2d" data-clip="A2d" data-dir="n"/>
+<line x1="713.0" y1="244.4" x2="740.6" y2="130.0" class="s-ink" stroke-width="2.2"/>
+<line x1="717.6" y1="225.3" x2="737.6" y2="230.3" class="s-ink" stroke-width="1.2"/>
+<line x1="722.2" y1="206.3" x2="742.2" y2="211.3" class="s-ink" stroke-width="1.2"/>
+<line x1="726.8" y1="187.2" x2="746.8" y2="192.2" class="s-ink" stroke-width="1.2"/>
+<line x1="731.4" y1="168.1" x2="751.4" y2="173.1" class="s-ink" stroke-width="1.2"/>
+<line x1="736.0" y1="149.1" x2="756.0" y2="154.1" class="s-ink" stroke-width="1.2"/>
+<path d="M683.8 232.1 L713.0 230.2 L744.0 225.7 L788.7 217.3 L829.1 205.9 L847.2 200.4" fill="none" class="s-amont" stroke-width="11" opacity="0.45" stroke-linejoin="round"/>
+<path d="M616.7 237.8 L632.2 235.0 L683.8 232.1" pathLength="1" fill="none" class="s-amont" stroke-width="11" stroke-linejoin="round" data-vis="A2b:s" data-wip="A2c" data-draw="A2b"/>
+<path d="M616.7 237.8 L632.2 235.0 L683.8 232.1 L713.0 230.2 L744.0 225.7 L788.7 217.3 L829.1 205.9 L847.2 200.4" pathLength="1" fill="none" class="s-coulis" stroke-width="7" stroke-linejoin="round" data-vis="A3g:s" data-draw="A3g"/>
+<path d="M616.7 237.8 L632.2 235.0 L683.8 232.1 L713.0 230.2 L744.0 225.7 L788.7 217.3 L829.1 205.9 L847.2 200.4" pathLength="1" fill="none" class="s-ink" stroke-width="2.2" data-vis="A3e:s" data-wip="A3e" data-draw="A3e"/>
+<text x="66" y="251.0" class="t-m t-2 halo">lac ≈ 531.00 (profil)</text>
 <text x="66" y="412.4" class="t-s halo" data-vis="A6h:s">4 × PE DN800 · lests 900 kg / 5 m</text>
-<text x="289.4" y="400.4" class="t-s halo" data-vis="A5b:s" data-hide="A7b:e">rideau de tête : fiche à dimensionner</text>
-<text x="391.3" y="354.2" text-anchor="middle" class="t-s halo" data-vis="A6g:e">bride lacustre / terrestre</text>
-<text x="522.2" y="217.5" class="t-m t-2 halo">+535.50</text>
-<text x="588.0" y="203.7" text-anchor="end" class="t-s halo" data-vis="A4a:s" data-hide="A5e:e">écran 7 à démolir</text>
-<text x="588.0" y="203.7" text-anchor="end" class="t-s halo" data-vis="A5e:e">écran 7 ouvert</text>
-<text x="628.1" y="317.0" text-anchor="middle" class="t-s t-2">bâche</text>
-<text x="711.9" y="249.4" text-anchor="end" class="t-m t-3">+532.80</text>
-<text x="679.9" y="306.0" text-anchor="middle" class="t-m t-3">niv. -1</text>
-<text x="646.3" y="200.4" text-anchor="middle" class="t-s t-b halo">mur fusible</text>
-<text x="662.7" y="383.6" text-anchor="middle" class="t-m t-2 halo">radier 522.40</text>
-<text x="711.9" y="225.5" text-anchor="end" class="t-m t-3">RdC 536.50</text>
-<text x="589.0" y="431.1" text-anchor="end" class="t-s t-2">écran 7</text>
-<text x="736.4" y="431.1" class="t-s t-2">écran 1</text>
-<text x="662.1" y="117.5" class="t-s halo" data-hide="A1:e">grave du chemin d'accès</text>
-<text x="662.1" y="117.5" class="t-s halo" data-vis="A1:e" data-hide="A2d:s">fouille amont · paroi clouée</text>
-<text x="662.1" y="117.5" class="t-s halo" data-vis="A2d:s">remblayé, rampe rétablie</text>
-<line x1="660.1" y1="119.5" x2="765.2" y2="207.0" class="s-ink3"/>
-<text x="763.8" y="272.6" class="t-s halo">2 × DN1000 · coudes préfabriqués</text>
-<text x="853.8" y="171.4" class="t-s halo">paroi clouée</text>
-<text x="937.4" y="299.4" text-anchor="end" class="t-s halo">fourreaux FD1/FD2 existants</text>
-<text x="937.4" y="313.4" text-anchor="end" class="t-s halo">→ centrale +577.05 (≈ 130 m)</text>
-<g data-vis="A5b:s" data-hide="A7b:e"><path d="M281.4 196.4 V189.4 H593.0 V196.4" fill="none" class="s-lac" stroke-width="1.4"/><text x="437.2" y="182.4" text-anchor="middle" class="t-s t-b">batardeau en palplanches ≈ 38 m</text></g>
-<g data-vis="A5c:s" data-hide="A7a:e"><line x1="289.6" y1="273.0" x2="289.6" y2="323.7" class="s-ink" stroke-width="1.1" marker-start="url(#c-arr)" marker-end="url(#c-arr)"/><text x="278.6" y="302.4" text-anchor="end" class="t-m t-b halo">4.6 m</text></g>
-<g data-vis="A5c:s" data-hide="A7a:e"><line x1="568.4" y1="273.0" x2="568.4" y2="303.5" class="s-ink" stroke-width="1.1" marker-start="url(#c-arr)" marker-end="url(#c-arr)"/><text x="557.4" y="285.0" text-anchor="end" class="t-m t-b halo">2.8 m</text></g>
+<text x="228.0" y="246.2" class="t-s t-b halo" data-vis="A3b:s" data-hide="A4a:s">plan d'introduction ≈ +532.80 (dalle N-1)</text>
+<text x="64" y="215.8" class="t-s t-b halo" data-vis="A3e:s" data-hide="A3f:e">batterie remorquée depuis l'autre rive</text>
+<text x="481.0" y="189.4" text-anchor="end" class="t-s halo" data-vis="A3c:s" data-hide="A4a:s">pieux recépés (écran 6, projeté)</text>
+<text x="167.2" y="400.4" class="t-s halo" data-vis="A5b:s" data-hide="A7b:e">rideau de tête : fiche à dimensionner</text>
+<text x="274.4" y="354.2" text-anchor="middle" class="t-s halo" data-vis="A6g:e">bride lacustre / terrestre</text>
+<text x="411.6" y="217.5" class="t-m t-2 halo">+535.50</text>
+<text x="481.0" y="203.7" text-anchor="end" class="t-s halo" data-vis="A4a:s" data-hide="A5e:e">écran 7 à démolir</text>
+<text x="481.0" y="203.7" text-anchor="end" class="t-s halo" data-vis="A5e:e">écran 7 ouvert</text>
+<text x="522.8" y="317.0" text-anchor="middle" class="t-s t-2">bâche</text>
+<text x="610.7" y="249.4" text-anchor="end" class="t-m t-3">+532.80</text>
+<text x="577.2" y="306.0" text-anchor="middle" class="t-m t-3">niv. -1</text>
+<text x="541.9" y="200.4" text-anchor="middle" class="t-s t-b halo">mur fusible</text>
+<text x="559.1" y="383.6" text-anchor="middle" class="t-m t-2 halo">radier 522.40</text>
+<text x="610.7" y="225.5" text-anchor="end" class="t-m t-3">RdC 536.50</text>
+<text x="482.0" y="431.1" text-anchor="end" class="t-s t-2">écran 7</text>
+<text x="636.2" y="431.1" class="t-s t-2">écran 1</text>
+<text x="557.8" y="117.5" class="t-s halo" data-hide="A1:e">grave du chemin d'accès</text>
+<text x="557.8" y="117.5" class="t-s halo" data-vis="A1:e" data-hide="A2d:s">fouille amont · paroi clouée</text>
+<text x="557.8" y="117.5" class="t-s halo" data-vis="A2d:s">remblayé, rampe rétablie</text>
+<line x1="555.8" y1="119.5" x2="666.6" y2="207.0" class="s-ink3"/>
+<text x="664.4" y="272.6" class="t-s halo">2 × DN1000 · coudes préfabriqués</text>
+<text x="759.5" y="171.4" class="t-s halo">paroi clouée</text>
+<text x="847.2" y="299.4" text-anchor="end" class="t-s halo">fourreaux FD1/FD2 existants</text>
+<text x="847.2" y="313.4" text-anchor="end" class="t-s halo">→ centrale +577.05 (≈ 130 m)</text>
+<g data-vis="A5b:s" data-hide="A7b:e"><path d="M159.2 196.4 V189.4 H486.0 V196.4" fill="none" class="s-lac" stroke-width="1.4"/><text x="322.6" y="182.4" text-anchor="middle" class="t-s t-b">batardeau en palplanches ≈ 38 m</text></g>
+<g data-vis="A5c:s" data-hide="A7a:e"><line x1="167.8" y1="273.0" x2="167.8" y2="323.7" class="s-ink" stroke-width="1.1" marker-start="url(#c-arr)" marker-end="url(#c-arr)"/><text x="156.8" y="302.4" text-anchor="end" class="t-m t-b halo">4.6 m</text></g>
+<g data-vis="A5c:s" data-hide="A7a:e"><line x1="460.2" y1="273.0" x2="460.2" y2="303.5" class="s-ink" stroke-width="1.1" marker-start="url(#c-arr)" marker-end="url(#c-arr)"/><text x="449.2" y="285.0" text-anchor="end" class="t-m t-b halo">2.8 m</text></g>
 </svg></div>
-</section>
-
-<section class="block" id="planning">
-  <div class="sec-head"><h2>Planning</h2><span class="ref">cliquer dans le Gantt pour se placer à une date · une barre pour l'étape correspondante</span></div>
-  <div class="gantt scroll"><svg id="gantt" role="img" aria-label="Diagramme de Gantt"></svg></div>
-  <div class="viewcap" style="border:0;padding:0">
-    <span><i class="sw" style="background:var(--prep)"></i>Préparation</span>
-    <span><i class="sw" style="background:var(--amont)"></i>Côté amont : forages dirigés</span>
-    <span><i class="sw" style="background:var(--lac)"></i>Côté lac : batardeau et conduites terrestres</span>
-    <span><i class="sw" style="background:var(--eau)"></i>Conduites lacustres (Lot 4)</span>
-    <span>◆ jalon · trait rouge : date affichée</span>
+      <div class="viewcap"><span>coupe développée · altitudes des profils 41-402 et 51-302 · verticale ×1.3 · le couloir des batteries (écran 6) est projeté</span></div>
+    </div>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
   </div>
-</section>
+</div>
 
 <section class="block" id="taches">
   <div class="sec-head"><h2>Interventions : durées et enchaînements</h2><span class="ref">jours ouvrés (lun.–ven., hors jours non ouvrés) · enregistré dans ce navigateur</span></div>
   <div class="tools">
-    <button type="button" class="btn" id="bStrict">Valeurs par défaut (ordre 1 → 7)</button>
-    <button type="button" class="btn" id="bPar">Variante : phases 4–5 en parallèle des phases 2–3</button>
+    <button type="button" class="btn" id="bStrict">Rétablir les valeurs par défaut</button>
     <button type="button" class="btn" id="bExpJ">Exporter (JSON)</button>
     <label class="btn" for="fImp" style="display:inline-flex;align-items:center">Importer (JSON)</label>
     <input type="file" id="fImp" accept=".json,application/json" hidden>
     <button type="button" class="btn" id="bExpC">Exporter pour Excel (CSV)</button>
   </div>
   <div class="legend-preds">
-    <span><b>Prédécesseurs :</b> <code>A2c</code> commence à la fin de A2c · <code>A1+3</code> 3 jours après la fin de A1 · <code>A5a DD+4</code> 4 jours après le début de A5a · <code>A5b DD-34</code> 34 jours avant le début de A5b · <code>M0</code> au jalon de départ. Plusieurs liens séparés par des virgules : la tâche attend le plus tardif.</span>
-    <span>Les cases modifiées sont en orange. Durées par défaut des tâches « R6 » : programme prévisionnel du Lot 4 (Annexe R6, 07.04.2025).</span>
+    <span><b>Prédécesseurs :</b> <code>A2c</code> commence à la fin de A2c · <code>A1+3</code> 3 jours après la fin de A1 · <code>A5a-3</code> 3 jours avant la fin de A5a · <code>A5c DD+9</code> 9 jours après le début de A5c · <code>A5b DD-34</code> 34 jours avant le début de A5b · <code>M0</code> au jalon de départ. Plusieurs liens séparés par des virgules : la tâche attend le plus tardif.</span>
+    <span>Les cases modifiées sont en orange. Durées des tâches « R6 » : programme prévisionnel du Lot 4 (Annexe R6, 07.04.2025).</span>
+    <span id="msg" style="color:var(--warn)"></span>
   </div>
   <div class="tscroll"><table id="tasks"></table></div>
 </section>
@@ -530,7 +557,7 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
   <div class="cols">
     <textarea id="holidays" spellcheck="false" aria-label="Jours non ouvrés"></textarea>
     <div class="note" style="display:grid;gap:8px;align-content:start">
-      <p>Pré-rempli avec les jours fériés du canton de Fribourg (district de la Sarine) pour 2026–2028.</p>
+      <p>Pré-rempli avec les jours fériés du canton de Fribourg (district de la Sarine) pour 2027–2028.</p>
       <p><b>Les vacances de fin d'année et d'été du bâtiment sont des exemples</b> : remplacer par les dates de la convention applicable et celles des entreprises.</p>
       <p>Avec un démarrage du Lot 4 en avril 2027, les noyages tombent en juillet–août : la coupure d'été pèse directement sur la fin du chantier.</p>
       <button type="button" class="btn" id="bHol" style="justify-self:start">Rétablir la liste par défaut</button>
@@ -543,8 +570,8 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
   <details class="fiche" data-zone="prep"><summary><span class="n">0</span><h3>Préparation, pendant la fin du gros œuvre</h3></summary><div class="fiche-body">
 <p>Arriver au jalon M0 avec des méthodes validées, des plans complets et le matériel à long délai commandé.</p>
 <ul><li>Plans à compléter : paroi clouée (51-301 « à venir »), batardeau en palplanches avec note de calcul, démolition des pieux de l'écran 7, raccordements des fourreaux (51-306).</li>
-<li>Méthodes : tirage des batteries par la bâche et le mur fusible, forage d'ameublissement, noyage et raccordement aux amorces (R6).</li>
-<li>Autorisations : travaux en rive et dans le lac, rejet des eaux, fenêtres biologiques, avis à la navigation.</li>
+<li>Méthodes : remorquage et tirage des batteries, recépage de l'écran 6, forage d'ameublissement, noyage et raccordement aux amorces (R6).</li>
+<li>Autorisations : travaux en rive et dans le lac, remorquage des batteries, rejet des eaux, fenêtres biologiques, avis à la navigation.</li>
 <li><b>Jalon M0</b> : dalle RdC bétonnée, butons « supérieurs » +536.90 déposés (étape 15 du plan 300-002), accord écrit de l'ingénieur structure. C'est maintenant la station qui butonne la paroi de pieux.</li></ul></div></details>
 <details class="fiche" data-zone="amont"><summary><span class="n">1</span><h3>Décaissement de la grave du chemin d'accès</h3></summary><div class="fiche-body">
 <p>Retirer la couche de grave posée sur le chemin d'accès entre l'écran 1 et le flanc de colline (≈ +537.4 → ≈ +535.5).</p>
@@ -555,29 +582,29 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
 <p>Rendre les deux fourreaux continus entre la station et la centrale, les contrôler, puis remblayer.</p>
 <ul><li>Fouille jusqu'à ≈ +533.8 adossée à la paroi clouée ; OTConst : fouille de plus de 1.50 m étayée ou talutée.</li>
 <li>Pièces DN1000 et coudes préfabriqués (vérifiés) entre les passe-murs (Intro₁/₂, +534.20) et les extrémités des fourreaux (points 1, ≈ +534.8) ; traversées de l'écran 1 en S33/S34 (étape 14 du plan 300-002).</li>
-<li>Le programme R6 prévoit la « pose pièce de forme DN1000 et raccordement Stap selon planning DT/MO » au Lot 4 : intervention à placer ici.</li>
 <li><b>Jalon M1</b> : raccords soudés et relevés, traversées étanches, calibre passé sur toute la longueur, câble de tirage en place, avant le remblai.</li></ul></div></details>
-<details class="fiche" data-zone="amont"><summary><span class="n">3</span><h3>Batteries RTP/PE et mur fusible</h3></summary><div class="fiche-body">
-<p>Poser une batterie dans chaque fourreau en passant par le mur fusible, l'éprouver, la bloquer, puis refermer le mur.</p>
-<ul><li>Le mur fusible est l'ouverture de ≈ 5 m du mur de refend de l'axe B (plan 51-1030), entre la bâche côté lac et le hall des pompes, dans l'axe des entrées des fourreaux.</li>
-<li>Ligne d'introduction : bâche → mur fusible → hall à ≈ 1.4 m au-dessus de la dalle +532.80 (axe +534.20 ; le plan 51-1030 est coté avec ±0.00 = 524.50) → passe-murs du mur A.</li>
-<li>La pompe 4 est dans l'axe de FD1 : poser les pompes après les tirages ou dévier la ligne.</li>
-<li>Tirage d'une traite par fourreau, treuil à la centrale (+577.05), dynamomètre enregistreur ; essais, puis coulis depuis le point bas.</li>
+<details class="fiche" data-zone="amont"><summary><span class="n">3</span><h3>Batteries RTP/PE : couloir, recépage, remorquage, tirage</h3></summary><div class="fiche-body">
+<p>Amener les deux batteries par le lac, les tirer l'une après l'autre dans leur forage, les éprouver, puis refermer le mur fusible.</p>
+<ul><li>Chaque batterie (une par forage) est assemblée sur l'autre rive, puis remorquée par le lac et mise en ligne face à la station.</li>
+<li>Couloir d'introduction : le terrain entre la rive et l'écran 6 est abaissé à la cote de la dalle N-1 (≈ +532.80), dans l'axe des entrées des fourreaux.</li>
+<li>Recépage des pieux sécants de l'écran 6 au droit du couloir, à ≈ +532.80, pour que le couloir, la tête des pieux et la dalle N-1 soient alignés.</li>
+<li>Trajet de la batterie : couloir → pieux recépés → dalle N-1 au-dessus de la bâche → mur fusible (axe B, ≈ 5 m, plan 51-1030) → hall → passe-murs du mur A (+534.20).</li>
+<li>Tirage d'une traite au treuil de la centrale (+577.05), FD1 puis FD2, dynamomètre enregistreur ; essais, coulis depuis le point bas, mur refermé.</li>
 <li><b>Jalon M2</b> : efforts enregistrés sous la limite fabricant, essais concluants, coulis fait, mur refermé.</li></ul></div></details>
 <details class="fiche" data-zone="lac"><summary><span class="n">4</span><h3>Plateforme et installation côté lac</h3></summary><div class="fiche-body">
 <p>Une plateforme plane, portante et hors d'eau le long du futur batardeau, et l'installation du Lot 4 en rive (R6 B2).</p>
-<ul><li>Batardeau de l'écran 7 jusqu'à la limite « fouille ouverte » du profil 41-402 (≈ 38 m).</li>
+<ul><li>Le couloir d'introduction des batteries est d'abord remblayé : il borde le futur batardeau.</li><li>Batardeau de l'écran 7 jusqu'à la limite « fouille ouverte » du profil 41-402 (≈ 38 m).</li>
 <li>Caler la plateforme et la tête des palplanches sur le niveau haut du lac : la limite de l'eau du plan 41-401 correspond à ≈ 532.1, le profil est dessiné à 531.00.</li>
 <li>Essais de plaque pour la pelle 40 t, barrière anti-turbidité, déplacement des cibles C7/C8 (dans la zone à ouvrir).</li></ul></div></details>
 <details class="fiche" data-zone="lac"><summary><span class="n">5</span><h3>Palplanches, fouille de l'amorce, ouverture de l'écran 7</h3></summary><div class="fiche-body">
 <p>Batardeau étanche et étayé, fouille à sec (≈ +528.2 côté station, ≈ +526.2 côté rive) et écran 7 ouvert.</p>
-<ul><li>Forage d'ameublissement (hors R6), fonçage (R6 C1, 5 j), terrassement de l'amorce (R6 C2, 14 j) et renforcement de l'enceinte (R6 C3, 14 j) en parallèle.</li>
+<ul><li>Forage d'ameublissement (hors R6, 6 semaines), fonçage (R6 C1, 5 j) en fin d'ameublissement, terrassement de l'amorce (R6 C2, 14 j) et renforcement de l'enceinte (R6 C3, 14 j) en parallèle.</li>
 <li>Côté rive, la fouille descend à ≈ 4.6 m sous le niveau du lac : soulèvement du fond, pompage, eaux décantées et neutralisées (SIA 431).</li>
 <li>Ouverture de l'écran 7 au sciage ou au carottage ; géophones (SN 640 312a) et cibles quotidiennes pendant la démolition.</li>
 <li><b>Jalon M3</b> : fouille réceptionnée, enceinte renforcée, passe-murs dégagés.</li></ul></div></details>
 <details class="fiche" data-zone="lac"><summary><span class="n">6</span><h3>Conduites terrestres et lacustres</h3></summary><div class="fiche-body">
 <p>Quatre PE DN800 et la gaine PE 120/132 continues des crépines jusqu'à la station, dans l'ordre du programme R6.</p>
-<ul><li>Soudage (R6 D2) et lestage (R6 D3) en amont, calés 34 jours avant le fonçage comme dans R6 : l'aire de soudage doit être disponible pendant les phases 2–3.</li>
+<ul><li>Soudage (R6 D2) et lestage (R6 D3) en amont, calés 34 jours avant le fonçage comme dans R6.</li>
 <li>Raccordement terrestre (R6 E1) depuis les passe-murs vers le lac : aspirations (+528.83), refoulements (+531.24), lestage avant remontée de la nappe.</li>
 <li>Selon R6, les conduites lacustres sont noyées <b>après</b> le retrait des palplanches et raccordées aux amorces par plongeurs : aspirations (E2), refoulements (E3), remblai de la souille (D6), crépines (E4).</li>
 <li><b>Jalons M4 et M6</b> : amorces raccordées et lestées ; conduites noyées, crépines posées, essais et relevé.</li></ul></div></details>
@@ -592,18 +619,16 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
 <section class="block" id="questions">
   <div class="sec-head"><h2>Points ouverts</h2></div>
   <ol class="questions">
-    <li><b>Entrée des batteries dans la bâche.</b> La ligne passe par la bâche côté lac, le mur fusible (axe B) puis le hall, à ≈ 1.4 m au-dessus de la dalle +532.80. Comment la batterie arrive-t-elle dans la bâche (trémie, ouverture en toiture, déroulage depuis le haut) ?</li>
-    <li><b>Pompes.</b> La pompe 4 (x ≈ 14.1 m) est dans l'axe de l'entrée de FD1. Les pompes sont-elles posées avant ou après les tirages ?</li>
-    <li><b>Pièce de forme DN1000.</b> Le programme R6 la confie au Lot 4 « selon planning DT/MO ». Ici elle tombe en phase 2, avant le chantier Lot 4 en rive : mobilisation ponctuelle à convenir.</li>
-    <li><b>Aire de soudage et de stockage PE Ø800</b> (R6 B3 à D3), pendant les phases 1 à 3 : à placer hors de la plateforme côté lac si la préparation des batteries y est prévue.</li>
-    <li><b>Forage d'ameublissement.</b> Absent du programme R6 (fonçage en 5 jours à la pelle 40 t) : entreprise, méthode et durée à confirmer.</li>
+    <li><b>Remorquage des batteries.</b> Chaque batterie fait ≈ 130 m : zone d'attente sur l'eau, mise en ligne dans le couloir et avis à la navigation à organiser, avec une fenêtre de vent faible pour chacune.</li>
+    <li><b>Recépage de l'écran 6.</b> Les pieux recépés à ≈ +532.80 restent-ils à cette cote, ou faut-il reconstituer une tête après les tirages ? À valider avec l'ingénieur structure.</li>
+    <li><b>Niveau du lac.</b> Le profil 41-402 est dessiné à ≈ 531.00, la limite de l'eau du plan 41-401 correspond à ≈ 532.1. Au niveau haut, le couloir à +532.80 n'est qu'à ≈ 0.7 m au-dessus de l'eau ; la tête des palplanches doit aussi être calée sur ce niveau.</li>
+    <li><b>Aire de soudage et de stockage PE Ø800</b> (R6 B3 à D3) : emplacement à définir ; elle fonctionne pendant les phases 3 à 5.</li>
     <li><b>Paroi clouée.</b> Déjà réalisée ? Le plan 51-301 l'annonce « informations à venir ».</li>
-    <li><b>Niveau du lac.</b> Le profil 41-402 est dessiné à ≈ 531.00, la limite de l'eau du plan 41-401 correspond à ≈ 532.1. Caler la tête des palplanches et la plateforme sur le niveau haut, ou convenir d'un abaissement avec l'exploitant du barrage.</li>
     <li><b>Point haut des aspirations à A1_23</b> (axe ≈ 530.8, génératrice ≈ 531.2, au niveau du lac) : à confirmer avec le projeteur, la tolérance de pose en dépend.</li>
   </ol>
 </section>
 
-<section class="block sources">
+<section class="block">
   <div class="sec-head"><h2>Documents de base</h2></div>
   <div class="tscroll"><table>
     <thead><tr><th>Document</th><th>Objet</th><th>Statut</th><th>Date</th></tr></thead>
@@ -618,53 +643,61 @@ footer{margin-top:40px;padding-top:12px;border-top:1.5px solid var(--ink);font-s
   </table></div>
 </section>
 
-<footer>Outil de phasage établi à partir des documents ci-dessus. Les durées sont modifiables et indicatives. Les dimensionnements (batardeau, étayage, ouverture de l'écran 7, efforts de tirage) relèvent de l'ingénieur.</footer>
+<footer>Outil de phasage établi à partir des documents ci-dessus. Les durées sont modifiables et indicatives. Les dimensionnements (batardeau, étayage, recépage, ouverture de l'écran 7, efforts de tirage) relèvent de l'ingénieur.</footer>
 </div>
 
-<div class="playbar" role="region" aria-label="Lecture du phasage">
-  <div class="pb-in">
-    <div class="pb-btns">
-      <button type="button" class="btn" id="bFirst" title="État initial" aria-label="État initial">⏮</button>
-      <button type="button" class="btn" id="bPrev" title="Étape précédente" aria-label="Étape précédente">◀</button>
-      <button type="button" class="btn primary" id="bPlay" title="Lecture" aria-label="Lecture">▶</button>
-      <button type="button" class="btn" id="bNext" title="Étape suivante" aria-label="Étape suivante">▶▶</button>
-      <button type="button" class="btn" id="bLast" title="Fin des travaux" aria-label="Fin des travaux">⏭</button>
+<div class="dock" id="dock" data-size="1" role="region" aria-label="Lecture du phasage et Gantt">
+  <div class="dock-bar">
+    <div class="ctl">
+      <button type="button" class="btn" data-act="first" title="État initial" aria-label="État initial">⏮</button>
+      <button type="button" class="btn" data-act="prev" title="Étape précédente" aria-label="Étape précédente">◀</button>
+      <button type="button" class="btn primary" data-act="play" title="Lire le phasage">▶ Lire</button>
+      <button type="button" class="btn" data-act="next" title="Étape suivante" aria-label="Étape suivante">▶▶</button>
+      <button type="button" class="btn" data-act="last" title="Fin des travaux" aria-label="Fin des travaux">⏭</button>
     </div>
-    <div class="pb-mid">
+    <div class="db-mid">
       <input type="range" id="tslider" min="0" max="100" step="0.25" value="0" aria-label="Date affichée (jours ouvrés depuis M0)">
-      <div class="pb-label" id="pbLabel"></div>
+      <div class="db-label" id="dbLabel"></div>
     </div>
-    <div class="pb-right"><label for="speed">Vitesse</label>
-      <select id="speed"><option value="2">2 j/s</option><option value="5" selected>5 j/s</option><option value="10">10 j/s</option></select></div>
+    <div class="db-right"><label for="speed">Vitesse</label>
+      <select id="speed"><option value="2">2 j/s</option><option value="5">5 j/s</option><option value="10">10 j/s</option></select>
+      <button type="button" class="btn" id="bDock" title="Taille du Gantt">Gantt ▴</button></div>
+  </div>
+  <div class="dock-body" id="dockBody">
+    <div class="g-head"><svg id="gHead" aria-label="Échelle de temps du Gantt"></svg></div>
+    <svg id="gBody" role="img" aria-label="Diagramme de Gantt : glisser horizontalement pour changer de date"></svg>
   </div>
 </div>
 
 <script>
 (function(){
 'use strict';
-var NS='http://www.w3.org/2000/svg', KEY='phasage-englisberg-v2';
-var PH=['Préparation','Décaissement de la grave','Fouille amont et DN1000','Batteries RTP/PE et mur fusible','Plateforme et installation côté lac','Palplanches, fouille, ouverture écran 7','Conduites terrestres et lacustres','Remblai, retrait des palplanches, repli'];
+var NS='http://www.w3.org/2000/svg', KEY='phasage-englisberg-v3';
+var PH=['Préparation','Décaissement de la grave','Fouille amont et DN1000','Batteries RTP/PE','Plateforme et installation côté lac','Palplanches, fouille, ouverture écran 7','Conduites terrestres et lacustres','Remblai, retrait des palplanches, repli'];
 var ZN={prep:{l:'Préparation',c:'var(--prep)'},amont:{l:'Côté amont',c:'var(--amont)'},lac:{l:'Côté lac',c:'var(--lac)'},eau:{l:'Lacustre (Lot 4)',c:'var(--eau)'}};
 var DEF=[
- {id:'A0',ph:0,z:'prep',l:'Plans, méthodes, autorisations, commandes',d:30,p:'',end0:true,r6:'',desc:"Plans manquants (paroi clouée, batardeau, démolition de l'écran 7), méthodes des entreprises, autorisations (travaux lacustres, rejets, pêche), commandes à long délai.",vig:['Autorisations lacustres à déposer en premier : elles fixent les noyages.',"M0 : accord écrit de l'ingénieur structure (la station butonne la paroi)."]},
+ {id:'A0',ph:0,z:'prep',l:'Plans, méthodes, autorisations, commandes',d:30,p:'',end0:true,r6:'',desc:"Plans manquants (paroi clouée, batardeau, recépage et démolition des pieux), méthodes des entreprises, autorisations (travaux lacustres, remorquage, rejets, pêche), commandes à long délai.",vig:['Autorisations lacustres à déposer en premier.',"M0 : accord écrit de l'ingénieur structure (la station butonne la paroi)."]},
  {id:'A1',ph:1,z:'amont',l:"Décaissement de la grave du chemin d'accès",d:5,p:'M0',r6:'',desc:"Retrait de la couche de grave entre l'écran 1 et le flanc de colline (≈ +537.4 → ≈ +535.5), mise en dépôt pour réemploi.",vig:["Rampe est coupée : accès par l'ouest.",'Relevé des cibles C1/C2 avant et après.']},
  {id:'A2a',ph:2,z:'amont',l:'Fouille amont blindée, paroi clouée',d:3,p:'A1',r6:'',desc:"Fouille jusqu'à ≈ +533.8, dégagement des extrémités des fourreaux FD ; paroi clouée par passes si elle n'existe pas.",vig:['OTConst : fouille de plus de 1.50 m étayée ou talutée.','Cibles C1/C2 deux fois par semaine.']},
- {id:'A2b',ph:2,z:'amont',l:'Pose 2 × DN1000 (pièce de forme, coudes préfabriqués)',d:4,p:'A2a',r6:'jalon R6',desc:"Pose sur lit de pose, soudures sous tente avec procès-verbaux, traversées de l'écran 1 (S33/S34, étape 14 du plan 300-002).",vig:['Temps de refroidissement des soudures DN1000.','R6 : intervention du Lot 4 « selon planning DT/MO ».']},
+ {id:'A2b',ph:2,z:'amont',l:'Pose 2 × DN1000, coudes préfabriqués',d:4,p:'A2a',r6:'',desc:"Pose sur lit de pose entre les passe-murs et les fourreaux existants, soudures sous tente avec procès-verbaux, traversées de l'écran 1 (S33/S34).",vig:['Temps de refroidissement des soudures DN1000.']},
  {id:'A2c',ph:2,z:'amont',l:'Étanchéité, calibrage, relevé',d:2,p:'A2b',r6:'',desc:"Étanchéité des traversées et passe-murs, calibre passé sur toute la longueur, câble de tirage laissé en place, relevé du géomètre.",vig:['Calibrer avant de remblayer, tant que les raccords sont accessibles.']},
- {id:'A2d',ph:2,z:'amont',l:'Enrobage, remblai, rampe rétablie',d:3,p:'A2c',r6:'',desc:"Enrobage sans pierres, compactage léger par couches de 30 cm, remblai en grave, rampe rétablie.",vig:['Pas de compacteur lourd au-dessus des tubes.','Portance de la rampe pour les engins des phases 4–5.']},
- {id:'A3a',ph:3,z:'amont',l:'Préfabrication des batteries RTP/PE',d:12,p:'A1+3',r6:'',desc:"Soudures PE, déroulage des RTP depuis les tourets, assemblage avec colliers et entretoises, tête de tirage avec émerillon et fusible mécanique.",vig:['Aire de préparation sur la plateforme côté lac : elle bloque le démarrage des palplanches.']},
- {id:'A3b',ph:3,z:'amont',l:"Ligne d'introduction, ouverture du mur fusible",d:3,p:'A2d',r6:'',desc:"Ouverture du mur fusible (axe B, ≈ 5 m), rouleaux et chevalets dans la bâche et le hall à ≈ 1.4 m au-dessus de la dalle +532.80, entonnoir à l'entrée des fourreaux.",vig:["Pompe 4 dans l'axe de l'entrée FD1.",'Protéger les arêtes du mur et des passe-murs.']},
- {id:'A3c',ph:3,z:'amont',l:'Tirages FD1 puis FD2',d:3,p:'A3a, A3b',r6:'',desc:"Tirage d'une traite par fourreau, treuil à la centrale (Intro₃/₄, +577.05), dynamomètre enregistreur, liaison radio entre les deux extrémités.",vig:["Ne pas s'arrêter en cours de tirage.",'Effort plafonné par le fusible mécanique.']},
- {id:'A3d',ph:3,z:'amont',l:'Essais de pression et coulis annulaire',d:5,p:'A3c',r6:'',desc:"Essais PE et RTP, contrôle de continuité, remplissage annulaire au coulis depuis le point bas (station), évents côté centrale.",vig:["Conduites remplies d'eau pendant l'injection (flottaison)."]},
- {id:'A3e',ph:3,z:'amont',l:'Fermeture du mur fusible',d:3,p:'A3d',r6:'',desc:"Maçonnerie et étanchéité du mur fusible, libération de la plateforme côté lac.",vig:[]},
- {id:'A4a',ph:4,z:'lac',l:'Plateforme côté lac, implantation, barrière',d:5,p:'A3e',r6:'',desc:"Implantation du batardeau, plateforme en grave et risberme hors d'eau, essais de plaque, barrière anti-turbidité, déplacement des cibles C7/C8.",vig:['Caler plateforme et tête des palplanches sur le niveau haut du lac (≈ 532.1).']},
- {id:'A4b',ph:4,z:'lac',l:"Mobilisation de l'inventaire terrestre",d:5,p:'A3e',r6:'R6 B2',desc:"Installation du Lot 4 en rive : containers, pelles, protection des eaux.",vig:[]},
- {id:'A5a',ph:5,z:'lac',l:"Forage d'ameublissement",d:8,p:'A4a, A4b',r6:'hors R6',desc:"Forages le long des rideaux latéraux et du rideau de tête, comblement au sable.",vig:['Géophones actifs sur la station et la paroi.']},
- {id:'A5b',ph:5,z:'lac',l:'Fonçage des palplanches',d:5,p:'A5a DD+4',r6:'R6 C1',desc:"Fonçage depuis la station vers le lac, rideau de tête en dernier (pelle 40 t selon R6).",vig:['Seuils de vibration fixés avant le premier fonçage (SN 640 312a).','Blocs ou molasse : vérinage plutôt que vibrofonçage.']},
+ {id:'A2d',ph:2,z:'amont',l:'Enrobage, remblai, rampe rétablie',d:3,p:'A2c',r6:'',desc:"Enrobage sans pierres, compactage léger par couches de 30 cm, remblai en grave, rampe rétablie.",vig:['Pas de compacteur lourd au-dessus des tubes.']},
+ {id:'A3a',ph:3,z:'amont',l:"Assemblage des batteries sur l'autre rive",d:12,p:'A1+3',r6:'',desc:"Assemblage des deux batteries RTP/PE sur la rive opposée (colliers, entretoises, tête de tirage avec émerillon et fusible mécanique), préparation de la flottaison.",vig:['Une batterie par forage, amenées l\'une après l\'autre.']},
+ {id:'A3b',ph:3,z:'amont',l:"Couloir d'introduction abaissé à ≈ +532.80",d:3,p:'A2d',r6:'',desc:"Décaissement de la plateforme entre la rive et l'écran 6, dans l'axe des entrées des fourreaux, au niveau de la dalle N-1 (+532.80). Rouleaux jusqu'au bord de l'eau.",vig:['Fouille en bord de lac : talus, pompage, barrière anti-turbidité.']},
+ {id:'A3c',ph:3,z:'amont',l:'Recépage des pieux sécants (écran 6)',d:4,p:'A3b',r6:'',desc:"Recépage des pieux de l'écran 6 dans l'axe des forages à ≈ +532.80, au sciage, pour aligner le couloir sur la dalle N-1.",vig:["Accord de l'ingénieur structure avant la première coupe.",'Cibles relevées avant et après.']},
+ {id:'A3d',ph:3,z:'amont',l:'Ouverture du mur fusible, guidages',d:2,p:'A3c',r6:'',desc:"Ouverture du mur fusible (axe B, ≈ 5 m), rouleaux sur la dalle N-1 et dans le hall, rehausse jusqu'aux passe-murs (+534.20), entonnoirs à l'entrée des fourreaux.",vig:['Protéger les arêtes du mur et des passe-murs.']},
+ {id:'A3e',ph:3,z:'amont',l:'Batterie FD1 : remorquage et tirage',d:2,p:'A3a, A3d',r6:'',desc:"Remorquage depuis l'autre rive, mise en ligne dans le couloir, tirage d'une traite au treuil de la centrale (Intro₃, +577.05), dynamomètre enregistreur.",vig:['Fenêtre de vent faible pour le remorquage.',"Ne pas s'arrêter en cours de tirage."]},
+ {id:'A3f',ph:3,z:'amont',l:'Batterie FD2 : remorquage et tirage',d:2,p:'A3e',r6:'',desc:"Même opération pour le second forage (Intro₄).",vig:['Fenêtre de vent faible pour le remorquage.']},
+ {id:'A3g',ph:3,z:'amont',l:'Essais de pression et coulis annulaire',d:5,p:'A3f',r6:'',desc:"Essais PE et RTP, contrôle de continuité, remplissage annulaire au coulis depuis le point bas (station), évents côté centrale.",vig:["Conduites remplies d'eau pendant l'injection (flottaison)."]},
+ {id:'A3h',ph:3,z:'amont',l:'Fermeture du mur fusible',d:3,p:'A3g',r6:'',desc:"Maçonnerie et étanchéité du mur fusible.",vig:[]},
+ {id:'A4a',ph:4,z:'lac',l:'Remblai du couloir, plateforme côté lac',d:5,p:'A3h',r6:'',desc:"Remblai du couloir d'introduction, plateforme en grave et risberme hors d'eau, implantation du batardeau, essais de plaque, barrière anti-turbidité, déplacement des cibles C7/C8.",vig:['Caler plateforme et tête des palplanches sur le niveau haut du lac (≈ 532.1).']},
+ {id:'A4b',ph:4,z:'lac',l:"Mobilisation de l'inventaire terrestre",d:5,p:'A3h',r6:'R6 B2',desc:"Installation du Lot 4 en rive : containers, pelles, protection des eaux.",vig:[]},
+ {id:'A5a',ph:5,z:'lac',l:"Forage d'ameublissement",d:30,p:'A4a, A4b',r6:'hors R6',desc:"Forages le long des rideaux latéraux et du rideau de tête, comblement au sable (6 semaines).",vig:['Géophones actifs sur la station et la paroi.']},
+ {id:'A5b',ph:5,z:'lac',l:'Fonçage des palplanches',d:5,p:'A5a-3',r6:'R6 C1',desc:"Fonçage depuis la station vers le lac, rideau de tête en dernier (pelle 40 t selon R6).",vig:['Seuils de vibration fixés avant le premier fonçage (SN 640 312a).']},
  {id:'A5c',ph:5,z:'lac',l:"Terrassement de l'amorce en rive",d:14,p:'A5b',r6:'R6 C2',desc:"Excavation par passes, pompage, décantation et neutralisation des eaux.",vig:['Fond à ≈ 4.6 m sous le lac côté rive : contrôle du soulèvement.','Rejets selon SIA 431.']},
  {id:'A5d',ph:5,z:'lac',l:"Renforcement de l'enceinte de palplanches",d:14,p:'A5c DD',r6:'R6 C3',desc:"Cadres (liernes et butons) posés au fil de l'excavation.",vig:[]},
  {id:'A5e',ph:5,z:'lac',l:"Ouverture de l'écran 7",d:5,p:'A5c DD+9',r6:'hors R6',desc:"Dégagement du parafouille, démolition des pieux au sciage ou au carottage, reprise provisoire si demandée.",vig:['Cibles C1–C8 quotidiennes pendant la démolition.',"Accord de l'ingénieur structure avant la première coupe."]},
- {id:'A6a',ph:6,z:'eau',l:'Atelier de soudage, stockage PE Ø800',d:4,p:'A5b DD-34',r6:'R6 B3',desc:"Préparation de l'atelier de soudage et de la place de stockage des conduites PE Ø800. Calée comme dans R6, 34 jours avant le fonçage.",vig:['Emplacement à trouver hors de la plateforme côté lac.']},
+ {id:'A6a',ph:6,z:'eau',l:'Atelier de soudage, stockage PE Ø800',d:4,p:'A5b DD-34',r6:'R6 B3',desc:"Préparation de l'atelier de soudage et de la place de stockage des conduites PE Ø800, calée comme dans R6 : 34 jours avant le fonçage.",vig:[]},
  {id:'A6b',ph:6,z:'eau',l:'Soudage des conduites',d:23,p:'A6a',r6:'R6 D2',desc:"Soudage des quatre conduites PE DN800.",vig:['Soudure sous tente chauffée en dessous de +5 °C.']},
  {id:'A6c',ph:6,z:'eau',l:'Montage des lests et stockage',d:19,p:'A6b DD+20',r6:'R6 D3',desc:"Pose des lests béton de 900 kg tous les 5 m, stockage des conduites.",vig:[]},
  {id:'A6d',ph:6,z:'eau',l:"Mobilisation de l'inventaire flottant",d:5,p:'A5b DD',r6:'R6 B1',desc:"Mise à l'eau des pontons (moyen de levage à terre), ponton de travail métallique.",vig:['Avis à la navigation.']},
@@ -674,37 +707,35 @@ var DEF=[
  {id:'A7a',ph:7,z:'lac',l:'Remblayage après pose des conduites',d:5,p:'A6g',r6:'R6 C4',desc:"Enrobage et remblai par couches de 30 cm, cadres déposés au fil du remblai, pompage arrêté quand la couverture suffit.",vig:["Compactage léger jusqu'à ≈ 1 m au-dessus des conduites."]},
  {id:'A7b',ph:7,z:'lac',l:'Retrait des palplanches',d:5,p:'A7a',r6:'R6 C5',desc:"Arrachage au vibreur, comblement des vides, rideau de tête en dernier.",vig:['Géophones actifs.','Arracher lentement pour ne pas déplacer les amorces.']},
  {id:'A7c',ph:7,z:'lac',l:'Remise en état de la rive',d:5,p:'A7b',r6:'R6 C6',desc:"Rive et plateforme remises en état, bassin de décantation retiré.",vig:[]},
- {id:'A6h',ph:6,z:'eau',l:"Positionnement et noyage des aspirations",d:15,p:'A7a, A6e',r6:'R6 E2',desc:"Immersion contrôlée avec purge d'air, raccordement aux amorces par plongeurs (brides).",vig:['Fenêtre météo, vent.']},
+ {id:'A6h',ph:6,z:'eau',l:'Positionnement et noyage des aspirations',d:15,p:'A7a, A6e',r6:'R6 E2',desc:"Immersion contrôlée avec purge d'air, raccordement aux amorces par plongeurs (brides).",vig:['Fenêtre météo, vent.']},
  {id:'A6i',ph:6,z:'eau',l:'Positionnement et noyage des refoulements',d:15,p:'A6h',r6:'R6 E3',desc:"Immersion contrôlée, raccordement aux amorces par plongeurs.",vig:[]},
  {id:'A6j',ph:6,z:'eau',l:'Remblayage sur conduites lacustres',d:10,p:'A6i DD+5',r6:'R6 D6',desc:"Recouvrement des conduites dans la souille.",vig:[]},
  {id:'A6k',ph:6,z:'eau',l:"Pose des crépines d'aspiration et de refoulement",d:5,p:'A6i',r6:'R6 E4',desc:"Crépines et diffuseurs selon détails Groupe E (plan 406).",vig:[]},
  {id:'A6l',ph:6,z:'eau',l:'Essais de pression, relevé as-built',d:3,p:'A6k',r6:'hors R6',desc:"Essais par tronçon puis d'ensemble, relevé des conduites.",vig:[]},
  {id:'A7d',ph:7,z:'eau',l:'Repli des installations et finitions',d:9,p:'A6k, A6j',r6:'R6 B4',desc:"Repli du Lot 4, retrait de la barrière anti-turbidité et du ponton.",vig:[]}
 ];
-var PRESET_PAR={A4a:{p:'A1+3'},A4b:{p:'A1+3'}};
 var DEFAULT_HOL=[
- '24.12.2026-06.01.2027 Fêtes de fin d\'année (exemple, à confirmer)',
  '26.03.2027 Vendredi saint','29.03.2027 Lundi de Pâques','06.05.2027 Ascension','17.05.2027 Lundi de Pentecôte','27.05.2027 Fête-Dieu',
  '19.07.2027-06.08.2027 Vacances d\'été du bâtiment (exemple, à confirmer)',
  '01.11.2027 Toussaint','08.12.2027 Immaculée Conception',
  '24.12.2027-07.01.2028 Fêtes de fin d\'année (exemple, à confirmer)',
  '14.04.2028 Vendredi saint','17.04.2028 Lundi de Pâques','25.05.2028 Ascension','05.06.2028 Lundi de Pentecôte','15.06.2028 Fête-Dieu','15.08.2028 Assomption'
 ].join('\n');
+function E(S,id){return S[id]?S[id].e:0;}
 var MILES=[
  {id:'M0',l:'Bâtiment prêt',c:"Dalle RdC bétonnée, butons +536.90 déposés, accord de l'ingénieur structure.",t:function(S){return 0;}},
  {id:'M1',l:'Fourreaux DN1000 continus',c:'Raccords soudés, traversées étanches, calibre passé, câble de tirage en place.',t:function(S){return E(S,'A2d');}},
- {id:'M2',l:'Batteries posées, mur refermé',c:'Efforts de tirage enregistrés, essais concluants, coulis fait.',t:function(S){return E(S,'A3e');}},
+ {id:'M2',l:'Batteries posées, mur refermé',c:'Efforts de tirage enregistrés, essais concluants, coulis fait.',t:function(S){return E(S,'A3h');}},
  {id:'M3',l:'Amorce à sec, écran 7 ouvert',c:'Fouille réceptionnée, enceinte renforcée, passe-murs dégagés.',t:function(S){return Math.max(E(S,'A5c'),E(S,'A5d'),E(S,'A5e'));}},
  {id:'M4',l:'Raccordement terrestre fait',c:'Amorces posées, raccordées à la station et lestées.',t:function(S){return E(S,'A6g');}},
  {id:'M5',l:'Palplanches retirées',c:'Remblai terminé, vides comblés, relevé des cibles.',t:function(S){return E(S,'A7b');}},
  {id:'M6',l:'Conduites lacustres en place',c:'Noyages, crépines, essais et relevé as-built.',t:function(S){return E(S,'A6l');}},
  {id:'FIN',l:'Repli du Lot 4',c:'Installations repliées, site rendu.',t:function(S){return E(S,'A7d');}}
 ];
-function E(S,id){return S[id]?S[id].e:0;}
 
 /* ---------- état persistant ---------- */
-function defaults(){return {v:2,tasks:{},anchor:{task:'A6a',date:'2027-04-05'},holidays:DEFAULT_HOL,t:0,speed:5};}
-var cfg=(function(){try{var r=JSON.parse(localStorage.getItem(KEY));if(r&&r.v===2){var d=defaults();for(var k in r)d[k]=r[k];return d;}}catch(e){}return defaults();})();
+function defaults(){return {v:3,tasks:{},anchor:{task:'A6a',date:'2027-04-05'},holidays:DEFAULT_HOL,t:0,speed:5,dock:1};}
+var cfg=(function(){try{var r=JSON.parse(localStorage.getItem(KEY));if(r&&r.v===3){var d=defaults();for(var k in r)d[k]=r[k];return d;}}catch(e){}return defaults();})();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(cfg));}catch(e){}}
 function tasks(){return DEF.map(function(t){var o={};for(var k in t)o[k]=t[k];var c=cfg.tasks[t.id];if(c){if(c.d!==undefined&&c.d!==null&&!isNaN(c.d))o.d=c.d;if(typeof c.p==='string')o.p=c.p;}return o;});}
 
@@ -763,6 +794,7 @@ function isoWeek(d){var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDa
 function endDay(r){return r.e>r.s?dateOf(Math.ceil(r.e-1e-9)-1):dateOf(r.s);}
 function num(x){var r=Math.round(x*10)/10;return String(r).replace('.',',');}
 function jlab(t){var r=Math.round(t*10)/10;return (r<0?'J':'J+')+String(r).replace('.',',');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 /* ---------- règles d'affichage du plan et de la coupe ---------- */
 function clamp(x,a,b){return x<a?a:(x>b?b:x);}
@@ -814,25 +846,21 @@ function byId(id){for(var i=0;i<SCHED.list.length;i++)if(SCHED.list[i].id===id)r
 function ph(id){var s=st(id,T);return s.done?2:(s.started?1:0);}
 function pct(id){return Math.round(st(id,T).p*100)+' %';}
 function stateRows(){
-  var R=[];
-  function row(k,v,c){R.push([k,v,c||'']);}
+  var R=[];function row(k,v,c){R.push([k,v,c||'']);}
   row("Rampe d'accès est",(ph('A1')>=1&&ph('A2d')<2)?"coupée, accès par l'ouest":'ouverte',(ph('A1')>=1&&ph('A2d')<2)?'att':'');
-  var z=ph('A1')===0?'grave en place':ph('A1')===1?'décaissement '+pct('A1'):ph('A2a')===0?'décaissé ≈ +535.5':ph('A2d')===0?'fouille ouverte ≈ +533.8':ph('A2d')===1?'remblayage':'remblayé, rampe rétablie';
-  row("Chemin d'accès amont",z,(ph('A2a')>=1&&ph('A2d')<2)?'att':'');
+  row("Chemin d'accès amont",ph('A1')===0?'grave en place':ph('A1')===1?'décaissement '+pct('A1'):ph('A2a')===0?'décaissé ≈ +535.5':ph('A2d')===0?'fouille ouverte ≈ +533.8':ph('A2d')===1?'remblayage':'remblayé, rampe rétablie',(ph('A2a')>=1&&ph('A2d')<2)?'att':'');
   row('Fourreaux DN1000',ph('A2b')<2?(ph('A2b')===1?'pose en cours':'≈ 5 m manquants'):ph('A2c')<2?'raccordés, à calibrer':'continus et calibrés',ph('A2c')===2?'ok':'');
-  var b=ph('A3a')===0?'—':ph('A3a')===1?'préfabrication '+pct('A3a'):ph('A3c')===0?'prêtes':ph('A3c')===1?'tirage en cours':ph('A3d')<2?'posées, essais et coulis':'posées, éprouvées, coulis fait';
-  row('Batteries RTP/PE',b,ph('A3d')===2?'ok':'');
-  row('Mur fusible',ph('A3b')===0?'fermé (briques)':ph('A3e')<2?'ouvert':'refermé',(ph('A3b')>=1&&ph('A3e')<2)?'att':'');
-  var c=ph('A6a')===0?'—':ph('A6b')<2?(ph('A6b')===1?'soudage '+pct('A6b'):'atelier en préparation'):ph('A6c')<2?'lestage '+pct('A6c'):ph('A6h')===0?'prêtes, lestées':ph('A6h')===1?'noyage des aspirations':ph('A6i')<2?'noyage des refoulements':'noyées';
-  row('Conduites PE Ø800',c,ph('A6i')===2?'ok':'');
-  var bt=ph('A5a')===0?'—':ph('A5a')===1&&ph('A5b')===0?"forage d'ameublissement":ph('A5b')===1?'fonçage '+pct('A5b'):ph('A5c')===1?'terrassement '+pct('A5c'):ph('A7a')===0?'à sec, étayé':ph('A7a')===1?'remblayage':ph('A7b')===1?'arrachage':ph('A7b')===2?'retiré':'remblayé';
-  row('Batardeau en rive',bt,(ph('A5c')>=1&&ph('A7a')<2)?'att':'');
+  row("Couloir d'introduction",ph('A3b')===0?'—':ph('A3b')===1?'décaissement '+pct('A3b'):ph('A3c')===1?'recépage des pieux':ph('A3c')===0?'abaissé à ≈ +532.80':ph('A4a')===0?'abaissé, pieux recépés':ph('A4a')===1?'remblai':'remblayé (pieux recépés)',(ph('A3b')>=1&&ph('A4a')<2)?'att':'');
+  row('Batteries RTP/PE',ph('A3a')===0?'—':ph('A3a')===1?"assemblage sur l'autre rive "+pct('A3a'):ph('A3e')===0?"prêtes sur l'autre rive":ph('A3e')===1?'FD1 : remorquage et tirage':ph('A3f')===0?'FD1 posée':ph('A3f')===1?'FD2 : remorquage et tirage':ph('A3g')<2?'posées, essais et coulis':'posées, éprouvées, coulis fait',ph('A3g')===2?'ok':'');
+  row('Mur fusible',ph('A3d')===0?'fermé (briques)':ph('A3h')<2?'ouvert':'refermé',(ph('A3d')>=1&&ph('A3h')<2)?'att':'');
+  row('Conduites PE Ø800',ph('A6a')===0?'—':ph('A6b')<2?(ph('A6b')===1?'soudage '+pct('A6b'):'atelier en préparation'):ph('A6c')<2?'lestage '+pct('A6c'):ph('A6h')===0?'prêtes, lestées':ph('A6h')===1?'noyage des aspirations':ph('A6i')<2?'noyage des refoulements':'noyées',ph('A6i')===2?'ok':'');
+  row('Batardeau en rive',ph('A5a')===0?'—':ph('A5b')===0?"forage d'ameublissement "+pct('A5a'):ph('A5b')===1?'fonçage '+pct('A5b'):ph('A5c')===1?'terrassement '+pct('A5c'):ph('A7a')===0?'à sec, étayé':ph('A7a')===1?'remblayage':ph('A7b')===1?'arrachage':ph('A7b')===2?'retiré':'remblayé',(ph('A5c')>=1&&ph('A7a')<2)?'att':'');
   row('Écran 7',ph('A4a')===0?'intact':ph('A5e')===0?'pieux marqués à démolir':ph('A5e')===1?'démolition':'ouvert',ph('A5e')===1?'att':'');
   row('Amorces terrestres',ph('A6g')===0?'—':ph('A6g')===1?'raccordement':'posées, raccordées',ph('A6g')===2?'ok':'');
-  var l=ph('A6e')===0?'—':ph('A6e')===1?'dragage de la souille':ph('A6j')===0?'souille ouverte':ph('A6j')===1?'remblayage de la souille':'souille remblayée';
-  row('Lac',l,'');
+  row('Lac',ph('A6e')===0?(ph('A3e')===1||ph('A3f')===1?'remorquage d\'une batterie':'—'):ph('A6e')===1?'dragage de la souille':ph('A6j')===0?'souille ouverte':ph('A6j')===1?'remblayage de la souille':'souille remblayée','');
   var sv=[];
   if(ph('A1')>=1&&ph('A2d')<2)sv.push('C1/C2 deux fois par semaine');
+  if(ph('A3c')===1)sv.push('cibles relevées (recépage)');
   if(['A5a','A5b','A5e','A7b'].some(function(i){return ph(i)===1;}))sv.push('géophones actifs');
   if(ph('A5e')===1)sv.push('C1–C8 quotidiennes');
   if(ph('A4a')===2)sv.push('C7/C8 déplacées');
@@ -841,69 +869,90 @@ function stateRows(){
 }
 function renderPanel(){
   var S=SCHED.S,d=dateOf(T),k=stepIndex(),h=[];
-  h.push('<div><div class="p-day">'+jlab(T)+'</div><div class="p-cal">'+(d?fd(d,'w')+' · sem. '+isoWeek(d):'calage non défini')+'</div></div>');
-  var stepTxt='';if(k>=0){var s=STEPS[k];stepTxt='Étape '+k+' / '+(STEPS.length-1)+' · <b>'+(s.id?byId(s.id).l:s.label)+'</b>';}else stepTxt='Entre deux étapes';
-  h.push('<div class="p-step">'+stepTxt+'</div>');
+  h.push('<div class="p-top"><span class="p-day">'+jlab(T)+'</span><span class="p-cal">'+(d?fd(d,'w')+' · sem. '+isoWeek(d):'calage non défini')+'</span></div>');
+  h.push('<div class="p-step">'+(k>=0?'Étape '+k+' / '+(STEPS.length-1)+' · <b>'+esc(STEPS[k].id?byId(STEPS[k].id).l:STEPS[k].label)+'</b>':'Entre deux étapes')+'</div>');
   var runs=SCHED.list.filter(function(t){return st(t.id,T).run&&!t.end0;});
   if(selId&&runs.every(function(t){return t.id!==selId;})){var x=byId(selId);if(x&&st(x.id,T).started)runs.unshift(x);}
-  h.push('<div><h4>En cours</h4></div>');
+  var L=['<div><h4>En cours</h4></div>'];
   if(!runs.length){var nxt=SCHED.list.filter(function(t){return S[t.id].s>T+1e-6;}).sort(function(a,b){return S[a.id].s-S[b.id].s;})[0];
-    h.push('<p class="empty">'+(T>=SCHED.end-1e-6?'Travaux terminés.':'Aucune intervention ce jour-là.'+(nxt?' Prochaine : <b>'+nxt.l+'</b> ('+jlab(S[nxt.id].s)+').':''))+'</p>');}
-  else{h.push('<div class="runs">');runs.forEach(function(t){var r=S[t.id],z=ZN[t.z],p=Math.round(st(t.id,T).p*100),ds=dateOf(r.s),de=endDay(r);
-    h.push('<div class="run'+(t.id===selId?' sel':'')+'"><div class="run-h"><span class="chip"><i class="dot" style="background:'+z.c+'"></i>Ph. '+t.ph+' · '+z.l+'</span><span class="mono">'+t.id+(t.r6?' · '+t.r6:'')+'</span></div><b>'+t.l+'</b><div class="pbar"><i style="width:'+p+'%;background:'+z.c+'"></i></div><span class="mono">'+p+' % · '+jlab(r.s)+' → '+jlab(r.e)+(ds?' · '+fd(ds,'s')+' → '+fd(de):'')+'</span><p>'+t.desc+'</p>'+(t.vig.length?'<ul class="vig">'+t.vig.map(function(v){return '<li>'+v+'</li>';}).join('')+'</ul>':'')+'</div>');});
-    h.push('</div>');}
+    L.push('<p class="empty">'+(T>=SCHED.end-1e-6?'Travaux terminés.':'Aucune intervention ce jour-là.'+(nxt?' Prochaine : <b>'+esc(nxt.l)+'</b> ('+jlab(S[nxt.id].s)+').':''))+'</p>');}
+  else{L.push('<div class="runs">');runs.forEach(function(t){var r=S[t.id],z=ZN[t.z],p=Math.round(st(t.id,T).p*100),ds=dateOf(r.s),de=endDay(r);
+    L.push('<div class="run'+(t.id===selId?' sel':'')+'"><div class="run-h"><span class="chip"><i class="dot" style="background:'+z.c+'"></i>Ph. '+t.ph+' · '+z.l+'</span><span class="mono">'+t.id+(t.r6?' · '+t.r6:'')+'</span></div><b>'+esc(t.l)+'</b><div class="pbar"><i style="width:'+p+'%;background:'+z.c+'"></i></div><span class="mono">'+p+' % · '+jlab(r.s)+' → '+jlab(r.e)+(ds?' · '+fd(ds,'s')+' → '+fd(de):'')+'</span><p>'+t.desc+'</p>'+(t.vig.length?'<ul class="vig">'+t.vig.map(function(v){return '<li>'+v+'</li>';}).join('')+'</ul>':'')+'</div>');});
+    L.push('</div>');}
+  var R2=[];
   var nm=MILES.map(function(m){return {m:m,t:m.t(S)};}).filter(function(x){return x.t>T+1e-6;}).sort(function(a,b){return a.t-b.t;})[0];
-  if(nm){var dm=dateOf(nm.t-1e-6);h.push('<div class="milestone"><span class="k">Prochain jalon · '+nm.m.id+' · '+jlab(nm.t)+(dm?' · fin '+fd(dm):'')+'</span><b>'+nm.m.l+'</b><span>'+nm.m.c+'</span></div>');}
-  h.push('<div><h4>État du chantier</h4></div><dl class="state">'+stateRows().map(function(r){return '<dt>'+r[0]+'</dt><dd class="'+r[2]+'">'+r[1]+'</dd>';}).join('')+'</dl>');
+  if(nm){var dm=dateOf(nm.t-1e-6);R2.push('<div class="milestone"><span class="k">Prochain jalon · '+nm.m.id+' · '+jlab(nm.t)+(dm?' · fin '+fd(dm):'')+'</span><b>'+nm.m.l+'</b><span>'+nm.m.c+'</span></div>');}
+  R2.push('<div><h4>État du chantier</h4></div><dl class="state">'+stateRows().map(function(r){return '<dt>'+r[0]+'</dt><dd class="'+r[2]+'">'+r[1]+'</dd>';}).join('')+'</dl>');
+  h.push('<div class="pcols"><div>'+L.join('')+'</div><div>'+R2.join('')+'</div></div>');
   document.getElementById('panel').innerHTML=h.join('');
 }
 
-/* ---------- Gantt ---------- */
-var G={};
+/* ---------- Gantt ancré ---------- */
+var G={},dockBody=document.getElementById('dockBody'),gHead=document.getElementById('gHead'),gBody=document.getElementById('gBody');
 function ganttRows(){var rows=[];for(var p=0;p<=7;p++){var g=SCHED.list.filter(function(t){return t.ph===p;}).sort(function(a,b){return SCHED.S[a.id].s-SCHED.S[b.id].s;});if(g.length)rows.push({ph:p});g.forEach(function(t){rows.push({t:t});});}return rows;}
 function renderGantt(){
-  var svg=document.getElementById('gantt'),S=SCHED.S,rows=ganttRows();
-  var LX=330,RH=19,TOP=52,k=6.2,t0=Math.floor(SCHED.tmin)-1,t1=Math.ceil(SCHED.end)+3;
-  var W=LX+(t1-t0)*k+14,y=TOP,h=[];
+  var S=SCHED.S,rows=ganttRows();
+  var LX=300,RH=18,PH_H=19,HH=56,t0=Math.floor(SCHED.tmin)-1,t1=Math.ceil(SCHED.end)+2;
+  var avail=Math.max(dockBody.clientWidth||1200,600);
+  var k=Math.max(4,(avail-LX-14)/(t1-t0)),W=Math.max(avail,LX+(t1-t0)*k+14);
   function X(t){return LX+(t-t0)*k;}
-  G={X:X,LX:LX,k:k,t0:t0,t1:t1,TOP:TOP};
-  var H=TOP+rows.reduce(function(a,r){return a+(r.ph!==undefined?22:RH);},0)+10;
-  // grille : semaines et mois si calage, sinon tous les 5 jours
-  var prevW=null,prevM=null;
+  G={X:X,LX:LX,k:k,t0:t0,t1:t1,W:W};
+  var H=rows.reduce(function(a,r){return a+(r.ph!==undefined?PH_H:RH);},0)+8;
+  var hh=[],hb=[];
+  hh.push('<rect x="0" y="0" width="'+LX+'" height="'+HH+'" class="f-sheet"/>');
+  var prevW=null,prevM=null,months=[];
   for(var i=t0;i<=t1;i++){var d=dateOf(i);
     if(d){var w=isoWeek(d),m=d.getMonth();
-      if(w!==prevW){h.push('<line class="grid" x1="'+X(i)+'" y1="'+(TOP-14)+'" x2="'+X(i)+'" y2="'+(H-6)+'"/>');h.push('<text x="'+(X(i)+2)+'" y="'+(TOP-4)+'" class="t-m t-3">'+w+'</text>');prevW=w;}
-      if(m!==prevM){h.push('<line class="gmonth" x1="'+X(i)+'" y1="4" x2="'+X(i)+'" y2="'+(TOP-14)+'"/><text x="'+(X(i)+4)+'" y="16" class="t-s t-b">'+MON[m]+' '+String(d.getFullYear()).slice(2)+'</text>');prevM=m;}
-    }else if(i%5===0){h.push('<line class="grid" x1="'+X(i)+'" y1="'+(TOP-14)+'" x2="'+X(i)+'" y2="'+(H-6)+'"/><text x="'+(X(i)+2)+'" y="'+(TOP-4)+'" class="t-m t-3">'+jlab(i)+'</text>');}
+      if(w!==prevW){hh.push('<line class="grid" x1="'+X(i)+'" y1="20" x2="'+X(i)+'" y2="'+HH+'"/>'+(k*5>=17?'<text x="'+(X(i)+2)+'" y="32" class="t-m t-3">'+w+'</text>':''));hb.push('<line class="grid" x1="'+X(i)+'" y1="0" x2="'+X(i)+'" y2="'+H+'"/>');prevW=w;}
+      if(m!==prevM){months.push({x:Math.max(X(i),LX),l:MON[m]+' '+String(d.getFullYear()).slice(2)});prevM=m;}
+    }else if(i%5===0){hh.push('<line class="grid" x1="'+X(i)+'" y1="20" x2="'+X(i)+'" y2="'+HH+'"/><text x="'+(X(i)+2)+'" y="32" class="t-m t-3">'+jlab(i)+'</text>');hb.push('<line class="grid" x1="'+X(i)+'" y1="0" x2="'+X(i)+'" y2="'+H+'"/>');}
   }
-  h.push('<text x="8" y="'+(TOP-4)+'" class="t-m t-3">'+(CAL?'SEMAINE':'JOURS OUVRÉS')+'</text>');
+  months.forEach(function(mo,j){var nx=j+1<months.length?months[j+1].x:W;hh.push('<line class="gmonth" x1="'+mo.x+'" y1="2" x2="'+mo.x+'" y2="20"/>');if(nx-mo.x>=48)hh.push('<text x="'+(mo.x+4)+'" y="15" class="t-s t-b">'+mo.l+'</text>');});
+  hh.push('<text x="8" y="15" class="t-s t-b">Glisser pour changer de date</text><text x="8" y="32" class="t-m t-3">'+(CAL?'SEMAINE':'JOURS OUVRÉS')+'</text>');
+  MILES.forEach(function(m){var mx=X(m.t(S));hh.push('<rect x="'+(mx-4)+'" y="'+(42-4)+'" width="8" height="8" transform="rotate(45 '+mx+' 42)" class="f-ink"/><text x="'+(mx+7)+'" y="46" class="t-m t-b">'+m.id+'</text>');hb.push('<line class="mline" x1="'+mx+'" y1="0" x2="'+mx+'" y2="'+H+'"/>');});
+  hh.push('<g id="gKnob"><line class="cur" x1="0" y1="20" x2="0" y2="'+HH+'"/><path class="curknob" d="M-6 '+(HH-9)+' h12 l-6 9 z"/></g>');
+  var y=4;
   rows.forEach(function(r){
-    if(r.ph!==undefined){h.push('<line class="sep" x1="0" y1="'+(y+2)+'" x2="'+W+'" y2="'+(y+2)+'"/><text x="8" y="'+(y+16)+'" class="t-s t-b">'+r.ph+' · '+PH[r.ph]+'</text>');y+=22;return;}
+    if(r.ph!==undefined){hb.push('<line class="sep" x1="0" y1="'+y+'" x2="'+W+'" y2="'+y+'"/><text x="8" y="'+(y+14)+'" class="t-s t-b">'+r.ph+' · '+PH[r.ph]+'</text>');y+=PH_H;return;}
     var t=r.t,s=S[t.id],cy=y+RH/2,bx=X(s.s),bw=Math.max((s.e-s.s)*k,3);
-    h.push('<g class="bar" data-id="'+t.id+'"><rect x="0" y="'+y+'" width="'+W+'" height="'+RH+'" fill="transparent"/><text x="22" y="'+(cy+4)+'" class="t-m t-3">'+t.id+'</text><text x="62" y="'+(cy+4)+'" class="t-s">'+esc(t.l.length>44?t.l.slice(0,43)+'…':t.l)+'</text><rect class="vis z-'+t.z+'" x="'+bx+'" y="'+(cy-6)+'" width="'+bw+'" height="12" rx="3"/>'+(SCHED.err[t.id]?'<text x="'+(bx+bw+4)+'" y="'+(cy+4)+'" class="t-s" style="fill:var(--warn)">!</text>':'')+'</g>');
+    hb.push('<g class="bar" data-id="'+t.id+'" data-y="'+y+'"><text x="18" y="'+(cy+4)+'" class="t-m t-3 lbl">'+t.id+'</text><text x="52" y="'+(cy+4)+'" class="t-s lbl">'+esc(t.l.length>42?t.l.slice(0,41)+'…':t.l)+'</text><rect class="vis z-'+t.z+'" x="'+bx+'" y="'+(cy-5.5)+'" width="'+bw+'" height="11" rx="3"/>'+(SCHED.err[t.id]?'<text x="'+(bx+bw+4)+'" y="'+(cy+4)+'" class="t-s" style="fill:var(--warn)">!</text>':'')+'</g>');
     y+=RH;
   });
-  MILES.forEach(function(m){var mx=X(m.t(S));h.push('<line class="mline" x1="'+mx+'" y1="'+(TOP-12)+'" x2="'+mx+'" y2="'+(H-6)+'"/><rect x="'+(mx-4.5)+'" y="'+(TOP-30)+'" width="9" height="9" transform="rotate(45 '+mx+' '+(TOP-25.5)+')" class="f-ink"/><text x="'+(mx+7)+'" y="'+(TOP-22)+'" class="t-m t-b">'+m.id+'</text>');});
-  h.push('<line id="gcur" class="cur" x1="0" y1="'+(TOP-14)+'" x2="0" y2="'+(H-6)+'"/>');
-  svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.style.minWidth=Math.min(W,1400)+'px';
-  svg.innerHTML=h.join('');
+  hb.push('<line id="gCur" class="cur" x1="0" y1="0" x2="0" y2="'+H+'"/>');
+  gHead.setAttribute('viewBox','0 0 '+W+' '+HH);gHead.setAttribute('width',W);gHead.setAttribute('height',HH);gHead.innerHTML=hh.join('');
+  gBody.setAttribute('viewBox','0 0 '+W+' '+H);gBody.setAttribute('width',W);gBody.setAttribute('height',H);gBody.innerHTML=hb.join('');
+  moveCursor();
 }
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function moveCursor(){var c=document.getElementById('gcur');if(!c||!G.X)return;var x=G.X(T);c.setAttribute('x1',x);c.setAttribute('x2',x);
-  document.querySelectorAll('#gantt .bar').forEach(function(g){g.classList.toggle('sel',g.dataset.id===selId);});}
-document.getElementById('gantt').addEventListener('click',function(e){
-  var svg=this,pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;var p=pt.matrixTransform(svg.getScreenCTM().inverse());
-  var g=e.target.closest('.bar');
-  if(g&&p.x<G.LX){var r=SCHED.S[g.dataset.id];stopPlay();setT(r.s+Math.max(0.5,(r.e-r.s)/2),g.dataset.id);return;}
-  if(p.x>=G.LX){stopPlay();setT(G.t0+(p.x-G.LX)/G.k,g?g.dataset.id:null);}
-});
+function moveCursor(){if(!G.X)return;var x=G.X(T),c=document.getElementById('gCur'),kn=document.getElementById('gKnob');
+  if(c){c.setAttribute('x1',x);c.setAttribute('x2',x);}if(kn)kn.setAttribute('transform','translate('+x+',0)');
+  gBody.querySelectorAll('.bar').forEach(function(g){g.classList.toggle('sel',g.dataset.id===selId);g.classList.toggle('run',st(g.dataset.id,T).run);});}
+function keepCursorVisible(){if(!G.X)return;var x=G.X(T),l=dockBody.scrollLeft,w=dockBody.clientWidth;if(x<l+G.LX*0.3||x>l+w-40)dockBody.scrollLeft=Math.max(0,x-w/2);}
+var lastRunKey='';
+function followRuns(){var run=SCHED.list.filter(function(t){return st(t.id,T).run&&!t.end0;});if(!run.length)return;var key=run.map(function(t){return t.id;}).join(',');if(key===lastRunKey)return;lastRunKey=key;
+  var g=gBody.querySelector('.bar[data-id="'+run[0].id+'"]');if(!g)return;var y=+g.dataset.y,top=dockBody.scrollTop,h=dockBody.clientHeight-60;if(y<top||y>top+h-30)dockBody.scrollTop=Math.max(0,y-24);}
+/* glisser dans le Gantt */
+var dragging=false;
+function svgX(e,svg){var pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse()).x;}
+function onDown(e){if(e.button!==undefined&&e.button!==0)return;var svg=e.currentTarget,x=svgX(e,svg),g=e.target.closest('.bar');
+  stopPlay();
+  if(x<G.LX){if(g){var r=SCHED.S[g.dataset.id];setT(r.s+Math.max(0.5,(r.e-r.s)/2),g.dataset.id);}return;}
+  dragging=true;try{svg.setPointerCapture(e.pointerId);}catch(_){}scrub(x,g?g.dataset.id:null);e.preventDefault();}
+function onMove(e){if(!dragging)return;scrub(svgX(e,e.currentTarget),null);}
+function onUp(e){if(!dragging)return;dragging=false;try{e.currentTarget.releasePointerCapture(e.pointerId);}catch(_){}cfg.t=T;save();refresh();}
+function scrub(x,id){T=clamp(G.t0+(x-G.LX)/G.k,0,SCHED.end);selId=id;refresh(true);}
+[gHead,gBody].forEach(function(s){s.addEventListener('pointerdown',onDown);s.addEventListener('pointermove',onMove);s.addEventListener('pointerup',onUp);s.addEventListener('pointercancel',onUp);});
+/* taille du dock */
+var dock=document.getElementById('dock');
+function setDock(n){dock.dataset.size=String(n);cfg.dock=n;save();document.getElementById('bDock').textContent=n===0?'Gantt ▴':n===1?'Gantt ▴▴':'Gantt ▾';padBody();}
+function padBody(){document.body.style.paddingBottom=(dock.offsetHeight+8)+'px';}
+document.getElementById('bDock').addEventListener('click',function(){setDock(((+dock.dataset.size)+1)%3);renderGantt();});
 
 /* ---------- tableau éditable ---------- */
 function renderTable(){
   var tb=document.getElementById('tasks'),h=['<thead><tr><th>Réf.</th><th class="lbl">Intervention</th><th>Durée (j)</th><th>≈ sem.</th><th>Prédécesseurs</th><th>Début</th><th>Fin</th><th></th></tr></thead><tbody>'];
   for(var p=0;p<=7;p++){var g=DEF.filter(function(t){return t.ph===p;});if(!g.length)continue;
     h.push('<tr class="ph"><td colspan="8">'+p+' · '+PH[p]+'</td></tr>');
-    g.forEach(function(t){h.push('<tr data-id="'+t.id+'"><td class="num">'+t.id+'</td><td class="lbl">'+t.l+(t.r6?' <span class="r6">'+t.r6+'</span>':'')+'</td><td><input type="number" min="0" step="0.5" id="d-'+t.id+'" aria-label="Durée '+t.id+'"></td><td class="num" data-k="w"></td><td>'+(t.end0?'<span class="r6">finit au jalon M0</span>':'<input type="text" id="p-'+t.id+'" aria-label="Prédécesseurs '+t.id+'" spellcheck="false">')+'</td><td class="num" data-k="s"></td><td class="num" data-k="e"></td><td class="err" data-k="x"></td></tr>');});
+    g.forEach(function(t){h.push('<tr data-id="'+t.id+'"><td class="num">'+t.id+'</td><td class="lbl">'+esc(t.l)+(t.r6?' <span class="r6">'+t.r6+'</span>':'')+'</td><td><input type="number" min="0" step="0.5" id="d-'+t.id+'" aria-label="Durée '+t.id+'"></td><td class="num" data-k="w"></td><td>'+(t.end0?'<span class="r6">finit au jalon M0</span>':'<input type="text" id="p-'+t.id+'" aria-label="Prédécesseurs '+t.id+'" spellcheck="false">')+'</td><td class="num" data-k="s"></td><td class="num" data-k="e"></td><td class="err" data-k="x"></td></tr>');});
   }
   tb.innerHTML=h.join('')+'</tbody>';
   fillInputs();
@@ -915,7 +964,7 @@ function renderTable(){
     inp.addEventListener(kind==='d'?'input':'change',upd);
   });
 }
-function fillInputs(){var L=tasks();L.forEach(function(t){var d=document.getElementById('d-'+t.id),p=document.getElementById('p-'+t.id);if(d){d.value=t.d;d.classList.toggle('changed',!!(cfg.tasks[t.id]&&cfg.tasks[t.id].d!==undefined));}if(p){p.value=t.p;p.classList.toggle('changed',!!(cfg.tasks[t.id]&&typeof cfg.tasks[t.id].p==='string'));}});}
+function fillInputs(){tasks().forEach(function(t){var d=document.getElementById('d-'+t.id),p=document.getElementById('p-'+t.id);if(d)d.value=t.d;if(p)p.value=t.p;});}
 function updateTable(){var S=SCHED.S;document.querySelectorAll('#tasks tr[data-id]').forEach(function(tr){var id=tr.dataset.id,r=S[id],t=byId(id);if(!r)return;
   var ds=dateOf(r.s),de=endDay(r);
   tr.querySelector('[data-k=w]').textContent=num((t.d||0)/5);
@@ -928,17 +977,16 @@ function updateTable(){var S=SCHED.S;document.querySelectorAll('#tasks tr[data-i
 
 /* ---------- calage ---------- */
 function renderAnchor(){var sel=document.getElementById('anchorTask');sel.innerHTML=DEF.filter(function(t){return !t.end0;}).map(function(t){return '<option value="'+t.id+'">'+t.id+' · '+esc(t.l)+(t.r6?' ('+t.r6+')':'')+'</option>';}).join('');sel.value=cfg.anchor.task;document.getElementById('anchorDate').value=cfg.anchor.date||'';}
-function m0info(){var d0=dateOf(0),de=dateOf(SCHED.end-1e-6),el=document.getElementById('m0info');el.textContent=d0?'→ M0 le '+fd(d0,'w')+' · fin le '+fd(de):'';}
+function m0info(){var d0=dateOf(0),de=dateOf(SCHED.end-1e-6);document.getElementById('m0info').textContent=d0?'→ M0 le '+fd(d0,'w')+' · fin le '+fd(de):'';}
 document.getElementById('anchorTask').addEventListener('change',function(){cfg.anchor.task=this.value;save();recalc();});
 document.getElementById('anchorDate').addEventListener('change',function(){cfg.anchor.date=this.value;save();recalc();});
 
 /* ---------- boutons ---------- */
 document.getElementById('bStrict').addEventListener('click',function(){cfg.tasks={};save();fillInputs();recalc();});
-document.getElementById('bPar').addEventListener('click',function(){cfg.tasks=JSON.parse(JSON.stringify(PRESET_PAR));save();fillInputs();recalc();});
 function download(name,text,type){var b=new Blob([text],{type:type}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);}
-document.getElementById('bExpJ').addEventListener('click',function(){download('phasage-englisberg.json',JSON.stringify({v:2,tasks:cfg.tasks,anchor:cfg.anchor,holidays:cfg.holidays},null,2),'application/json');});
-document.getElementById('fImp').addEventListener('change',function(){var f=this.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{var o=JSON.parse(rd.result);if(o.v!==2)throw 0;cfg.tasks=o.tasks||{};if(o.anchor)cfg.anchor=o.anchor;if(typeof o.holidays==='string')cfg.holidays=o.holidays;save();document.getElementById('holidays').value=cfg.holidays;renderAnchor();fillInputs();recalc();}catch(e){alertBox('Fichier non reconnu : exporter d\'abord un fichier JSON depuis cet outil.');}};rd.readAsText(f);this.value='';});
-function alertBox(m){var n=document.querySelector('.legend-preds');var s=document.createElement('span');s.style.color='var(--warn)';s.textContent=m;n.appendChild(s);setTimeout(function(){s.remove();},6000);}
+document.getElementById('bExpJ').addEventListener('click',function(){download('phasage-englisberg.json',JSON.stringify({v:3,tasks:cfg.tasks,anchor:cfg.anchor,holidays:cfg.holidays},null,2),'application/json');});
+function msg(m){var s=document.getElementById('msg');s.textContent=m;setTimeout(function(){s.textContent='';},6000);}
+document.getElementById('fImp').addEventListener('change',function(){var f=this.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(){try{var o=JSON.parse(rd.result);if(o.v!==3)throw 0;cfg.tasks=o.tasks||{};if(o.anchor)cfg.anchor=o.anchor;if(typeof o.holidays==='string')cfg.holidays=o.holidays;save();document.getElementById('holidays').value=cfg.holidays;renderAnchor();fillInputs();recalc();msg('');}catch(e){msg("Fichier non reconnu : exporter d'abord un fichier JSON depuis cette version de l'outil.");}};rd.readAsText(f);this.value='';});
 document.getElementById('bExpC').addEventListener('click',function(){var S=SCHED.S,L=['Phase;Réf.;Intervention;Programme R6;Durée (j ouvrés);Prédécesseurs;Début (J);Fin (J);Date début;Date fin'];
   SCHED.list.forEach(function(t){var r=S[t.id],ds=dateOf(r.s),de=endDay(r);L.push([t.ph,t.id,'"'+t.l.replace(/"/g,'""')+'"',t.r6,String(t.d).replace('.',','),'"'+(t.end0?'fin à M0':t.p)+'"',String(Math.round(r.s*10)/10).replace('.',','),String(Math.round(r.e*10)/10).replace('.',','),ds?fd(ds):'',de?fd(de):''].join(';'));});
   download('phasage-englisberg.csv','﻿'+L.join('\r\n'),'text/csv;charset=utf-8');});
@@ -948,16 +996,22 @@ document.getElementById('bHol').addEventListener('click',function(){cfg.holidays
 
 /* ---------- lecture ---------- */
 var slider=document.getElementById('tslider'),playing=false,last=0;
-slider.addEventListener('input',function(){stopPlay();setT(parseFloat(slider.value));});
-function stopPlay(){playing=false;document.getElementById('bPlay').textContent='▶';document.getElementById('bPlay').setAttribute('aria-label','Lecture');}
-function loop(ts){if(!playing)return;var dt=last?(ts-last)/1000:0;last=ts;var sp=parseFloat(document.getElementById('speed').value)||5;var nt=T+dt*sp;if(nt>=SCHED.end){setT(SCHED.end);stopPlay();return;}T=nt;selId=null;refresh(true);requestAnimationFrame(loop);}
-document.getElementById('bPlay').addEventListener('click',function(){if(playing){stopPlay();cfg.t=T;save();return;}if(T>=SCHED.end-1e-6)T=0;playing=true;last=0;this.textContent='❚❚';this.setAttribute('aria-label','Pause');requestAnimationFrame(loop);});
-document.getElementById('bFirst').addEventListener('click',function(){stopPlay();setT(0);});
-document.getElementById('bLast').addEventListener('click',function(){stopPlay();setT(SCHED.end);});
-document.getElementById('bNext').addEventListener('click',function(){stopPlay();for(var i=0;i<STEPS.length;i++)if(STEPS[i].t>T+1e-6){setT(STEPS[i].t,STEPS[i].id);return;}});
-document.getElementById('bPrev').addEventListener('click',function(){stopPlay();for(var i=STEPS.length-1;i>=0;i--)if(STEPS[i].t<T-1e-6){setT(STEPS[i].t,STEPS[i].id);return;}});
-document.getElementById('speed').addEventListener('change',function(){cfg.speed=+this.value;save();});
-if(cfg.speed)document.getElementById('speed').value=String(cfg.speed);
+slider.addEventListener('input',function(){stopPlay();T=clamp(parseFloat(slider.value),0,SCHED.end);selId=null;refresh(true);});
+slider.addEventListener('change',function(){cfg.t=T;save();refresh();});
+function playLabels(){document.querySelectorAll('[data-act=play]').forEach(function(b){var big=b.classList.contains('play');b.textContent=playing?(big?'❚❚ Pause':'❚❚ Pause'):(big?'▶ Lire le phasage':'▶ Lire');});}
+function stopPlay(){if(!playing)return;playing=false;playLabels();cfg.t=T;save();refresh();}
+function loop(ts){if(!playing)return;var dt=last?(ts-last)/1000:0;last=ts;var sp=parseFloat(document.getElementById('speed').value)||5;var nt=T+Math.min(dt,0.1)*sp;
+  if(nt>=SCHED.end){T=SCHED.end;playing=false;playLabels();refresh();return;}T=nt;selId=null;refresh(true);followRuns();keepCursorVisible();requestAnimationFrame(loop);}
+function act(a){
+  if(a==='play'){if(playing){stopPlay();return;}if(T>=SCHED.end-1e-6)T=0;playing=true;last=0;lastRunKey='';playLabels();requestAnimationFrame(loop);return;}
+  playing=false;playLabels();
+  if(a==='first')setT(0);else if(a==='last')setT(SCHED.end);
+  else if(a==='next'){for(var i=0;i<STEPS.length;i++)if(STEPS[i].t>T+1e-6){setT(STEPS[i].t,STEPS[i].id);break;}}
+  else if(a==='prev'){for(var j=STEPS.length-1;j>=0;j--)if(STEPS[j].t<T-1e-6){setT(STEPS[j].t,STEPS[j].id);break;}}
+  lastRunKey='';followRuns();keepCursorVisible();
+}
+document.querySelectorAll('[data-act]').forEach(function(b){b.addEventListener('click',function(){act(b.dataset.act);});});
+var sp=document.getElementById('speed');sp.value=String(cfg.speed||5);sp.addEventListener('change',function(){cfg.speed=+sp.value;save();});
 
 /* ---------- rafraîchissement ---------- */
 var lastPanelKey='';
@@ -965,16 +1019,21 @@ function refresh(fast){
   applyAll(T);moveCursor();
   slider.max=String(Math.ceil(SCHED.end*4)/4);slider.value=String(T);
   var d=dateOf(T),k=stepIndex(),cur=SCHED.list.filter(function(t){return st(t.id,T).run&&!t.end0;}).map(function(t){return t.l;});
-  document.getElementById('pbLabel').innerHTML='<b>'+jlab(T)+'</b>'+(d?' · '+fd(d,'w'):'')+(k>=0?' · étape '+k+'/'+(STEPS.length-1):'')+(cur.length?' · '+esc(cur.join(' / ')):'');
+  var lab='<b>'+jlab(T)+'</b>'+(d?' · '+fd(d,'w'):'')+(k>=0?' · étape '+k+'/'+(STEPS.length-1):'');
+  document.getElementById('dbLabel').innerHTML=lab+(cur.length?' · '+esc(cur.join(' / ')):'');
+  document.getElementById('sbDate').innerHTML=lab;
   var key=Math.floor(T*2)+'|'+selId+'|'+k;
   if(!fast||key!==lastPanelKey){renderPanel();updateTable();lastPanelKey=key;}
 }
 function recalc(){compute();buildCal();buildSteps();if(T>SCHED.end)T=SCHED.end;renderGantt();m0info();refresh();}
+var rz=null;window.addEventListener('resize',function(){clearTimeout(rz);rz=setTimeout(function(){renderGantt();padBody();},150);});
 
 /* ---------- démarrage ---------- */
 compute();buildCal();
 initRules(document.getElementById('planSvg'));initRules(document.getElementById('coupeSvg'));
-buildSteps();renderAnchor();renderTable();renderGantt();m0info();refresh();
+buildSteps();renderAnchor();renderTable();
+setDock(typeof cfg.dock==='number'?cfg.dock:(window.innerWidth<700?0:1));
+renderGantt();m0info();refresh();padBody();
 })();
 </script>
 </body>
