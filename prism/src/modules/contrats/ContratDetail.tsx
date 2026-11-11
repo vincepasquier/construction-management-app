@@ -1,3 +1,4 @@
+import { Commentaires } from "@/modules/collaboration/Commentaires";
 import { confirmer } from "@/app/etatUI";
 import { useSuppression } from "@/app/suppression";
 import { useEffect, useState } from "react";
@@ -217,6 +218,7 @@ export function ContratDetail() {
           )}
         </Modale>
       )}
+      <div className="mt-6"><Commentaires cible={{ collection: "contrats", id: c.id }} projetId={c.projetId} /></div>
     </>
   );
 }

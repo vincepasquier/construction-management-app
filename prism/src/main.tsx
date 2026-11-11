@@ -6,6 +6,7 @@ import { notifier } from "./app/etatUI";
 import { Avis } from "./app/ui";
 import { Depot } from "./donnees/depot";
 import { brancherErreurs, FournisseurDepot, useDepot, useDonnees } from "./donnees/hooks";
+import { brancherNotifications, rappelsDuJour } from "./donnees/notifications";
 import { installerReferentiels } from "./donnees/initialisation";
 import { autoriser, REGLES } from "./donnees/regles";
 import { session } from "./donnees/session";
@@ -47,6 +48,9 @@ function Amorce() {
       depot.acteurId = session.lire().utilisateurId ?? undefined;
       // Une base déjà remplie reçoit les référentiels ajoutés par les versions suivantes
       if (!depot.estVide()) installerReferentiels(depot, false);
+      // Les notifications naissent des écritures : le moteur écoute le journal dès l'ouverture
+      brancherNotifications(depot);
+      if (!depot.estVide()) rappelsDuJour(depot);
       // Demande au navigateur de ne pas évincer la base quand l'espace disque manque
       void navigator.storage?.persist?.();
       setEtat("pret");

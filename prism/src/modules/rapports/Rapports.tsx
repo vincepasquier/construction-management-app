@@ -1,3 +1,4 @@
+import { Commentaires } from "@/modules/collaboration/Commentaires";
 // Rapports de phase et de clôture du projet, avec son indice de complétude.
 import { ClipboardList, Download, ExternalLink, Plus, Send } from "lucide-react";
 import { useState } from "react";
@@ -159,6 +160,7 @@ export function Rapports() {
               </Champ>
             ))}
             {editable(ouvert) && <BoutonIA question={`Rédige une proposition pour chaque rubrique du « ${ouvert.titre} » du projet, à partir des données du projet : ${ouvert.sections.map((s) => s.titre).join(" ; ")}. Reste factuel et signale ce que tu ne peux pas déduire des données.`}>Proposer un texte avec l'IA</BoutonIA>}
+            <Commentaires compact cible={{ collection: "rapports", id: ouvert.id }} projetId={projet.id} titre="Échanges sur le rapport" />
             {ouvert.statut !== "Brouillon" && <Champ libelle="Décision ou remarque du valideur"><Zone rows={2} disabled={!valideur || lecture} value={ouvert.decision ?? ""} onChange={(e) => majOuvert({ decision: e.target.value })} onBlur={() => modifier("rapports", ouvert.id, { decision: ouvert.decision })} /></Champ>}
           </div>
         </Panneau>

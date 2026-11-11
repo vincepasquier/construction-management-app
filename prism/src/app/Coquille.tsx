@@ -39,7 +39,7 @@ function ordonner(projets: Projet[]): { projet: Projet; niveau: number }[] {
 
 export function Coquille() {
   const depot = useDepot();
-  const { projets, personnes, typesProjet, validations, actions, lots } = useDonnees();
+  const { projets, personnes, typesProjet, validations, actions, lots, delegations } = useDonnees();
   const journal = useJournal();
   const utilisateur = useUtilisateur();
   const utilisateurId = session.utiliser((s) => s.utilisateurId);
@@ -96,7 +96,7 @@ export function Coquille() {
   // Ce qui attend l'utilisateur sur le projet ouvert
   const jour = aujourdhui();
   const compteurs: Record<string, { n: number; alerte?: boolean }> = {
-    validations: { n: validations.filter((v) => v.projetId === projetId && attendDe(v, utilisateurId)).length, alerte: true },
+    validations: { n: validations.filter((v) => v.projetId === projetId && attendDe(v, utilisateurId, delegations, jour)).length, alerte: true },
     taches: {
       n: actions.filter((a) => a.projetId === projetId && a.assigneId === utilisateurId && a.statut !== "Terminé").length,
       alerte: actions.some((a) => a.projetId === projetId && a.assigneId === utilisateurId && a.statut !== "Terminé" && !!a.echeance && a.echeance < jour),

@@ -1,3 +1,4 @@
+import { Commentaires } from "@/modules/collaboration/Commentaires";
 // Mandat de projet : rédaction selon le modèle du groupe, soumission, signatures, versions.
 import { Copy, Download, FilePlus2, Lock, PenLine, Plus, Printer, Save, Send, Trash2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
@@ -203,6 +204,7 @@ export function Mandat() {
           <div className="sm:col-span-2"><Case libelle="Un préavis du ComInv est nécessaire" disabled={!editable} checked={c.preavisComInv} onChange={(e) => maj({ preavisComInv: e.target.checked })} /></div>
           {texte("annexes", "Annexes", { lignes: 2 })}
         </>)}
+        <Commentaires cible={{ collection: "mandats", id: mandat.id }} projetId={projet.id} titre="Échanges sur le mandat" />
       </div>
 
       <aside className="space-y-4 pas-impression xl:sticky xl:top-0 xl:self-start">

@@ -1,3 +1,4 @@
+import { Commentaires } from "@/modules/collaboration/Commentaires";
 import { notifier } from "@/app/etatUI";
 import { useState } from "react";
 import { ListPlus, Plus, ShieldAlert, Sparkles, X } from "lucide-react";
@@ -217,9 +218,10 @@ export function Risques() {
 }
 
 function FormulaireRisque({ initial, onFermer, onEnregistrer, onCreerTache }: { initial: Risque; onFermer: () => void; onEnregistrer: (r: Risque) => void; onCreerTache: (r: Risque) => void }) {
-  const { personnes, lots, actions } = useDonnees();
+  const { personnes, lots, actions, risques } = useDonnees();
   const [r, setR] = useState(initial);
   const liees = actions.filter((a) => a.risqueId === r.id);
+  const existe = risques.some((x) => x.id === r.id);
   return (
     <Modale ouverte large onFermer={onFermer} titre={`Risque ${r.code}`}
       pied={<>
@@ -254,6 +256,7 @@ function FormulaireRisque({ initial, onFermer, onEnregistrer, onCreerTache }: { 
         <Champ libelle="Échéance de traitement"><Saisie type="date" value={r.echeance ?? ""} onChange={(e) => setR({ ...r, echeance: e.target.value || undefined })} /></Champ>
       </div>
       <AnalyseRisque r={r} onChange={setR} />
+      {existe && <div className="mt-6 border-t border-slate-100 pt-5 dark:border-slate-800"><Commentaires compact cible={{ collection: "risques", id: r.id }} projetId={r.projetId} /></div>}
       {liees.length > 0 && (
         <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-800">
           <p className="mb-1 font-medium">Tâches de traitement</p>

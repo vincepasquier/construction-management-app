@@ -147,7 +147,7 @@ export function aTraiter(depot: Depot, utilisateurId: ID | null | undefined, pro
   const dans = <T extends { projetId: ID }>(xs: T[]) => xs.filter((x) => projetIds.has(x.projetId));
   const actions = dans(depot.tous("actions")).filter((a) => a.assigneId === utilisateurId && a.statut !== "Terminé");
   return {
-    validations: dans(depot.tous("validations")).filter((v) => attendDe(v, utilisateurId)),
+    validations: dans(depot.tous("validations")).filter((v) => attendDe(v, utilisateurId, depot.tous("delegations"), jour)),
     actions: actions.sort((a, b) => (a.echeance ?? "9999").localeCompare(b.echeance ?? "9999")),
     actionsEnRetard: actions.filter((a) => a.echeance && a.echeance < jour).length,
     risques: dans(depot.tous("risques")).filter((r) => r.proprietaireId === utilisateurId && estActif(r)).sort((a, b) => score(b) - score(a)),

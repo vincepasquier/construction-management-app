@@ -125,7 +125,7 @@ export function Taches() {
 /** Tout ce qui est attribué à une personne : tâches, tâches du planning, validations en attente, risques */
 function ColonnePersonne({ personneId, carte, onAjouter, detaille }: { personneId: string; carte: (a: Action) => React.ReactNode; onAjouter: () => void; detaille?: boolean }) {
   const d = useProjet();
-  const { personnes } = useDonnees();
+  const { personnes, delegations } = useDonnees();
   const p = personnes.find((x) => x.id === personneId);
   const jour = aujourdhui();
   if (!p) return null;
@@ -133,7 +133,7 @@ function ColonnePersonne({ personneId, carte, onAjouter, detaille }: { personneI
   const ouvertes = mes.filter((a) => a.statut !== "Terminé").sort((a, b) => (a.echeance ?? "9").localeCompare(b.echeance ?? "9"));
   const retard = ouvertes.filter((a) => a.echeance && a.echeance < jour).length;
   const planning = d.taches.filter((t) => t.responsableId === personneId && !t.jalon && t.avancement < 100 && t.debut <= jour);
-  const validations = d.validations.filter((v) => attendDe(v, personneId));
+  const validations = d.validations.filter((v) => attendDe(v, personneId, delegations, aujourdhui()));
   const risques = d.risques.filter((r) => r.proprietaireId === personneId && estActif(r));
 
   return (

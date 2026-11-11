@@ -1,3 +1,4 @@
+import { Commentaires } from "@/modules/collaboration/Commentaires";
 // Fiche projet : l'état du projet en une page, lisible et imprimable, avec l'origine de chaque
 // donnée (système source, calcul, saisie).
 import { AlertTriangle, CalendarClock, GitBranch, Pencil, Plus, Printer, RefreshCw, ShieldAlert } from "lucide-react";
@@ -163,6 +164,7 @@ export function Synthese({ complements }: { complements?: ReactNode }) {
           )}
 
           <Notes />
+          <Commentaires cible={{ collection: "projets", id: projet.id }} projetId={projet.id} titre="Discussion sur le projet" />
         </div>
 
         <div className="space-y-6">

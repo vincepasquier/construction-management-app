@@ -4,8 +4,7 @@ import { clsx } from "clsx";
 import { AlertTriangle, Calculator, CheckCircle2, CloudDownload, Info, PencilLine, X } from "lucide-react";
 import {
   createContext, useContext, useEffect, useRef, useState,
-  type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes,
-} from "react";
+  type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes, type Ref } from "react";
 import { fermerAvis, ui } from "../etatUI";
 
 export { clsx as cx };
@@ -248,7 +247,7 @@ export function Saisie({ libre, ...p }: InputHTMLAttributes<HTMLInputElement> & 
   const lecture = useLectureSeule();
   return <input {...p} disabled={p.disabled || (lecture && !libre)} className={clsx(champ, "disabled:opacity-70", p.className)} />;
 }
-export function Zone({ libre, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement> & Libre) {
+export function Zone({ libre, ...p }: TextareaHTMLAttributes<HTMLTextAreaElement> & Libre & { ref?: Ref<HTMLTextAreaElement> }) {
   const lecture = useLectureSeule();
   return <textarea {...p} disabled={p.disabled || (lecture && !libre)} className={clsx(champ, "disabled:opacity-70", p.className)} />;
 }

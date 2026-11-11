@@ -4,13 +4,14 @@ import { useSearchParams } from "react-router-dom";
 import { LienProjet as Link } from "@/app/chemins";
 import { ArrowDown, ArrowUp, Check, CheckCircle2, Circle, Clock, ExternalLink, FileCheck2, History, Pencil, Plus, RotateCcw, Trash2, X, XCircle } from "lucide-react";
 import { useProjet, useDonnees, useUtilisateur } from "@/donnees/hooks";
-import { annuler, attendDe, decider, etapeCourante, nouvelleVersion } from "@/domaine/lib/validations";
+import { annuler, attendDe, circuitApplicable, decider, etapePour, etapesCourantes, nouvelleVersion } from "@/domaine/lib/validations";
 import { aujourdhui, ajouterJours, formatCHF, formatDate } from "@/domaine/lib/format";
 import { nouvelId } from "@/domaine/lib/id";
 import { Avatar, Badge, BadgeStatut, Bouton, Carte, Champ, cx, EnTetePage, Indicateur, Liste, Modale, Onglets, Saisie, Vide, Zone } from "@/app/ui";
-import type { CircuitValidation, DecisionValidation, Role, TypeObjetValidation, Facture, Personne } from "@/domaine/types";
+import type { CircuitValidation, DecisionValidation, TypeObjetValidation, Facture, Personne } from "@/domaine/types";
 
-const MODELES: { nom: string; type: TypeObjetValidation; roles: Role[] }[] = [
+interface ModeleLocal { nom: string; type: TypeObjetValidation; roles: string[]; mode?: "sequentiel" | "parallele"; seuilMin?: number }
+const MODELES_DEFAUT: ModeleLocal[] = [
   { nom: "Document technique (plans, notes de calcul)", type: "Document", roles: ["Ingénieur", "Directeur de projet"] },
   { nom: "Facture / situation", type: "Facture", roles: ["Conducteur de travaux", "Responsable de lot", "Directeur de projet"] },
   { nom: "Avenant", type: "Avenant", roles: ["Responsable de lot", "Directeur de projet", "Maître d'ouvrage"] },
@@ -22,7 +23,7 @@ type Vue = "moi" | "demandes" | "tous";
 
 export function Validations() {
   const d = useProjet();
-  const { personnes, modifier, ajouter, contrats, factures, utilisateurId } = useDonnees();
+  const { personnes, modifier, ajouter, contrats, factures, utilisateurId, delegations } = useDonnees();
   const [params, setParams] = useSearchParams();
   const [vue, setVue] = useState<Vue>("moi");
   const [nouveau, setNouveau] = useState<CircuitValidation | null>(null);
@@ -43,7 +44,7 @@ export function Validations() {
   const projetId = d.projet.id;
   const jour = aujourdhui();
 
-  const aMoi = d.validations.filter((v) => attendDe(v, utilisateurId));
+  const aMoi = d.validations.filter((v) => attendDe(v, utilisateurId, delegations, aujourdhui()));
   const mesDemandes = d.validations.filter((v) => v.demandeurId === utilisateurId);
   const liste = (vue === "moi" ? aMoi : vue === "demandes" ? mesDemandes : d.validations)
     .slice().sort((a, b) => Number(b.statut === "En cours") - Number(a.statut === "En cours") || (a.echeance ?? "9").localeCompare(b.echeance ?? "9"));
@@ -114,13 +115,15 @@ function brouillon(projetId: string, demandeurId: string, type: TypeObjetValidat
 }
 
 function CarteCircuit({ c, onChange }: { c: CircuitValidation; onChange: (c: CircuitValidation) => void }) {
-  const { personnes, documents, factures, contrats, utilisateurId } = useDonnees();
+  const { personnes, documents, factures, contrats, utilisateurId, delegations } = useDonnees();
   const [commentaire, setCommentaire] = useState("");
   const [historique, setHistorique] = useState(false);
   const [lienVersion, setLienVersion] = useState("");
   const nom = (id: string) => personnes.find((p) => p.id === id)?.nom ?? "?";
-  const courante = etapeCourante(c);
-  const aMoi = attendDe(c, utilisateurId);
+  const courantes = etapesCourantes(c).map((e) => e.id);
+  const monEtape = etapePour(c, utilisateurId, delegations, aujourdhui());
+  const aMoi = !!monEtape;
+  const remplace = monEtape && monEtape.personneId !== utilisateurId ? monEtape.personneId : undefined;
   const demandeur = c.demandeurId === utilisateurId;
   const jour = aujourdhui();
 
@@ -132,7 +135,7 @@ function CarteCircuit({ c, onChange }: { c: CircuitValidation; onChange: (c: Cir
 
   const decision = (dcs: DecisionValidation) => {
     if (dcs !== "Approuvé" && !commentaire.trim()) { notifier("Merci d'indiquer un commentaire pour motiver votre décision."); return; }
-    onChange(decider(c, utilisateurId!, dcs, jour, commentaire.trim() || undefined));
+    onChange(decider(c, utilisateurId!, dcs, jour, commentaire.trim() || undefined, delegations));
     setCommentaire("");
   };
 
@@ -144,6 +147,7 @@ function CarteCircuit({ c, onChange }: { c: CircuitValidation; onChange: (c: Cir
             <Badge couleur="violet">{c.objet.type}</Badge>
             <h3 className="font-semibold text-slate-900 dark:text-white">{c.titre}</h3>
             <span className="text-xs text-slate-400">v{c.version}</span>
+            {c.mode === "parallele" && <Badge titre="Tous les validateurs sont sollicités en même temps ; tous doivent approuver">Parallèle</Badge>}
           </div>
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
             <span>Demandé par {nom(c.demandeurId)} le {formatDate(c.dateCreation)}</span>
@@ -162,17 +166,17 @@ function CarteCircuit({ c, onChange }: { c: CircuitValidation; onChange: (c: Cir
           const icone = e.statut === "Approuvé" ? <CheckCircle2 size={16} className="text-emerald-600" />
             : e.statut === "Refusé" ? <XCircle size={16} className="text-rose-600" />
               : e.statut === "Modifications demandées" ? <RotateCcw size={16} className="text-amber-600" />
-                : courante?.id === e.id ? <Clock size={16} className="text-brand-600" /> : <Circle size={16} className="text-slate-300" />;
+                : courantes.includes(e.id) ? <Clock size={16} className="text-brand-600" /> : <Circle size={16} className="text-slate-300" />;
           return (
             <div key={e.id} className="flex items-center gap-2">
-              {i > 0 && <span className="h-px w-6 bg-slate-200 dark:bg-slate-700" />}
-              <div className={cx("flex items-center gap-2 rounded-lg px-2.5 py-1.5 ring-1", courante?.id === e.id ? "bg-brand-50 ring-brand-200 dark:bg-indigo-950 dark:ring-indigo-800" : "ring-slate-200 dark:ring-slate-700")}
+              {i > 0 && c.mode !== "parallele" && <span className="h-px w-6 bg-slate-200 dark:bg-slate-700" />}
+              <div className={cx("flex items-center gap-2 rounded-lg px-2.5 py-1.5 ring-1", courantes.includes(e.id) ? "bg-brand-50 ring-brand-200 dark:bg-indigo-950 dark:ring-indigo-800" : "ring-slate-200 dark:ring-slate-700")}
                 title={e.commentaire ? `« ${e.commentaire} »` : undefined}>
                 {icone}
                 <Avatar nom={nom(e.personneId)} taille={22} />
                 <div className="leading-tight">
                   <p className="text-xs font-medium">{nom(e.personneId)}</p>
-                  <p className="text-[11px] text-slate-500">{e.date ? `${e.statut} · ${formatDate(e.date)}` : courante?.id === e.id ? "À son tour" : "En attente"}</p>
+                  <p className="text-[11px] text-slate-500">{e.date ? `${e.statut} · ${formatDate(e.date)}${e.parDelegationDe ? " · par délégation" : ""}` : courantes.includes(e.id) ? (c.mode === "parallele" ? "Attendu" : "À son tour") : "En attente"}</p>
                 </div>
               </div>
             </div>
@@ -183,7 +187,7 @@ function CarteCircuit({ c, onChange }: { c: CircuitValidation; onChange: (c: Cir
       {/* Décision du validateur courant */}
       {aMoi && (
         <div className="border-t border-slate-100 bg-brand-50/40 px-5 py-4 dark:border-slate-800 dark:bg-indigo-950/20">
-          <p className="mb-2 text-sm font-medium">Votre décision</p>
+          <p className="mb-2 text-sm font-medium">Votre décision{remplace && <span className="ml-2 font-normal text-amber-700 dark:text-amber-300">par délégation de {nom(remplace)}</span>}</p>
           <Zone rows={2} value={commentaire} onChange={(e) => setCommentaire(e.target.value)} placeholder="Commentaire (obligatoire pour un refus ou une demande de modifications)" />
           <div className="mt-2 flex flex-wrap gap-2">
             <Bouton variante="primaire" icone={<Check size={15} />} onClick={() => decision("Approuvé")}>Approuver</Bouton>
@@ -234,8 +238,10 @@ function NouveauCircuit({ initial, onFermer, onCreer, factures, personnes }: {
   factures: Facture[]; personnes: Personne[];
 }) {
   const d = useProjet();
-  const { contrats, entreprises, lots } = useDonnees();
+  const { contrats, entreprises, lots, configurations } = useDonnees();
   const moi = useUtilisateur();
+  const circuits = configurations.find((x) => x.id === "courante")?.circuits ?? [];
+  const MODELES: ModeleLocal[] = circuits.length ? circuits.map((m) => ({ nom: m.nom, type: m.typeObjet as TypeObjetValidation, roles: m.roles, mode: m.mode, seuilMin: m.seuilMin })) : MODELES_DEFAUT;
   const [c, setC] = useState(initial);
   const [ajout, setAjout] = useState("");
 
@@ -270,12 +276,20 @@ function NouveauCircuit({ initial, onFermer, onCreer, factures, personnes }: {
     const respLot = lots.find((l) => l.id === ctr?.lotId)?.responsableId;
     const ids = m.roles.map((role) =>
       role === "Responsable de lot" && respLot ? respLot
-        : role === "Directeur de projet" && d.projet?.directeurId ? d.projet.directeurId
-          : personnes.find((p) => p.role === role)?.id,
+        : (role === "Directeur de projet" || role === "Chef de projet") && d.projet?.directeurId ? d.projet.directeurId
+          : (role === "Commanditaire" || role === "Sponsor") && d.projet?.sponsorId ? d.projet.sponsorId
+            : personnes.find((p) => p.role === role)?.id ?? personnes.find((p) => p.acces?.profil === role)?.id,
     ).filter((y): y is string => !!y && y !== x.demandeurId);
-    return { ...x, etapes: [...new Set(ids)].map((pid) => ({ id: nouvelId("et"), personneId: pid, statut: "En attente" as const })) };
+    return { ...x, mode: m.mode ?? "sequentiel", etapes: [...new Set(ids)].map((pid) => ({ id: nouvelId("et"), personneId: pid, statut: "En attente" as const })) };
   };
-  const choisirObjet = (valeur: string) => setC(avecObjet(c, valeur));
+  // Montant de l'objet à valider, pour appliquer le seuil de compétence
+  const montantDe = (x: CircuitValidation) => (x.objet.type === "Facture" ? factures.find((f) => f.id === x.objet.id)?.montantHT : x.objet.type === "Avenant" ? avenants.find((z) => z.a.id === x.objet.id)?.a.montant : undefined) ?? 0;
+  const choisirObjet = (valeur: string) => {
+    const x = avecObjet(c, valeur);
+    const modeles = MODELES.map((y, i) => ({ ...y, typeObjet: y.type, i }));
+    const m = circuitApplicable(modeles, x.objet.type, montantDe(x));
+    setC(m ? avecModele(x, m.i) : x);
+  };
   const appliquerModele = (i: number) => setC(avecModele(c, i));
 
   const deplacer = (i: number, sens: -1 | 1) => {
@@ -288,8 +302,9 @@ function NouveauCircuit({ initial, onFermer, onCreer, factures, personnes }: {
   useEffect(() => {
     let x = c;
     if (x.objet.id) x = avecObjet(x, x.objet.id);
-    const m = MODELES.findIndex((y) => y.type === x.objet.type);
-    if (m >= 0) x = avecModele(x, m);
+    const m = MODELES.indexOf(circuitApplicable(MODELES.map((y) => ({ ...y, typeObjet: y.type })), x.objet.type, montantDe(x)) as ModeleLocal ?? MODELES.find((y) => y.type === x.objet.type)!);
+    const parType = m >= 0 ? m : MODELES.findIndex((y) => y.type === x.objet.type);
+    if (parType >= 0) x = avecModele(x, parType);
     setC(x);
     // Une seule fois, à l'ouverture du panneau
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -336,7 +351,7 @@ function NouveauCircuit({ initial, onFermer, onCreer, factures, personnes }: {
           <Champ libelle="Partir d'un modèle">
             <Liste value="" onChange={(e) => e.target.value !== "" && appliquerModele(Number(e.target.value))}>
               <option value="">Choisir un modèle de circuit…</option>
-              {MODELES.map((m, i) => <option key={m.nom} value={i}>{m.nom} : {m.roles.join(" → ")}</option>)}
+              {MODELES.map((m, i) => <option key={m.nom} value={i}>{m.nom} : {m.roles.join(m.mode === "parallele" ? " + " : " → ")}</option>)}
             </Liste>
           </Champ>
           <ol className="space-y-2">
@@ -362,7 +377,13 @@ function NouveauCircuit({ initial, onFermer, onCreer, factures, personnes }: {
             </Liste>
             <Bouton icone={<Pencil size={14} />} disabled={!ajout} onClick={() => { setC({ ...c, etapes: [...c.etapes, { id: nouvelId("et"), personneId: ajout, statut: "En attente" }] }); setAjout(""); }}>Ajouter</Bouton>
           </div>
-          <p className="text-xs text-slate-500">Chaque validateur se prononce à son tour. Une demande de modifications renvoie le circuit au demandeur, qui soumet une nouvelle version.</p>
+          <Champ libelle="Déroulement">
+            <Liste value={c.mode ?? "sequentiel"} onChange={(e) => setC({ ...c, mode: e.target.value as "sequentiel" | "parallele" })}>
+              <option value="sequentiel">Séquentiel : chacun son tour, dans l'ordre</option>
+              <option value="parallele">Parallèle : tous en même temps, tous doivent approuver</option>
+            </Liste>
+          </Champ>
+          <p className="text-xs text-slate-500">Les modèles et leurs seuils de compétence se règlent dans l'administration. Une demande de modifications renvoie le circuit au demandeur, qui soumet une nouvelle version.</p>
         </div>
       </div>
     </Modale>
