@@ -2,6 +2,7 @@
 // serveur) et sert l'application compilée (production ou version prête à lancer).
 import express from "express";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import Anthropic from "@anthropic-ai/sdk";
@@ -16,6 +17,10 @@ try {
 // Modèle par défaut ; PRISM_MODELE permet d'en changer sans toucher au code (ex. claude-fable-5-2)
 const MODELE = process.env.PRISM_MODELE?.trim() || "claude-opus-5-5";
 const PORT = Number(process.env.PORT ?? 8787);
+// PRISM_RESEAU=1 : l'application est aussi servie aux appareils du même réseau (téléphone sur le
+// chantier). Le relais de l'assistant, qui détient la clé API, reste réservé à ce poste.
+const RESEAU = /^(1|oui|true)$/i.test(process.env.PRISM_RESEAU?.trim() ?? "");
+const estLocale = (adresse?: string) => !adresse || adresse === "::1" || adresse.startsWith("127.") || adresse === "::ffff:127.0.0.1";
 
 const SYSTEME = `Tu es l'assistant IA intégré à PRISM, la plateforme de pilotage des projets d'un groupe de Suisse romande : projets de construction et d'infrastructure, mais aussi projets numériques, d'investissement et d'organisation. Tu aides les responsables de projet, les responsables de lot, le PMO et le contrôle de gestion.
 
@@ -24,6 +29,7 @@ Ton domaine :
 - Appels d'offres : descriptifs selon le CAN (Catalogue des articles normalisés, CRB), comparaison des soumissions, évaluation multicritère, marchés publics (AIMP/LMP, procédures ouverte, sélective, sur invitation, gré à gré).
 - Contrats d'entreprise selon la norme SIA 118, mandats SIA 102/103/108, avenants, retenue de garantie, décomptes et situations.
 - Planning, chemin critique, retards, ressources.
+- Suivi de chantier : journal, constats, réserves et réceptions (garanties selon la SIA 118), bons de régie, métrés.
 - Rédaction : courriers aux entreprises, lettres d'adjudication ou de non-adjudication, ordres du jour et PV de séance, rapports au maître d'ouvrage.
 
 Règles :
@@ -38,6 +44,12 @@ const app = express();
 app.use(express.json({ limit: "30mb" }));
 
 const client = new Anthropic();
+
+// Hors de ce poste, seul l'état du serveur se consulte : aucune requête ne part vers le modèle
+app.use("/api", (req, res, suite) => {
+  if (estLocale(req.socket.remoteAddress) || req.path === "/sante") { suite(); return; }
+  res.status(403).json({ erreur: "L'assistant n'est disponible que sur le poste qui héberge PRISM." });
+});
 
 app.get("/api/sante", (_req, res) => {
   res.json({ ok: true, modele: MODELE, cleConfiguree: Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN) });
@@ -173,7 +185,12 @@ if (dossierWeb && (process.env.NODE_ENV === "production" || dossierWeb.endsWith(
   app.get(/^(?!\/api).*/, (_req, res) => res.sendFile(path.join(dossierWeb, "index.html")));
 }
 
-// Le relais détient la clé API : il n'écoute que sur ce poste, jamais sur le réseau
-app.listen(PORT, "127.0.0.1", () => {
+// Par défaut le serveur n'écoute que sur ce poste. Avec PRISM_RESEAU=1 il écoute aussi sur le réseau
+// local, et le filtre ci-dessus garde le relais de l'assistant pour ce poste.
+app.listen(PORT, RESEAU ? "0.0.0.0" : "127.0.0.1", () => {
   console.log(dossierWeb ? `PRISM est prêt : ouvrez http://localhost:${PORT}` : `API PRISM sur http://localhost:${PORT}`);
+  if (!RESEAU || !dossierWeb) return;
+  const adresses = Object.values(os.networkInterfaces()).flat().filter((a) => a && a.family === "IPv4" && !a.internal).map((a) => `http://${a!.address}:${PORT}`);
+  console.log(adresses.length ? `Depuis un téléphone du même réseau : ${adresses.join(" ou ")}` : "Aucune adresse de réseau local trouvée.");
+  console.log("Chaque appareil garde ses propres données : elles ne sont pas partagées avec ce poste.");
 });

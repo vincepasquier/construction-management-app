@@ -4,7 +4,7 @@ import { integre } from "../../domaine/socle/mandat";
 import { bilanCapacite } from "../../domaine/socle/planification";
 import { Depot } from "../depot";
 import { conditionsOuvertes } from "../gouvernance";
-import { chargerDemo } from "../initialisation";
+import { chargerDemo } from "./charger";
 import { lignesPilotage } from "../pilotage";
 import { REGLES, autoriser } from "../regles";
 import { StockageMemoire } from "../stockage";

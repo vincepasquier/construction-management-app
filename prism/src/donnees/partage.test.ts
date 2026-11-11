@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { projetVisible } from "../domaine/socle/droits";
 import { Depot } from "./depot";
-import { chargerDemo } from "./initialisation";
+import { chargerDemo } from "./demo/charger";
 import { brancherNotifications } from "./notifications";
 import { deciderPartage, demanderAcces, demandesADecider } from "./partage";
 import { REGLES, autoriser } from "./regles";

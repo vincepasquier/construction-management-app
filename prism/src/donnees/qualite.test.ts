@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { surcharger } from "./connecteurs/synchro";
 import { Depot } from "./depot";
-import { chargerDemo } from "./initialisation";
+import { chargerDemo } from "./demo/charger";
 import { bilan, controler } from "./qualite";
 import { StockageMemoire } from "./stockage";
 

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { Depot } from "./depot";
-import { chargerDemo } from "./initialisation";
+import { chargerDemo } from "./demo/charger";
 import { chercher, construireIndex } from "./recherche";
 import { StockageMemoire } from "./stockage";
 

@@ -2,8 +2,8 @@
 // partie ou laisse à l'infrastructure du groupe — exigence par exigence, sans arrondir.
 import { Download } from "lucide-react";
 import { TableDonnees, type Colonne } from "@/app/table/TableDonnees";
-import { Badge, Bouton, Carte, Indicateur, type CouleurBadge } from "@/app/ui";
-import { bilanExigences, ETATS, EXIGENCES, familleDe, FAMILLES, type EtatExigence, type Exigence } from "@/domaine/socle/exigences";
+import { Badge, Bouton, Carte, Indicateur, Tableau, type CouleurBadge } from "@/app/ui";
+import { bilanExigences, ETATS, EXIGENCES, familleDe, FAMILLES, VERTICALE_CONSTRUCTION, type EtatExigence, type Exigence } from "@/domaine/socle/exigences";
 import { telechargerXlsx } from "@/outils/telechargement";
 import { NOTES_DE_VERSION } from "./versions";
 
@@ -24,6 +24,9 @@ export function Couverture() {
   const exporter = () => telechargerXlsx("PRISM-couverture-des-exigences", [{
     nom: "Couverture", largeurs: [9, 30, 60, 22, 70],
     lignes: [["Code", "Famille", "Exigence (intitulé reformulé)", "État", "Où, ou pourquoi"], ...EXIGENCES.map((e) => [e.code, FAMILLES[familleDe(e.code)], e.titre, e.etat, e.remarque])],
+  }, {
+    nom: "Verticale construction", largeurs: [70, 22, 90],
+    lignes: [["Fonction", "État", "Où, ou pourquoi"], ...VERTICALE_CONSTRUCTION.map((v) => [v.fonction, v.etat, v.remarque])],
   }]);
 
   return (
@@ -34,6 +37,12 @@ export function Couverture() {
       <Carte>
         <TableDonnees id="couverture" lignes={EXIGENCES} colonnes={colonnes} cle={(e) => e.code} grouperPar="famille"
           barre={<Bouton libre icone={<Download size={15} />} onClick={exporter}>Exporter pour le PMO</Bouton>} />
+      </Carte>
+      <Carte titre="Verticale construction" sousTitre="Fonctions propres aux projets de construction, en dehors du cahier des charges du groupe">
+        <Tableau>
+          <thead><tr><th>Fonction</th><th>État</th><th>Où, ou pourquoi</th></tr></thead>
+          <tbody>{VERTICALE_CONSTRUCTION.map((v) => <tr key={v.fonction}><td className="font-medium">{v.fonction}</td><td><Badge couleur={COULEUR[v.etat]}>{v.etat}</Badge></td><td className="text-slate-600 dark:text-slate-300">{v.remarque}</td></tr>)}</tbody>
+        </Tableau>
       </Carte>
       <Carte titre="Notes de version">
         <ul className="divide-y divide-slate-100 dark:divide-slate-800">

@@ -123,7 +123,7 @@ export function Assistant() {
               <div className="prose-ia text-sm text-slate-700 dark:text-slate-300">
                 {m.content ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown> : null}
                 {m.content && !enCours && (
-                  <button type="button" onClick={() => navigator.clipboard.writeText(m.content)} className="mt-1 inline-flex items-center gap-1 text-xs text-slate-400 opacity-0 transition group-hover:opacity-100 hover:text-slate-600">
+                  <button type="button" onClick={() => void navigator.clipboard?.writeText(m.content)} className="mt-1 inline-flex items-center gap-1 text-xs text-slate-400 opacity-0 transition group-hover:opacity-100 hover:text-slate-600">
                     <Copy size={12} /> Copier
                   </button>
                 )}

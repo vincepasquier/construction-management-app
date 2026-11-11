@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { criticite, definirSeuilsCriticite } from "../domaine/lib/risques";
 import { controlerConfiguration, courante, mesurerImpact, publier, retablir, versions } from "./configuration";
 import { Depot } from "./depot";
-import { chargerDemo } from "./initialisation";
+import { chargerDemo } from "./demo/charger";
 import { REGLES, autoriser } from "./regles";
 import { StockageMemoire } from "./stockage";
 

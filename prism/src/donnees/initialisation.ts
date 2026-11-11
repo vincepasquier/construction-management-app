@@ -1,12 +1,7 @@
 // Mise en place de la base : référentiels indispensables, puis l'un des trois départs possibles —
-// démonstration, reprise de Chantier+ ou base vide.
-import { aujourdhui } from "../domaine/lib/format";
+// reprise de Chantier+ ou base vide. Le jeu de démonstration, plus lourd, est dans demo/charger.ts
+// et n'est téléchargé par le navigateur que si on le demande.
 import type { Personne, Projet } from "../domaine/types";
-import { installerChantierDemo } from "./demo/chantier";
-import { installerGouvernanceDemo } from "./demo/gouvernance";
-import { dataPlatformSimulee } from "./connecteurs/dataPlatformSimulee";
-import { importerProjet, synchroniser } from "./connecteurs/synchro";
-import { COMPLEMENTS_SOURCE, docsDemo, NUMEROS_DEMO, UTILISATEUR_DEMO } from "./demo";
 import { CONFIGURATION, DIRECTIONS, PORTEFEUILLES, PROGRAMMES, TYPES_PROJET } from "./demo/referentiels";
 import type { Depot, Operation } from "./depot";
 import { convertirChantierPlus, promouvoirAdministrateur, type DocsParCollection, type DonneesChantierPlus } from "./reprise";
@@ -26,7 +21,7 @@ export function installerReferentiels(depot: Depot, avecExemples = true): void {
   if (ops.length) depot.executer({ libelle: "Installation des référentiels", origine: "systeme", operations: ops, sansDetail: true });
 }
 
-function importer(depot: Depot, docs: DocsParCollection, libelle: string): void {
+export function importer(depot: Depot, docs: DocsParCollection, libelle: string): void {
   const operations: Operation[] = [];
   for (const c of COLLECTIONS) {
     for (const doc of docs[c] ?? []) {
@@ -36,28 +31,6 @@ function importer(depot: Depot, docs: DocsParCollection, libelle: string): void 
     }
   }
   if (operations.length) depot.executer({ libelle, origine: "import", operations, sansDetail: true });
-}
-
-/**
- * Charge le jeu de démonstration (fictif) et le synchronise avec la source simulée. Avec
- * `gouvernance`, les projets reçoivent aussi mandats, périodes, rapports, séances et décisions.
- */
-export async function chargerDemo(depot: Depot, o: { gouvernance?: boolean; chantier?: boolean; jour?: string } = {}): Promise<void> {
-  installerReferentiels(depot);
-  importer(depot, docsDemo(), "Chargement des données de démonstration");
-  const horodatage = new Date().toISOString();
-  for (const numero of NUMEROS_DEMO) await importerProjet(depot, dataPlatformSimulee, numero, horodatage);
-  const complements: Operation[] = [];
-  for (const p of depot.tous("projets")) {
-    const c = p.numeroSource ? COMPLEMENTS_SOURCE[p.numeroSource] : undefined;
-    if (c) complements.push({ op: "modifier", collection: "projets", id: p.id, patch: c as Record<string, unknown> });
-  }
-  depot.executer({ libelle: "Compléments de démonstration", origine: "systeme", operations: complements, sansDetail: true });
-  await synchroniser(depot, dataPlatformSimulee, { horodatage });
-  session.ecrire({ utilisateurId: UTILISATEUR_DEMO, dernierProjetId: null });
-  depot.acteurId = UTILISATEUR_DEMO;
-  if (o.gouvernance) installerGouvernanceDemo(depot, o.jour ?? aujourdhui());
-  if (o.chantier) await installerChantierDemo(depot, o.jour ?? aujourdhui());
 }
 
 export interface RapportReprise {

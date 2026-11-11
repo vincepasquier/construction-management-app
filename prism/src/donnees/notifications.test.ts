@@ -3,7 +3,7 @@ import { nouvelId } from "../domaine/lib/id";
 import { creerCommentaire, extraireMentions, modifierCommentaire } from "../domaine/socle/collaboration";
 import { contenuInitial, creerMandat, soumettre } from "../domaine/socle/mandat";
 import { Depot } from "./depot";
-import { chargerDemo } from "./initialisation";
+import { chargerDemo } from "./demo/charger";
 import { brancherNotifications, clePreferences, rappelsDuJour } from "./notifications";
 import { REGLES, autoriser } from "./regles";
 import { StockageMemoire } from "./stockage";

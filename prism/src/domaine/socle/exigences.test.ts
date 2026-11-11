@@ -19,3 +19,14 @@ describe("couverture du cahier des charges", () => {
     expect(b["Réalisé"] + b.Partiel + b["Simulé"] + b["Hors preuve de concept"]).toBe(b.total);
   });
 });
+
+describe("verticale construction", () => {
+  it("donne un état et une explication à chaque fonction, sans tout déclarer réalisé", async () => {
+    const { VERTICALE_CONSTRUCTION, EXIGENCES } = await import("./exigences");
+    expect(VERTICALE_CONSTRUCTION.length).toBeGreaterThanOrEqual(15);
+    expect(VERTICALE_CONSTRUCTION.every((v) => v.fonction && v.remarque)).toBe(true);
+    expect(VERTICALE_CONSTRUCTION.some((v) => v.etat !== "Réalisé")).toBe(true);
+    // Aucune exigence du groupe ne reste sans explication
+    expect(EXIGENCES.filter((e) => e.etat !== "Réalisé" && !e.remarque)).toEqual([]);
+  });
+});

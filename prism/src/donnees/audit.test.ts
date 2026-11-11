@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { journalVisible, lignesAudit } from "./audit";
 import { Depot } from "./depot";
-import { chargerDemo } from "./initialisation";
+import { chargerDemo } from "./demo/charger";
 import { filtrerJournal } from "./journal";
 import { REGLES, autoriser } from "./regles";
 import { StockageMemoire } from "./stockage";

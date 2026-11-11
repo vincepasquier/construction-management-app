@@ -203,7 +203,7 @@ const LIGNES: Ligne[] = [
   ["ERG-01", "État d'un projet en une page", R, "Synthèse du projet"],
   ["ERG-02", "Écrans adaptés au rôle", R, "Navigation et vues selon le profil et le type de projet"],
   ["ERG-03", "Saisie rapide, copier-coller, modifications de masse", P, "Saisie en ligne et collage depuis Excel ; pas de modification de masse"],
-  ["ERG-04", "Interface utilisable sur ordinateur, tablette et téléphone", P, "Écrans de chantier pensés pour le téléphone ; le reste est conçu pour l'ordinateur"],
+  ["ERG-04", "Interface utilisable sur ordinateur, tablette et téléphone", P, "Toute l'application s'affiche au téléphone ; le suivi de chantier y est pensé pour la saisie sur place ; les grands tableaux restent faits pour l'ordinateur"],
   ["ERG-05", "Accessibilité (WCAG 2.1 AA)", P, "Clavier, libellés, contrastes ; non audité"],
   ["ERG-06", "Exports PDF, Word et Excel soignés", R, "Mandat, rapports, procès-verbaux, tableaux"],
   ["ERG-07", "Aide contextuelle et exemples", P, "Aides sous les champs et écrans vides explicatifs"],
@@ -220,7 +220,31 @@ const LIGNES: Ligne[] = [
   ["AUD-08", "Correction à la source plutôt que dans PRISM", R, "Corrections locales signalées « à corriger dans le système source »"],
 ];
 
-export const EXIGENCES: Exigence[] = LIGNES.map(([code, titre, etat, remarque]) => ({ code, titre, etat, remarque }));
+const SANS_REMARQUE = "Demande l'infrastructure du groupe (hébergement, exploitation, chaîne de livraison)";
+export const EXIGENCES: Exigence[] = LIGNES.map(([code, titre, etat, remarque]) => ({ code, titre, etat, remarque: remarque || (etat === H ? SANS_REMARQUE : "") }));
+
+/**
+ * Fonctions de la verticale construction (périmètre de Chantier+), hors du cahier des charges du
+ * groupe : même vocabulaire d'états, pour que la couverture se lise d'un seul tenant.
+ */
+export const VERTICALE_CONSTRUCTION: { fonction: string; etat: EtatExigence; remarque: string }[] = [
+  { fonction: "Finances par position : budget, mutations, engagements, factures, prévisions", etat: R, remarque: "Finances du projet ; calcul identique à celui de Chantier+, vérifié par un test de parité" },
+  { fonction: "Clôtures mensuelles et rapport mensuel", etat: R, remarque: "Finances → Clôtures ; la clôture est une photo figée" },
+  { fonction: "Reprise du classeur de suivi financier et des exports de factures", etat: R, remarque: "Par fichier, avec contrôle des totaux avant import" },
+  { fonction: "Appels d'offres : descriptif, fichiers CRBX (SIA 451), comparatif, évaluation", etat: R, remarque: "Appels d'offres ; les soumissions restent établies dans le logiciel de devis" },
+  { fonction: "Contrats, avenants, factures, retenues de garantie", etat: R, remarque: "Contrats et factures" },
+  { fonction: "Planning, phases SIA, lots", etat: R, remarque: "Planification" },
+  { fonction: "Autorisations, servitudes et emprises", etat: R, remarque: "Autorisations et foncier" },
+  { fonction: "Journal de chantier", etat: R, remarque: "Suivi de chantier → Journal ; verrouillage après une semaine" },
+  { fonction: "Séances de chantier et procès-verbaux", etat: R, remarque: "Suivi de chantier → Séances et PV ; points repris de séance en séance, export Word" },
+  { fonction: "Constats avec photographies", etat: R, remarque: "Suivi de chantier → Constats ; suites en réserve, tâche ou risque" },
+  { fonction: "Réserves, réceptions et garanties", etat: R, remarque: "Suivi de chantier → Réserves et réceptions ; délais SIA 118 proposés" },
+  { fonction: "Bons de régie", etat: R, remarque: "Suivi de chantier → Régies ; validation contradictoire" },
+  { fonction: "Métrés contradictoires et situation mensuelle", etat: R, remarque: "Suivi de chantier → Métrés ; positions et prix de l'offre retenue" },
+  { fonction: "Saisie sur place, au téléphone", etat: P, remarque: "Constat, réserve et journal en quelques gestes, avec l'appareil photo ; pas de saisie hors réseau, et les données restent sur l'appareil qui les a saisies" },
+  { fonction: "Photographies", etat: P, remarque: "Réduites et rangées dans le navigateur, comprises dans la sauvegarde ; pas de stockage partagé ni d'insertion dans les documents Word" },
+  { fonction: "Repérage sur plan et signature sur l'écran", etat: H, remarque: "Non traité : localisation en texte, documents Word à signer" },
+];
 export const ETATS: EtatExigence[] = [R, P, S, H];
 export const familleDe = (code: string) => code.split("-")[0];
 

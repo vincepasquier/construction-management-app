@@ -4,7 +4,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import type { Personne } from "@/domaine/types";
 import { Depot } from "@/donnees/depot";
 import { FournisseurDepot, useDonnees, useProjet } from "@/donnees/hooks";
-import { chargerDemo } from "@/donnees/initialisation";
+import { chargerDemo } from "@/donnees/demo/charger";
 import { StockageMemoire } from "@/donnees/stockage";
 import { contexteAssistant } from "./contexte";
 

@@ -9,15 +9,25 @@ Aucune installation requise : seul node.exe est necessaire (Node.js 18 ou plus r
 2. Le navigateur s'ouvre sur http://localhost:8787
 3. Laissez la fenetre noire ouverte pendant l'utilisation.
 
-Reprise de Chantier+
-- Au premier lancement, PRISM detecte les donnees de Chantier+ presentes dans ce
-  navigateur et propose de les reprendre. Rien n'est efface dans Chantier+.
+Premier lancement
+- "Charger la demonstration" installe un portefeuille fictif, dont un projet de
+  route avec deux semaines de suivi de chantier.
+- "Reprendre Chantier+" apparait si ce navigateur contient les donnees de
+  Chantier+. Elles sont copiees ; rien n'est efface dans Chantier+.
 - Ne lancez pas Chantier+ et PRISM en meme temps : ils utilisent la meme adresse.
 
 Assistant IA (facultatif)
 - Ouvrez le fichier .env (cree au premier lancement) avec le Bloc-notes
 - Renseignez : ANTHROPIC_API_KEY=votre-cle
 - Fermez et relancez LANCER.bat
+
+Sur un telephone (suivi de chantier)
+- Dans le fichier .env, mettez : PRISM_RESEAU=1 puis relancez LANCER.bat
+- La fenetre noire affiche l'adresse a ouvrir sur le telephone, par exemple
+  http://192.168.1.20:8787 (telephone et PC sur le meme reseau ; le pare-feu
+  du PC doit autoriser Node.js).
+- Le telephone garde ses propres donnees : elles ne sont pas partagees avec
+  le PC. L'assistant IA reste reserve au PC.
 
 Les donnees sont enregistrees dans votre navigateur.
 Pensez a telecharger une sauvegarde : Administration > Sauvegarde.

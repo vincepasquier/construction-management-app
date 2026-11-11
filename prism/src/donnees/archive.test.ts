@@ -2,7 +2,7 @@ import "fake-indexeddb/auto";
 import { beforeEach, describe, expect, it } from "vitest";
 import { archiverProjet, chercherDansArchive, construireArchive, controlerArchive, desarchiver, eliminerArchive, finConservation, FORMAT_ARCHIVE, ouvrirArchive } from "./archive";
 import { Depot, ErreurDepot } from "./depot";
-import { chargerDemo } from "./initialisation";
+import { chargerDemo } from "./demo/charger";
 import { REGLES, autoriser } from "./regles";
 import { StockageMemoire } from "./stockage";
 

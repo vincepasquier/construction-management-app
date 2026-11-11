@@ -7,7 +7,7 @@ import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { ProjetCourant } from "../../app/ProjetCourant";
 import { Depot } from "../../donnees/depot";
 import { FournisseurDepot } from "../../donnees/hooks";
-import { chargerDemo } from "../../donnees/initialisation";
+import { chargerDemo } from "@/donnees/demo/charger";
 import { REGLES, autoriser } from "../../donnees/regles";
 import { session } from "../../donnees/session";
 import { StockageMemoire } from "../../donnees/stockage";

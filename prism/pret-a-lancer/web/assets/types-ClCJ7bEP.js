@@ -1,0 +1,1 @@
+var e=[`Définition des objectifs`,`Études préliminaires`,`Étude du projet`,`Appel d'offres`,`Réalisation`,`Clôture`],t=[`Public`,`Interne`,`Confidentiel`,`Strictement confidentiel`];export{e as n,t};

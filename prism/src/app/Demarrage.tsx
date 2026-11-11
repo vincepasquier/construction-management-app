@@ -2,7 +2,7 @@
 import { ArrowRight, DatabaseZap, FolderInput, Sparkles } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import { useDepot } from "../donnees/hooks";
-import { chargerDemo, demarrerVide, reprendreChantierPlus } from "../donnees/initialisation";
+import { demarrerVide, reprendreChantierPlus } from "../donnees/initialisation";
 import { detecterChantierPlus } from "../donnees/reprise";
 import { lireChantierPlus } from "../donnees/reprise";
 import { lireSauvegarde, restaurerSauvegarde } from "../donnees/sauvegarde";
@@ -49,7 +49,7 @@ export function Demarrage() {
           <Bouton variante="primaire" disabled={!!enCours} icone={<ArrowRight size={15} />} onClick={() => lancer("Reprise…", () => { reprendreChantierPlus(depot, ancien); })}>Reprendre mes données</Bouton>)}
         {choix(<Sparkles size={20} />, "Découvrir avec la démonstration",
           "Un portefeuille fictif : deux projets de construction complets et des projets numériques, d'investissement et d'organisation venus de la source simulée.",
-          <Bouton variante={ancien ? "secondaire" : "primaire"} disabled={!!enCours} onClick={() => lancer("Chargement…", () => chargerDemo(depot, { gouvernance: true, chantier: true }))}>Charger la démonstration</Bouton>)}
+          <Bouton variante={ancien ? "secondaire" : "primaire"} disabled={!!enCours} onClick={() => lancer("Chargement…", async () => { const { chargerDemo } = await import("../donnees/demo/charger"); await chargerDemo(depot, { gouvernance: true, chantier: true }); })}>Charger la démonstration</Bouton>)}
         {choix(<DatabaseZap size={20} />, "Commencer à vide",
           <><span>Seuls les référentiels sont installés. Vous serez l'administrateur.</span><Saisie libre className="mt-3" placeholder="Votre nom" value={nom} onChange={(e) => setNom(e.target.value)} /></>,
           <Bouton disabled={!!enCours || nom.trim().length < 2} onClick={() => lancer("Création…", () => { demarrerVide(depot, nom); })}>Créer la base</Bouton>)}

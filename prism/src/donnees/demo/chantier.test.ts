@@ -3,7 +3,7 @@ import { bilanJournal, bilanRegies, bilanReserves, echeancesGarantie, joursSansE
 import { ajouterJours } from "../../domaine/lib/format";
 import { serie } from "../../domaine/socle/seances";
 import { Depot } from "../depot";
-import { chargerDemo } from "../initialisation";
+import { chargerDemo } from "./charger";
 import { espacePhotos } from "../photos";
 import { REGLES, autoriser } from "../regles";
 import { StockageMemoire } from "../stockage";

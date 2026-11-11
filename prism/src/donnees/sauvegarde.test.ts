@@ -2,7 +2,7 @@ import { lireChantierPlus } from "./reprise";
 import { describe, expect, it } from "vitest";
 import { donneesDemo } from "../domaine/data/demo";
 import { Depot } from "./depot";
-import { chargerDemo } from "./initialisation";
+import { chargerDemo } from "./demo/charger";
 import { creerSauvegarde, lireSauvegarde, restaurerSauvegarde } from "./sauvegarde";
 import { strToU8 } from "fflate";
 import { StockageMemoire } from "./stockage";
