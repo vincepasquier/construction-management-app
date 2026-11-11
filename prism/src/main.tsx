@@ -6,6 +6,7 @@ import { notifier } from "./app/etatUI";
 import { Avis } from "./app/ui";
 import { Depot } from "./donnees/depot";
 import { brancherErreurs, FournisseurDepot, useDepot, useDonnees } from "./donnees/hooks";
+import { definirSeuilsCriticite } from "./domaine/lib/risques";
 import { brancherNotifications, rappelsDuJour } from "./donnees/notifications";
 import { brancherJournalExports } from "./outils/telechargement";
 import { installerReferentiels } from "./donnees/initialisation";
@@ -50,6 +51,8 @@ function Amorce() {
       // Une base déjà remplie reçoit les référentiels ajoutés par les versions suivantes
       if (!depot.estVide()) installerReferentiels(depot, false);
       // Les notifications naissent des écritures : le moteur écoute le journal dès l'ouverture
+      // La matrice des risques de la configuration publiée s'applique à toute l'application
+      definirSeuilsCriticite(depot.parId("configurations", "courante")?.matriceRisques);
       brancherNotifications(depot);
       // Chaque export (Excel, Word, sauvegarde) laisse une trace au journal
       brancherJournalExports((nom) => { if (!depot.estVide()) depot.consigner(`Export : ${nom}`); });

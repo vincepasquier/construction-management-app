@@ -1,3 +1,4 @@
+import { DemandesADecider } from "@/modules/acces/DemandesAcces";
 // Mon travail : ce que l'utilisateur doit traiter, tous projets confondus, et ses projets.
 import { CheckCircle2, FileCheck2, LifeBuoy, ListChecks, ShieldAlert } from "lucide-react";
 import type { ReactNode } from "react";
@@ -50,6 +51,7 @@ export function MonTravail() {
         </div>
       )}
 
+      <DemandesADecider />
       <div className="grid gap-6 lg:grid-cols-3">
         <Bloc titre="À valider" icone={<FileCheck2 size={15} />} compte={t.validations.length} vide="Aucune validation ne vous attend.">
           {t.validations.slice(0, 8).map((v) => (

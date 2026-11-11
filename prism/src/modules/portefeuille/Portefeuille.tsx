@@ -1,3 +1,4 @@
+import { DemandeAcces } from "@/modules/acces/DemandesAcces";
 // Portefeuille : tous les projets du périmètre de l'utilisateur, en liste ou en tuiles, avec filtres,
 // regroupements, vues enregistrées et export.
 import { AlertTriangle, CalendarClock, FolderKanban, LayoutGrid, List, Plus, Printer, ShieldAlert, TrendingUp, Wallet } from "lucide-react";
@@ -23,11 +24,14 @@ export function Portefeuille() {
   const { projets, personnes, directions, portefeuilles, programmes, typesProjet } = useDonnees();
   const [affichage, setAffichage] = useState<Affichage>("liste");
   const [ajout, setAjout] = useState(false);
+  const [demande, setDemande] = useState(false);
   const [detail, setDetail] = useState(false);
   const [filtres, setFiltres] = useState({ direction: "", portefeuille: "", type: "", statut: "" });
   const jour = aujourdhui();
 
   const visibles = useMemo(() => projetsAccessibles(utilisateur, projets.filter((p) => !p.archive)), [utilisateur, projets]);
+  // Projets non confidentiels que l'utilisateur ne voit pas : il peut en demander l'accès
+  const horsPerimetre = projets.filter((p) => !p.archive && (!p.confidentialite || p.confidentialite === "Public" || p.confidentialite === "Interne")).length - visibles.filter((p) => !p.confidentialite || p.confidentialite === "Public" || p.confidentialite === "Interne").length;
   // Par défaut, un projet et ses sous-projets forment une seule ligne consolidée ; « Détailler » les
   // remplace par leurs sous-projets : dans les deux cas, aucun montant n'est compté deux fois.
   const lignes = useMemo(() => {
@@ -84,9 +88,11 @@ export function Portefeuille() {
       <EnTetePage titre="Portefeuille" description={`${lignes.length} projet${lignes.length > 1 ? "s" : ""} dans votre périmètre au ${formatDate(jour)}`}
         actions={<>
           <Bouton libre icone={<Printer size={15} />} onClick={() => window.print()}>Imprimer / PDF</Bouton>
+          {horsPerimetre > 0 && <Bouton libre variante="fantome" onClick={() => setDemande(true)} title="Demander l'accès à un projet qui n'est pas dans votre périmètre">Un projet manque ?</Bouton>}
           {droit.ecrire && <Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => setAjout(true)}>Ajouter un projet</Bouton>}
         </>} />
       {ajout && <AjoutProjet onFermer={() => setAjout(false)} />}
+      {demande && <DemandeAcces onFermer={() => setDemande(false)} />}
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Indicateur libelle="Projets" valeur={lignes.length} icone={<FolderKanban size={16} />} detail={`${indicateurs.filter((i) => i.sousProjets).length} avec sous-projets`} />

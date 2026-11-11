@@ -1,3 +1,4 @@
+import { DemandesADecider } from "./DemandesAcces";
 import { useState } from "react";
 import { ChevronDown, Info, KeyRound, RotateCcw, X } from "lucide-react";
 import { useDonnees } from "@/donnees/hooks";
@@ -34,6 +35,7 @@ export function Acces() {
         </p>
       </div>
 
+      <DemandesADecider />
       <Carte>
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
           {[...personnes].sort((x, y) => x.nom.localeCompare(y.nom, "fr")).map((p) => {

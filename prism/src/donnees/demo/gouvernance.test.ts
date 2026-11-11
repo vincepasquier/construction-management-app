@@ -56,3 +56,16 @@ describe("démonstration avec gouvernance", () => {
     expect(bilan.every((l) => l.capacite > 0)).toBe(true);
   });
 });
+
+describe("ordre du jour du comité", () => {
+  it("propose les projets dont le mandat demande un préavis et qui n'ont pas encore de décision", async () => {
+    const { candidatsComInv } = await import("../seances");
+    const candidats = candidatsComInv(depot, depot.tous("projets"));
+    const codes = candidats.map((c) => c.projet.numeroSource ?? c.projet.code);
+    // La centrale de chauffe a déjà sa décision ; le poste de transformation et le collecteur attendent
+    expect(codes).toContain("ENR-2025-0098");
+    expect(codes).toContain("INF-2026-0240");
+    expect(codes).not.toContain("INF-2026-0312");
+    expect(candidats[0].montant).toBeGreaterThan(0);
+  });
+});

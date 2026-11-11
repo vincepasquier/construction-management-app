@@ -9,7 +9,7 @@ import { TableDonnees, type Colonne } from "@/app/table/TableDonnees";
 import { Alerte, Badge, Bouton, Carte, EnTetePage, Indicateur, Liste, Onglets, Progression, Tableau, useLectureSeule } from "@/app/ui";
 import { BadgeSante, Montant } from "@/app/ui/metier";
 import { aujourdhui, formatCompact, formatDate, formatPct, moisDe, moisEnClair } from "@/domaine/lib/format";
-import { criticite, estActif, score } from "@/domaine/lib/risques";
+import { criticite, estActif, exposition, score } from "@/domaine/lib/risques";
 import { accesDe, decisionVisible, projetsAccessibles } from "@/domaine/socle/droits";
 import { moisPrecedent } from "@/domaine/socle/periodes";
 import { LIBELLE_SANTE } from "@/domaine/socle/synthese";
@@ -19,7 +19,7 @@ import { arreterPeriodeGroupe } from "@/donnees/periodes";
 import { useLignesPilotage, type LignePilotage } from "@/donnees/pilotage";
 import { couleurIndice } from "../rapports/Completude";
 
-type Vue = "finance" | "pmo" | "direction" | "ca";
+type Vue = "finance" | "pmo" | "direction" | "risques" | "ca";
 type Regroupement = "direction" | "portefeuille" | "programme" | "type";
 
 const lienProjet = (l: LignePilotage, sous = "") => <Link to={cheminProjet(l.projet.id, sous)} className="font-medium text-brand-600 hover:underline">{l.projet.code}</Link>;
@@ -208,6 +208,60 @@ export function Pilotage() {
     </div>
   );
 
+  // ------------------------------------------------------------------ Risques
+  const idsRacines = new Map<string, LignePilotage>();
+  // Les risques des sous-projets sont rattachés au projet parent affiché
+  for (const l of lignes) { idsRacines.set(l.projet.id, l); for (const p of visibles) if (p.parentId === l.projet.id) idsRacines.set(p.id, l); }
+  const actifs = risques.filter((x) => idsRacines.has(x.projetId) && estActif(x));
+  const niveaux = ["Critique", "Élevée", "Moyenne", "Faible"] as const;
+  const groupesRisques = new Map<string, { cle: string; total: number; exposition: number; parNiveau: Record<string, number> }>();
+  for (const x of actifs) {
+    const cle = cleDe(idsRacines.get(x.projetId)!);
+    const g = groupesRisques.get(cle) ?? { cle, total: 0, exposition: 0, parNiveau: {} };
+    const n = criticite(score(x));
+    g.total++; g.parNiveau[n] = (g.parNiveau[n] ?? 0) + 1; g.exposition += exposition([x]);
+    groupesRisques.set(cle, g);
+  }
+  const lignesRisques = [...groupesRisques.values()].sort((a, b) => (b.parNiveau.Critique ?? 0) - (a.parNiveau.Critique ?? 0) || b.exposition - a.exposition);
+  const majeurs = [...actifs].sort((a, b) => score(b) - score(a) || b.impactFinancier - a.impactFinancier).slice(0, 15);
+  const COULEUR_NIVEAU: Record<string, "rouge" | "orange" | "gris" | "vert"> = { Critique: "rouge", "Élevée": "orange", Moyenne: "gris", Faible: "vert" };
+  const vueRisques = (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+        <Indicateur libelle="Risques ouverts" valeur={actifs.filter((x) => x.nature !== "Opportunité").length} detail={`${actifs.filter((x) => x.nature === "Opportunité").length} opportunité(s)`} />
+        <Indicateur libelle="Critiques" valeur={actifs.filter((x) => criticite(score(x)) === "Critique").length} tendance={actifs.some((x) => criticite(score(x)) === "Critique") ? "mauvais" : "bon"} />
+        <Indicateur libelle="Exposition pondérée" valeur={formatCompact(exposition(actifs))} detail="CHF · impact × probabilité" />
+        <Indicateur libelle="À revoir" valeur={lignes.reduce((t2, l) => t2 + l.risquesARevoir, 0)} detail="revue au-delà du délai" />
+        <Indicateur libelle="Sans responsable" valeur={actifs.filter((x) => !x.proprietaireId).length} tendance={actifs.some((x) => !x.proprietaireId) ? "alerte" : "bon"} />
+      </div>
+      <Carte titre="Risques ouverts par groupe" sousTitre="Risques des sous-projets compris dans leur projet parent"
+        action={<div className="w-44"><Liste libre aria-label="Regrouper par" value={regroupement} onChange={(e) => setRegroupement(e.target.value as Regroupement)}><option value="direction">Par direction</option><option value="portefeuille">Par portefeuille</option><option value="programme">Par programme</option><option value="type">Par type de projet</option></Liste></div>}>
+        <Tableau>
+          <thead><tr><th>Groupe</th><th className="text-right">Ouverts</th>{niveaux.map((n) => <th key={n} className="text-right">{n}</th>)}<th className="text-right">Exposition pondérée</th></tr></thead>
+          <tbody>{lignesRisques.map((g) => (
+            <tr key={g.cle}><td>{g.cle}</td><td className="text-right num">{g.total}</td>{niveaux.map((n) => <td key={n} className="text-right">{g.parNiveau[n] ? <Badge couleur={COULEUR_NIVEAU[n]}>{g.parNiveau[n]}</Badge> : <span className="text-slate-300">—</span>}</td>)}<td className="text-right"><Montant v={g.exposition} /></td></tr>
+          ))}</tbody>
+        </Tableau>
+      </Carte>
+      <Carte titre="Risques majeurs du périmètre" sousTitre="Les quinze premiers par criticité">
+        <Tableau>
+          <thead><tr><th className="w-16">Score</th><th>Risque</th><th>Projet</th><th>Responsable</th><th className="text-right">Impact financier</th><th>Stratégie</th></tr></thead>
+          <tbody>{majeurs.map((x) => {
+            const l = idsRacines.get(x.projetId)!;
+            return (
+              <tr key={x.id}>
+                <td><Badge couleur={COULEUR_NIVEAU[criticite(score(x))]}>{score(x)}</Badge></td>
+                <td><Link className="font-medium text-slate-900 hover:underline dark:text-white" to={cheminProjet(x.projetId, "risques")}>{x.titre}</Link>{x.nature === "Opportunité" && <span className="ml-2"><Badge couleur="vert">Opportunité</Badge></span>}</td>
+                <td className="whitespace-nowrap">{l.projet.code}</td><td>{personnes.find((p) => p.id === x.proprietaireId)?.nom ?? <span className="text-amber-600">à désigner</span>}</td>
+                <td className="text-right">{x.impactFinancier ? <Montant v={x.impactFinancier} /> : "—"}</td><td>{x.strategie ?? "—"}</td>
+              </tr>
+            );
+          })}</tbody>
+        </Tableau>
+      </Carte>
+    </div>
+  );
+
   // ------------------------------------------------------------------------ CA
   const suivis = lignes.filter((l) => l.projet.suiviCA || l.projet.strategique);
   const tca = total(enLigne(suivis));
@@ -262,10 +316,11 @@ export function Pilotage() {
   return (
     <>
       <EnTetePage titre="Pilotage groupe" description={`${lignes.length} projets de votre périmètre au ${formatDate(jour)} — une même base, lue selon le rôle`} />
-      <div className="mb-6 pas-impression"><Onglets valeur={vue} onChange={setVue} options={[{ id: "finance", libelle: "Finance" }, { id: "pmo", libelle: "PMO" }, { id: "direction", libelle: "Direction" }, { id: "ca", libelle: "Conseil d'administration", compte: suivis.length || undefined }]} /></div>
+      <div className="mb-6 pas-impression"><Onglets valeur={vue} onChange={setVue} options={[{ id: "finance", libelle: "Finance" }, { id: "pmo", libelle: "PMO" }, { id: "direction", libelle: "Direction" }, { id: "risques", libelle: "Risques" }, { id: "ca", libelle: "Conseil d'administration", compte: suivis.length || undefined }]} /></div>
       {vue === "finance" && vueFinance}
       {vue === "pmo" && vuePmo}
       {vue === "direction" && vueDirection}
+      {vue === "risques" && vueRisques}
       {vue === "ca" && vueCA}
     </>
   );

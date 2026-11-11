@@ -1,3 +1,5 @@
+import { dupliquerStructure } from "@/donnees/structure";
+import { projetsAccessibles } from "@/domaine/socle/droits";
 // Ajout d'un projet : depuis son numéro dans le système source (cas normal), ou en projet
 // provisoire tant qu'il n'existe pas dans la source.
 import { CloudDownload, Search } from "lucide-react";
@@ -6,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { notifier } from "@/app/etatUI";
 import { FormulaireSchema, champsManquants, type ChampSchema } from "@/app/formulaire/Formulaire";
 import { cheminProjet } from "@/app/registre";
-import { Alerte, BandeauSimule, Bouton, Onglets, Panneau, Saisie } from "@/app/ui";
+import { Alerte, BandeauSimule, Bouton, Onglets, Panneau, Saisie, Champ, Liste } from "@/app/ui";
 import { aujourdhui } from "@/domaine/lib/format";
 import { nouvelId } from "@/domaine/lib/id";
 import type { Projet } from "@/domaine/types";
@@ -29,6 +31,7 @@ export function AjoutProjet({ onFermer, parentId }: { onFermer: () => void; pare
   const [erreur, setErreur] = useState<string | null>(null);
   const [enCours, setEnCours] = useState(false);
   const [manquants, setManquants] = useState<string[]>([]);
+  const [modele, setModele] = useState("");
   const [brouillon, setBrouillon] = useState<Projet>(() => ({
     id: nouvelId("prj"), code: "", nom: "", maitreOuvrage: "", lieu: "", phase: "11 Énoncé des besoins", dateDebut: aujourdhui(), dateFin: `${Number(aujourdhui().slice(0, 4)) + 1}-12-31`,
     tauxTVA: 8.1, couleur: "#475569", description: "", typeProjetId: typesProjet[0]?.id, statut: "Idée", priorite: "Normale", confidentialite: "Interne",
@@ -72,6 +75,12 @@ export function AjoutProjet({ onFermer, parentId }: { onFermer: () => void; pare
     if (m.length) return;
     if (projets.some((p) => p.code.toLowerCase() === brouillon.code.trim().toLowerCase())) { setErreur(`Le code « ${brouillon.code} » est déjà utilisé.`); return; }
     ajouter("projets", { ...brouillon, code: brouillon.code.trim() });
+    if (modele && depot.parId("projets", brouillon.id)) {
+      try {
+        const r = dupliquerStructure(depot, modele, brouillon.id, aujourdhui());
+        notifier(`Structure reprise : ${r.lots} lot(s), ${r.fonctions} fonction(s), ${r.jalons} jalon(s), ${r.risques} risque(s).`, "succes");
+      } catch (e) { notifier(e instanceof Error ? e.message : "La structure n'a pas pu être reprise.", "erreur"); }
+    }
     onFermer();
     navigate(cheminProjet(brouillon.id));
   };
@@ -107,6 +116,7 @@ export function AjoutProjet({ onFermer, parentId }: { onFermer: () => void; pare
         </>
       ) : (
         <>
+          <div className="mb-4"><Champ libelle="Reprendre la structure d'un projet existant" aide="Lots, organigramme, parties prenantes, jalons et risques — sans finances, sans documents, sans titulaires"><Liste value={modele} onChange={(e) => setModele(e.target.value)}><option value="">Non, partir d'un projet vide</option>{projetsAccessibles(utilisateur, projets.filter((p) => !p.archive)).map((p) => <option key={p.id} value={p.id}>{p.code} · {p.nom}</option>)}</Liste></Champ></div>
           <div className="mb-4"><Alerte type="info">Un projet provisoire n'existe pas encore dans le système source : ses chiffres sont saisis à la main et il est signalé comme tel jusqu'à son rattachement.</Alerte></div>
           <FormulaireSchema champs={champs} valeur={brouillon} onChange={setBrouillon} manquants={manquants} />
         </>

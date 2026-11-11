@@ -65,6 +65,7 @@ export function installerGouvernanceDemo(depot: Depot, jour: string): void {
       contenu.perimetre = p.description;
       contenu.impactsEnvironnementaux = type?.id === "construction" ? "Nuisances de chantier limitées par le phasage ; matériaux d'excavation valorisés sur place." : "Aucun";
       contenu.impactsSociaux = "Information régulière des personnes concernées ; accompagnement au changement.";
+      contenu.preavisComInv = ["ENR-2025-0098", "INF-2026-0240", "INF-2026-0312"].includes(code);
       contenu.composanteIT = type?.id === "numerique";
       contenu.descriptionIT = type?.id === "numerique" ? "Solution métier reposant sur l'environnement informatique du groupe ; l'informatique valide l'architecture, la sécurité et les interfaces." : "";
       contenu.phases = contenu.phases.map((ph, i) => (ph.applicable ? { ...ph, debut: ajouterJours(p.dateDebut, -120 + i * 40), fin: i === contenu.phases.length - 1 ? p.dateFin : ajouterJours(p.dateDebut, -80 + i * 40), livrables: ["Mandat de projet signé", "", "Dossier de projet et devis", "", "Ouvrage ou solution en service"][i] } : ph));

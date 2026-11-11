@@ -2,7 +2,9 @@
 // découlent, en une seule opération.
 import { nouvelId } from "../domaine/lib/id";
 import { derives } from "../domaine/socle/seances";
+import { mandatEnVigueur } from "../domaine/socle/mandat";
 import type { Seance } from "../domaine/socle/types";
+import type { Projet } from "../domaine/types";
 import type { Depot } from "./depot";
 
 export function enregistrerSeance(depot: Depot, seance: Seance): Seance {
@@ -18,4 +20,22 @@ export function enregistrerSeance(depot: Depot, seance: Seance): Seance {
     if (depot.parId("seances", finale.id)) depot.modifier("seances", finale.id, finale); else depot.ajouter("seances", finale);
   });
   return finale;
+}
+
+export interface Candidat { projet: Projet; motif: string; titre: string; montant?: number }
+
+/**
+ * Projets à proposer à l'ordre du jour du comité d'investissement : ceux dont le mandat demande un
+ * préavis du comité et qui n'ont pas encore de décision approuvée, et ceux dont un rapport attend
+ * sa validation.
+ */
+export function candidatsComInv(depot: Depot, projets: Projet[]): Candidat[] {
+  const out: Candidat[] = [];
+  for (const p of projets) {
+    const mandat = mandatEnVigueur(depot.parProjet("mandats", p.id));
+    const decide = depot.parProjet("decisions", p.id).some((d) => d.organe === "ComInv" && d.statut === "Approuvée");
+    if (mandat?.contenu.preavisComInv && !decide) out.push({ projet: p, motif: `Préavis du comité demandé par le mandat (version ${mandat.version})`, titre: `Préavis sur le projet ${p.code}`, montant: mandat.contenu.budget || undefined });
+    for (const r of depot.parProjet("rapports", p.id).filter((x) => x.statut === "En revue")) out.push({ projet: p, motif: `${r.titre} en revue`, titre: `${r.titre} – ${p.code}` });
+  }
+  return out;
 }

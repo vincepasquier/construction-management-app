@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ui } from "../../app/etatUI";
 import { Badge, cx, Liste, Saisie } from "../../app/ui";
+import { formatDate } from "../../domaine/lib/format";
 import { nouvelId } from "../../domaine/lib/id";
 import { useDepot, useDonnees, useUtilisateur } from "../../donnees/hooks";
 import { chercher, construireIndex, type FiltresRecherche } from "../../donnees/recherche";
@@ -124,7 +125,7 @@ export function Palette() {
               <span className="w-28 shrink-0"><Badge couleur={r.type === "Projet" ? "bleu" : "gris"}>{r.type}</Badge></span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium text-slate-900 dark:text-white">{r.titre}</span>
-                {r.detail && <span className="block truncate text-xs text-slate-500">{r.detail}</span>}
+                {(r.detail || r.date) && <span className="block truncate text-xs text-slate-500">{[r.detail, r.date ? formatDate(r.date) : ""].filter(Boolean).join(" · ")}</span>}
               </span>
               {i === actif && <CornerDownLeft size={14} className="shrink-0 text-slate-400" />}
             </button>

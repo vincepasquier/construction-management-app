@@ -12,7 +12,7 @@ import { numeroPoint } from "@/domaine/socle/seances";
 import type { Decision, NaturePoint, ParticipantSeance, PointSeance, Seance } from "@/domaine/socle/types";
 import { ErreurDepot } from "@/donnees/depot";
 import { useActions, useDepot, useDonnees, useUtilisateur } from "@/donnees/hooks";
-import { enregistrerSeance } from "@/donnees/seances";
+import { candidatsComInv, enregistrerSeance } from "@/donnees/seances";
 import { telechargerDocx } from "@/outils/telechargement";
 import { SaisieConditions } from "../gouvernance/Conditions";
 import { blocsSeance } from "./exportSeance";
@@ -37,6 +37,7 @@ export function EditeurSeance({ initiale, onFermer }: { initiale: Seance; onFerm
   const tries = [...personnes].sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
   const nomPersonne = (id?: string) => personnes.find((p) => p.id === id)?.nom;
   const existe = !!depot.parId("seances", s.id);
+  const candidats = transverse ? candidatsComInv(depot, mesProjets).filter((x) => !s.points.some((p) => p.projetId === x.projet.id && p.titre === x.titre)) : [];
 
   const enregistrer = () => {
     try {
@@ -79,7 +80,7 @@ export function EditeurSeance({ initiale, onFermer }: { initiale: Seance; onFerm
               <div key={i} className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-800/50">
                 <div className="min-w-40 flex-1"><Liste aria-label="Participant" value={p.personneId ?? ""} onChange={(e) => majParticipant(i, { personneId: e.target.value || undefined })}><option value="">Externe…</option>{tries.map((x) => <option key={x.id} value={x.id}>{x.nom}</option>)}</Liste></div>
                 {!p.personneId && <div className="min-w-32 flex-1"><Saisie aria-label="Nom" placeholder="Nom, organisation" value={p.nom ?? ""} onChange={(e) => majParticipant(i, { nom: e.target.value })} /></div>}
-                <div className="w-28"><Liste aria-label="Présence" value={p.presence} onChange={(e) => majParticipant(i, { presence: e.target.value as ParticipantSeance["presence"] })}><option>Présent</option><option>Excusé</option><option>Absent</option></Liste></div>
+                <div className="w-32 shrink-0"><Liste aria-label="Présence" value={p.presence} onChange={(e) => majParticipant(i, { presence: e.target.value as ParticipantSeance["presence"] })}><option>Présent</option><option>Excusé</option><option>Absent</option></Liste></div>
                 <Case libelle="PV" title="Reçoit le procès-verbal" checked={p.diffusion} onChange={(e) => majParticipant(i, { diffusion: e.target.checked })} />
                 {!lecture && <button type="button" aria-label="Retirer le participant" className="rounded p-1 text-slate-300 hover:text-rose-600" onClick={() => maj({ participants: s.participants.filter((_, j) => j !== i) })}><Trash2 size={14} /></button>}
               </div>
@@ -87,6 +88,20 @@ export function EditeurSeance({ initiale, onFermer }: { initiale: Seance; onFerm
           </div>
         )}
       </Carte>
+
+      {transverse && !lecture && candidats.length > 0 && (
+        <Carte titre="Projets candidats à l'ordre du jour" sousTitre="Projets qui attendent une décision du comité et ne figurent pas encore dans cette séance">
+          <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+            {candidats.map((x) => (
+              <li key={`${x.projet.id}-${x.motif}`} className="flex flex-wrap items-center gap-3 px-5 py-2.5 text-sm">
+                <span className="font-medium text-slate-900 dark:text-white">{x.projet.code}</span><span className="min-w-0 flex-1 truncate text-slate-600 dark:text-slate-300">{x.projet.nom}</span>
+                <span className="text-xs text-slate-500">{x.motif}</span>
+                <Bouton taille="sm" icone={<Plus size={13} />} onClick={() => maj({ points: [...s.points, { id: nouvelId("pt"), numero: numeroPoint(s), projetId: x.projet.id, titre: x.titre, texte: "", nature: "Décision", statut: "Ouvert", origineSeanceId: s.id, responsableId: x.projet.directeurId, decision: { statut: "Approuvée", montant: x.montant, conditions: [] } }] })}>Inscrire</Bouton>
+              </li>
+            ))}
+          </ul>
+        </Carte>
+      )}
 
       <Carte titre="Points" sousTitre="Un point resté ouvert est repris, avec son numéro, à la séance suivante"
         action={!lecture && <Bouton taille="sm" variante="primaire" icone={<Plus size={13} />} onClick={() => maj({ points: [...s.points, { id: nouvelId("pt"), numero: numeroPoint(s), titre: "", texte: "", nature: transverse ? "Décision" : "Information", statut: "Ouvert", origineSeanceId: s.id, decision: transverse ? { statut: "Approuvée", conditions: [] } : undefined }] })}>Point</Bouton>}>
