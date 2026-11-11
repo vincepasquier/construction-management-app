@@ -272,7 +272,9 @@ export function TableDonnees<T>({ id, lignes, colonnes, cle, onOuvrir, actions, 
                     const nombre = c.type === "montant" || c.type === "nombre" || c.type === "pourcent";
                     const edition = !lecture && c.edition;
                     return (
-                      <td key={c.id} className={cx("px-4 py-2.5", nombre && "text-right num", edition && "!py-1")} onClick={edition ? (e) => e.stopPropagation() : undefined}>
+                      // Une ligne = une hauteur : le texte long est coupé (et lisible au survol), jamais replié
+                      <td key={c.id} className={cx("px-4 py-2.5", nombre && "text-right num", edition && "!py-1", !edition && !c.rendu && "max-w-md truncate whitespace-nowrap")}
+                        title={!edition && !c.rendu && !nombre ? String(c.valeur(l) ?? "") || undefined : undefined} onClick={edition ? (e) => e.stopPropagation() : undefined}>
                         {edition ? <CelluleSaisie colonne={c} ligne={l} onColler={(e) => coller(e, l, c)} /> : c.rendu ? c.rendu(l) : formater(c.valeur(l), c.type)}
                       </td>
                     );

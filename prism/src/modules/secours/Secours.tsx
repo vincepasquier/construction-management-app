@@ -18,7 +18,8 @@ export async function telechargerSauvegarde(depot: Depot): Promise<void> {
   session.ecrire({ derniereSauvegarde: new Date().toISOString() });
 }
 
-export function Secours({ depot, erreur }: { depot: Depot; erreur?: string }) {
+/** `integre` : affichée comme onglet de l'administration, sans en-tête ni lien de retour */
+export function Secours({ depot, erreur, integre }: { depot: Depot; erreur?: string; integre?: boolean }) {
   const [message, setMessage] = useState<{ type: "info" | "erreur"; texte: string } | null>(null);
   const [quota, setQuota] = useState<{ usage: number; quota: number } | null>(null);
   const [version, setVersion] = useState(0);
@@ -61,8 +62,8 @@ export function Secours({ depot, erreur }: { depot: Depot; erreur?: string }) {
   });
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
-      <div className="mb-6 flex items-center gap-3">
+    <div className={integre ? "max-w-2xl" : "mx-auto max-w-2xl px-4 py-10"}>
+      <div className={integre ? "hidden" : "mb-6 flex items-center gap-3"}>
         <div className="flex size-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 dark:bg-sky-950 dark:text-sky-300"><LifeBuoy size={20} /></div>
         <div>
           <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Sauvegarde et secours</h1>
@@ -97,8 +98,9 @@ export function Secours({ depot, erreur }: { depot: Depot; erreur?: string }) {
           <Bouton libre variante="fantome" className="text-rose-600" icone={<Trash2 size={15} />} disabled={!depot.ouvert} onClick={effacer}>Effacer la base</Bouton>
         </div>
       </Carte>
-      <p className="mt-6 text-sm"><a href="/" className="inline-flex items-center gap-1.5 font-medium text-brand-600"><RotateCcw size={14} /> Revenir à l'application</a></p>
-      <Confirmation />
+      {integre
+        ? <p className="mt-4 text-sm text-slate-500">Les données de PRISM vivent dans ce navigateur : une sauvegarde régulière est la seule protection contre leur effacement. En cas de blocage de l'application, cette page reste accessible à l'adresse <a className="font-medium text-brand-600" href="/secours">/secours</a>.</p>
+        : <><p className="mt-6 text-sm"><a href="/" className="inline-flex items-center gap-1.5 font-medium text-brand-600"><RotateCcw size={14} /> Revenir à l'application</a></p><Confirmation /></>}
     </div>
   );
 }
