@@ -20,7 +20,10 @@ export interface DonneesChantierPlus {
   version?: number;
 }
 
-/** Reconnaît un état Chantier+ : stockage du navigateur (`{state, version}`) ou fichier exporté */
+/**
+ * Reconnaît des données Chantier+ sous leurs trois formes : stockage du navigateur (`{state, version}`),
+ * fichier de sauvegarde ou de projet (`{format, donnees}`), ou collections à la racine.
+ */
 export function lireChantierPlus(brut: unknown): DonneesChantierPlus | null {
   let o = brut;
   if (typeof o === "string") {
@@ -28,7 +31,8 @@ export function lireChantierPlus(brut: unknown): DonneesChantierPlus | null {
   }
   if (!o || typeof o !== "object") return null;
   const racine = o as Record<string, unknown>;
-  const etat = (racine.state && typeof racine.state === "object" ? racine.state : racine) as Record<string, unknown>;
+  const objet = (v: unknown) => (v && typeof v === "object" && !Array.isArray(v) ? (v as Record<string, unknown>) : undefined);
+  const etat = objet(racine.state) ?? objet(racine.donnees) ?? racine;
   if (!Array.isArray(etat.projets)) return null;
   const donnees: Partial<DonneesDemo> = {};
   for (const c of COLLECTIONS_CHANTIER_PLUS) if (Array.isArray(etat[c])) (donnees as Record<string, unknown>)[c] = etat[c];

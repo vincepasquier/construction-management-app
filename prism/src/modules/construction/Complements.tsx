@@ -1,0 +1,111 @@
+import { LienProjet as Link } from "@/app/chemins";
+import { AlertTriangle, CalendarClock, FileWarning, Receipt } from "lucide-react";
+import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useProjet, useDonnees } from "@/donnees/hooks";
+import { avancementPlanning, courbeEnS, tachesEnRetard } from "@/domaine/lib/finance";
+import { totaux as totauxBudget } from "@/domaine/lib/budget";
+import { useBudget } from "@/modules/finances/useBudget";
+import { aujourdhui, formatCHF, formatCompact, formatDate, formatPct } from "@/domaine/lib/format";
+import { Avatar, Carte, Progression } from "@/app/ui";
+import { FrisePhases } from "@/modules/planning/FrisePhases";
+import { libelleCFC } from "@/domaine/data/cfc";
+
+/** Blocs propres aux projets de construction, ajoutés à la synthèse du projet */
+export function ComplementsConstruction() {
+  const d = useProjet();
+  const { personnes, entreprises } = useDonnees();
+  const budget = useBudget();
+  if (!d.projet) return null;
+  const p = d.projet;
+  const jour = aujourdhui();
+
+  const tb = budget.totaux;
+  const t = { budget: tb.revise, engage: tb.engage, facture: tb.facture, paye: tb.paye, prevision: tb.atterrissage, ecart: tb.ecart };
+  const courbe = courbeEnS(p.dateDebut, p.dateFin, t.prevision, d.factures, jour);
+  const retards = tachesEnRetard(d.taches, jour);
+  const avenants = d.contrats.flatMap((c) => c.avenants.filter((a) => a.statut === "Demandé").map((a) => ({ c, a })));
+  const facturesATraiter = d.factures.filter((f) => f.statut === "Reçue" || f.statut === "Contrôlée");
+  const nomPers = (id?: string) => personnes.find((x) => x.id === id)?.nom;
+
+  const alertes = [
+    ...retards.map((x) => ({ icone: <CalendarClock size={16} />, couleur: "text-rose-600", texte: `${x.nom} – ${x.avancement} % au ${formatDate(jour)}, fin prévue ${formatDate(x.fin)}`, lien: "/planning" })),
+    ...avenants.map(({ c, a }) => ({ icone: <FileWarning size={16} />, couleur: "text-amber-600", texte: `Avenant ${a.numero} – ${c.numero} : ${a.objet} (${formatCHF(a.montant)})`, lien: `/contrats/${c.id}` })),
+    ...facturesATraiter.map((f) => {
+      const c = d.contrats.find((x) => x.id === f.contratId);
+      const echue = f.echeance < jour;
+      return { icone: <Receipt size={16} />, couleur: echue ? "text-rose-600" : "text-sky-600", texte: `Facture ${f.numero} ${entreprises.find((e) => e.id === c?.entrepriseId)?.nom ?? ""} – ${formatCHF(f.montantHT)} (${f.statut}${echue ? ", échue" : ""})`, lien: `/contrats/${c?.id}` };
+    }),
+  ];
+
+  return (
+    <>
+      {d.filtreActif && <p className="mb-4 text-sm text-brand-600">Vue filtrée sur vos lots : {d.lots.map((l) => l.code).join(", ")}</p>}
+      <div><FrisePhases projet={p} lots={d.lots} /></div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <Carte className="lg:col-span-2" titre="Courbe de dépenses" sousTitre="Planifié (courbe en S sur la prévision) vs facturé cumulé">
+          <div className="h-72 p-4">
+            <ResponsiveContainer>
+              <AreaChart data={courbe}>
+                <defs>
+                  <linearGradient id="gPlan" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6366f1" stopOpacity={0.18} /><stop offset="100%" stopColor="#6366f1" stopOpacity={0} /></linearGradient>
+                  <linearGradient id="gReel" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#10b981" stopOpacity={0.3} /><stop offset="100%" stopColor="#10b981" stopOpacity={0} /></linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="3 3" />
+                <XAxis dataKey="mois" tickLine={false} axisLine={false} fontSize={11} tickFormatter={(m: string) => `${m.slice(5)}.${m.slice(2, 4)}`} />
+                <YAxis tickFormatter={formatCompact} tickLine={false} axisLine={false} fontSize={11} width={60} />
+                <Tooltip formatter={(v) => formatCHF(Number(v))} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                <Area type="monotone" dataKey="planifie" name="Planifié" stroke="#6366f1" strokeDasharray="5 4" fill="url(#gPlan)" strokeWidth={2} />
+                <Area type="monotone" dataKey="realise" name="Facturé" stroke="#10b981" fill="url(#gReel)" strokeWidth={2.5} connectNulls={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Carte>
+
+        <Carte titre="Points d'attention" sousTitre={`${alertes.length} élément(s)`} action={alertes.length > 0 && <AlertTriangle size={16} className="text-amber-500" />}>
+          <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto dark:divide-slate-800">
+            {alertes.map((a, i) => (
+              <li key={i}>
+                <Link to={a.lien} className="flex gap-3 px-5 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                  <span className={`mt-0.5 ${a.couleur}`}>{a.icone}</span><span className="text-slate-700 dark:text-slate-300">{a.texte}</span>
+                </Link>
+              </li>
+            ))}
+            {alertes.length === 0 && <li className="px-5 py-10 text-center text-sm text-slate-500">Rien à signaler</li>}
+          </ul>
+        </Carte>
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <Carte className="lg:col-span-3" titre="Lots" sousTitre="Budget révisé et atterrissage par lot" action={<Link to="/finances" className="text-sm font-medium text-brand-600 hover:underline">Suivi financier →</Link>}>
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {d.lots.map((l) => {
+              const tl = totauxBudget(budget.positions.filter((x) => x.lotId === l.id));
+              const { revise: budgetLot, atterrissage: prevision, facture } = tl;
+              const resp = nomPers(l.responsableId);
+              const taches = d.taches.filter((x) => x.lotId === l.id);
+              return (
+                <div key={l.id} className="flex flex-wrap items-center gap-4 px-5 py-3.5">
+                  <div className="w-56 min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-900 dark:text-white"><span className="text-slate-400">{l.code}</span> {l.nom}</p>
+                    {l.cfc.length > 0 && <p className="truncate text-xs text-slate-500">CFC {l.cfc.map((c) => `${c} ${libelleCFC(c)}`).join(" · ")}</p>}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-500">{resp && <Avatar nom={resp} taille={22} />}{resp ?? "Non attribué"}</div>
+                  <div className="ml-auto grid w-full grid-cols-3 gap-4 text-right text-sm sm:w-auto sm:min-w-[330px]">
+                    <div><p className="text-xs text-slate-500">Budget</p><p className="num">{formatCompact(budgetLot)}</p></div>
+                    <div><p className="text-xs text-slate-500">Prévision</p><p className={`num ${prevision > budgetLot + 0.5 ? "text-rose-600" : ""}`}>{formatCompact(prevision)}</p></div>
+                    <div><p className="text-xs text-slate-500">Avancement</p><p className="num">{formatPct(avancementPlanning(taches), 0)}</p></div>
+                  </div>
+                  <Progression valeur={prevision ? (facture / prevision) * 100 : 0} couleur={p.couleur} />
+                </div>
+              );
+            })}
+          </div>
+        </Carte>
+
+      </div>
+
+    </>
+  );
+}

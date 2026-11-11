@@ -59,6 +59,11 @@ export function confirmer(o: { titre?: string; message: string; action?: string;
   });
 }
 
+/** Confirmation simple, sans motif : `if (await demander("Supprimer ?")) …` */
+export function demander(message: string, action = "Confirmer", danger = true): Promise<boolean> {
+  return confirmer({ message, action, danger }).then(Boolean);
+}
+
 export function ouvrirAssistant(question?: string): void {
   ui.ecrire({ assistantOuvert: true, questionEnAttente: question ?? null });
 }

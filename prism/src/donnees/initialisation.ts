@@ -7,7 +7,7 @@ import { COMPLEMENTS_SOURCE, docsDemo, NUMEROS_DEMO, UTILISATEUR_DEMO } from "./
 import { CONFIGURATION, DIRECTIONS, PORTEFEUILLES, PROGRAMMES, TYPES_PROJET } from "./demo/referentiels";
 import type { Depot, Operation } from "./depot";
 import { convertirChantierPlus, promouvoirAdministrateur, type DocsParCollection, type DonneesChantierPlus } from "./reprise";
-import { COLLECTIONS } from "./schema";
+import { COLLECTIONS, META } from "./schema";
 import { session } from "./session";
 
 /** Crée les référentiels sans lesquels l'application ne peut pas fonctionner */
@@ -82,4 +82,28 @@ export function demarrerVide(depot: Depot, nom: string): void {
   depot.ajouter("personnes", { id, nom: nom.trim() || "Administrateur", role: "Directeur de projet", email: "", organisation: "", capacite: 100, acces: { profil: "Administrateur", projets: "tous", modules: {} } }, { origine: "systeme" });
   session.ecrire({ utilisateurId: id, dernierProjetId: null });
   depot.acteurId = id;
+}
+
+/**
+ * Supprime un projet, ses sous-projets et toutes leurs données, en une seule opération inscrite au
+ * journal avec son motif. Renvoie le nombre d'enregistrements supprimés.
+ */
+export function supprimerProjet(depot: Depot, projetId: string, motif: string): number {
+  const ids = new Set<string>([projetId]);
+  for (let ajout = true; ajout;) {
+    ajout = false;
+    for (const p of depot.tous("projets")) if (p.parentId && ids.has(p.parentId) && !ids.has(p.id)) { ids.add(p.id); ajout = true; }
+  }
+  const racine = depot.parId("projets", projetId);
+  let n = 0;
+  depot.grouper(`Suppression du projet ${racine?.code ?? projetId}`, () => {
+    for (const c of COLLECTIONS) {
+      if (c === "projets" || !META[c].parProjet) continue;
+      for (const doc of depot.tous(c) as { id: string; projetId?: string }[]) {
+        if (doc.projetId && ids.has(doc.projetId)) { depot.supprimer(c, doc.id, { motif }); n++; }
+      }
+    }
+    for (const id of ids) { depot.supprimer("projets", id, { motif }); n++; }
+  }, { motif, sansDetail: true });
+  return n;
 }

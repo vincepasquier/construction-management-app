@@ -9,7 +9,19 @@ const page = <T extends Record<string, unknown>>(charger: () => Promise<T>, nom:
 
 const MonTravail = page(() => import("./modules/accueil/MonTravail"), "MonTravail");
 const Portefeuille = page(() => import("./modules/portefeuille/Portefeuille"), "Portefeuille");
-const Synthese = page(() => import("./modules/projet/Synthese"), "Synthese");
+const SyntheseProjet = page(() => import("./modules/projet/PagesProjet"), "SyntheseProjet");
+const FinancesProjet = page(() => import("./modules/projet/PagesProjet"), "FinancesProjet");
+const AppelsOffres = page(() => import("./modules/achats/AppelsOffres"), "AppelsOffres");
+const AppelOffresDetail = page(() => import("./modules/achats/AppelOffresDetail"), "AppelOffresDetail");
+const Contrats = page(() => import("./modules/contrats/Contrats"), "Contrats");
+const ContratDetail = page(() => import("./modules/contrats/ContratDetail"), "ContratDetail");
+const Planning = page(() => import("./modules/planning/Planning"), "Planning");
+const Taches = page(() => import("./modules/taches/Taches"), "Taches");
+const Risques = page(() => import("./modules/risques/Risques"), "Risques");
+const Documents = page(() => import("./modules/documents/Documents"), "Documents");
+const Validations = page(() => import("./modules/validations/Validations"), "Validations");
+const Juridique = page(() => import("./modules/juridique/Juridique"), "Juridique");
+const Ressources = page(() => import("./modules/ressources/Ressources"), "Ressources");
 const Organisation = page(() => import("./modules/organisation/Organisation"), "Organisation");
 const Entreprises = page(() => import("./modules/entreprises/Entreprises"), "Entreprises");
 const Acces = page(() => import("./modules/acces/Acces"), "Acces");
@@ -24,14 +36,25 @@ export default function App() {
           <Route path="portefeuille" element={<Portefeuille />} />
           <Route path="pilotage" element={<EnConstruction titre="Pilotage groupe" etape={3} />} />
           <Route path="cominv" element={<EnConstruction titre="ComInv" etape={3} />} />
-          <Route path="ressources" element={<EnConstruction titre="Ressources" etape={2} />} />
+          <Route path="ressources" element={<Ressources />} />
           <Route path="entreprises" element={<Entreprises />} />
           <Route path="archives" element={<EnConstruction titre="Archives" etape={4} />} />
           <Route path="acces" element={<Acces />} />
           <Route path="administration/*" element={<Administration />} />
           <Route path="projets/:projetId" element={<ProjetCourant />}>
-            <Route index element={<Synthese />} />
+            <Route index element={<SyntheseProjet />} />
+            <Route path="planning" element={<Planning />} />
+            <Route path="taches" element={<Taches />} />
+            <Route path="risques" element={<Risques />} />
             <Route path="organisation" element={<Organisation />} />
+            <Route path="finances" element={<FinancesProjet />} />
+            <Route path="appels-offres" element={<AppelsOffres />} />
+            <Route path="appels-offres/:id" element={<AppelOffresDetail />} />
+            <Route path="contrats" element={<Contrats />} />
+            <Route path="contrats/:id" element={<ContratDetail />} />
+            <Route path="juridique" element={<Juridique />} />
+            <Route path="validations" element={<Validations />} />
+            <Route path="documents" element={<Documents />} />
             <Route path="*" element={<EnConstruction titre="Module du projet" etape={2} />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

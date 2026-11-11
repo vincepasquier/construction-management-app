@@ -4,6 +4,7 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import type { Depot } from "./depot";
 import type { EntreeJournal } from "./journal";
+import { importerAncienneSession } from "../domaine/lib/importAncien";
 import { lireChantierPlus } from "./reprise";
 import type { DocQuelconque, NomCollection } from "./schema";
 import type { FichierStocke } from "./stockage";
@@ -73,7 +74,13 @@ export function lireSauvegarde(octets: Uint8Array): SauvegardeLue {
     const enregistrements = Object.values(ancien.donnees).reduce((s, l) => s + (l?.length ?? 0), 0);
     return { type: "chantier-plus", brut: o, resume: { type: "chantier-plus", projets: ancien.donnees.projets?.length ?? 0, enregistrements, fichiers: 0 } };
   }
-  throw new Error("Fichier non reconnu : ce n'est ni une sauvegarde PRISM ni un export Chantier+.");
+  // Export « session » de l'ancienne application de suivi financier : converti en projet Chantier+
+  try {
+    const { resume: _resume, ...donnees } = importerAncienneSession(o);
+    const enregistrements = Object.values(donnees).reduce((s, l) => s + (l?.length ?? 0), 0);
+    return { type: "chantier-plus", brut: { donnees }, resume: { type: "chantier-plus", projets: donnees.projets?.length ?? 0, enregistrements, fichiers: 0 } };
+  } catch { /* ce n'est pas non plus une session de l'ancienne application */ }
+  throw new Error("Fichier non reconnu : ce n'est ni une sauvegarde PRISM, ni un export Chantier+, ni une session de l'ancienne application.");
 }
 
 /** Remplace toute la base par le contenu d'une sauvegarde PRISM */

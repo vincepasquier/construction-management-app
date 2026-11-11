@@ -7,6 +7,7 @@ import { Alerte, Bouton, Carte, Confirmation } from "../../app/ui";
 import { aujourdhui, formatDate } from "../../domaine/lib/format";
 import type { Depot } from "../../donnees/depot";
 import { reprendreChantierPlus } from "../../donnees/initialisation";
+import { lireChantierPlus } from "../../donnees/reprise";
 import { COLLECTIONS } from "../../donnees/schema";
 import { creerSauvegarde, lireSauvegarde, restaurerSauvegarde } from "../../donnees/sauvegarde";
 import { session } from "../../donnees/session";
@@ -48,7 +49,7 @@ export function Secours({ depot, erreur, integre }: { depot: Depot; erreur?: str
     });
     if (!ok) return "Restauration abandonnée.";
     if (lue.type === "prism") await restaurerSauvegarde(depot, lue);
-    else reprendreChantierPlus(depot, { donnees: (lue.brut as { state?: object }).state ?? (lue.brut as object) });
+    else reprendreChantierPlus(depot, lireChantierPlus(lue.brut)!);
     return "Données restaurées.";
   });
 
@@ -83,7 +84,7 @@ export function Secours({ depot, erreur, integre }: { depot: Depot; erreur?: str
         <div className="flex flex-wrap items-center justify-between gap-3 p-5">
           <div>
             <p className="font-medium text-slate-900 dark:text-white">Restaurer depuis un fichier</p>
-            <p className="text-sm text-slate-500">Sauvegarde PRISM (.zip) ou export Chantier+ (.json)</p>
+            <p className="text-sm text-slate-500">Sauvegarde PRISM (.zip), fichier de projet ou sauvegarde Chantier+ (.json), session de l'ancienne application (.json)</p>
           </div>
           <label className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg bg-white px-3.5 text-sm font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">
             <Upload size={15} /> Choisir un fichier

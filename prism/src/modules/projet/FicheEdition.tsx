@@ -1,14 +1,17 @@
 // Édition de la fiche projet. Les champs dont le système source est maître ne se modifient pas
 // directement : on les « corrige localement » avec un motif, en attendant la correction à la source.
-import { Undo2 } from "lucide-react";
+import { Trash2, Undo2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { confirmer } from "@/app/etatUI";
+import { useNavigate } from "react-router-dom";
+import { confirmer, notifier } from "@/app/etatUI";
 import { Bouton, Case, Champ, Liste, Panneau, Saisie, Zone } from "@/app/ui";
 import { PHASES } from "@/domaine/data/phasesSia";
+import { accesDe } from "@/domaine/socle/droits";
 import { CONFIDENTIALITES } from "@/domaine/socle/types";
 import type { PhaseSIA, Projet, StatutProjet } from "@/domaine/types";
 import { leverSurcharge, origineChamp, surcharger } from "@/donnees/connecteurs/synchro";
-import { useDepot, useDonnees } from "@/donnees/hooks";
+import { useDepot, useDonnees, useUtilisateur } from "@/donnees/hooks";
+import { supprimerProjet } from "@/donnees/initialisation";
 import { champsManquantsProjet } from "@/donnees/lectures";
 import { libelleChamp } from "./libelles";
 
@@ -16,6 +19,8 @@ const STATUTS: StatutProjet[] = ["Idée", "En préparation", "En cours", "En pau
 
 export function FicheEdition({ projet, onFermer }: { projet: Projet; onFermer: () => void }) {
   const depot = useDepot();
+  const navigate = useNavigate();
+  const utilisateur = useUtilisateur();
   const { personnes, directions, portefeuilles, programmes, typesProjet, configurations, projets, modifier } = useDonnees();
   const [p, setP] = useState<Projet>(projet);
   // Champs maîtres de la source que l'utilisateur a choisi de corriger localement, avec leur motif
@@ -76,6 +81,25 @@ export function FicheEdition({ projet, onFermer }: { projet: Projet; onFermer: (
     onFermer();
   };
 
+  const administrateur = !!utilisateur && accesDe(utilisateur).profil === "Administrateur";
+  const supprimer = async () => {
+    const sous = projets.filter((x) => x.parentId === projet.id).length;
+    const r = await confirmer({
+      titre: `Supprimer le projet ${projet.code}`,
+      message: `Le projet « ${projet.nom} »${sous ? `, ses ${sous} sous-projet(s)` : ""} et toutes leurs données (budget, contrats, factures, planning, risques, documents…) seront supprimés. L'opération est inscrite au journal ; téléchargez d'abord une sauvegarde si vous voulez pouvoir y revenir plus tard.`,
+      action: "Supprimer le projet", danger: true, motif: true,
+    });
+    if (!r) return;
+    try {
+      const n = supprimerProjet(depot, projet.id, r.motif);
+      notifier(`Projet ${projet.code} supprimé (${n} enregistrements).`, "succes");
+      onFermer();
+      navigate("/portefeuille");
+    } catch (e) {
+      notifier(e instanceof Error ? e.message : "Suppression impossible.", "erreur");
+    }
+  };
+
   const personnesTriees = [...personnes].sort((a, b) => a.nom.localeCompare(b.nom, "fr")).map((x) => ({ id: x.id, nom: x.nom }));
   const section = (titre: string, enfants: ReactNode) => (
     <fieldset className="mb-6">
@@ -86,7 +110,10 @@ export function FicheEdition({ projet, onFermer }: { projet: Projet; onFermer: (
 
   return (
     <Panneau ouverte large onFermer={onFermer} titre={`Fiche du projet ${projet.code}`}
-      pied={<><Bouton libre onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!p.code.trim() || !p.nom.trim()} onClick={enregistrer}>Enregistrer</Bouton></>}>
+      pied={<>
+        {administrateur && <Bouton libre variante="fantome" className="mr-auto text-rose-600" icone={<Trash2 size={14} />} onClick={supprimer}>Supprimer le projet</Bouton>}
+        <Bouton libre onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!p.code.trim() || !p.nom.trim()} onClick={enregistrer}>Enregistrer</Bouton>
+      </>}>
       {section("Identification", <>
         {texte("code")}
         {liste("typeProjetId", typesProjet, { vide: false })}

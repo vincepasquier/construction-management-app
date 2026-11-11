@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { useDepot } from "../donnees/hooks";
 import { chargerDemo, demarrerVide, reprendreChantierPlus } from "../donnees/initialisation";
 import { detecterChantierPlus } from "../donnees/reprise";
+import { lireChantierPlus } from "../donnees/reprise";
 import { lireSauvegarde, restaurerSauvegarde } from "../donnees/sauvegarde";
 import { Alerte, Bouton, Saisie } from "./ui";
 
@@ -24,7 +25,7 @@ export function Demarrage() {
   const depuisFichier = (f: File | undefined) => f && lancer("Lecture du fichier…", async () => {
     const lue = lireSauvegarde(new Uint8Array(await f.arrayBuffer()));
     if (lue.type === "prism") await restaurerSauvegarde(depot, lue);
-    else reprendreChantierPlus(depot, { donnees: (lue.brut as { state?: object }).state ?? (lue.brut as object) });
+    else reprendreChantierPlus(depot, lireChantierPlus(lue.brut)!);
   });
 
   const choix = (icone: ReactNode, titre: string, texte: ReactNode, action: ReactNode) => (

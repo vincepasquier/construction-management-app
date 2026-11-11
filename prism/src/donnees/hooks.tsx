@@ -122,22 +122,24 @@ export function useActions(): Actions {
 // Lecture de toute la base
 // ---------------------------------------------------------------------------
 
-export type Donnees = { [C in NomCollection]: Doc<C>[] } & Actions;
+export type Donnees = { [C in NomCollection]: Doc<C>[] } & Actions & { /** Utilisateur choisi dans la barre du haut */ utilisateurId: ID | null };
 
 /** Collections complètes et écritures : `const { projets, ajouter } = useDonnees()` */
 export function useDonnees(): Donnees {
   const depot = useDepot();
   const suivre = useSuivi(depot);
+  const utilisateurId = session.utiliser((s) => s.utilisateurId);
   return useMemo(() => {
     const actions = actionsDe(depot) as unknown as Record<string, unknown>;
     return new Proxy({} as Donnees, {
       get(_cible, cle) {
         if (typeof cle !== "string") return undefined;
+        if (cle === "utilisateurId") return utilisateurId;
         if (cle in META) { suivre(cle); return depot.tous(cle as NomCollection); }
         return actions[cle];
       },
     });
-  }, [depot, suivre]);
+  }, [depot, suivre, utilisateurId]);
 }
 
 /** Un enregistrement par son identifiant */
