@@ -46,7 +46,7 @@ describe("moteur de notifications", () => {
     expect(recues.find((n) => n.canal === "Application")).toMatchObject({ type: "Mention", lien: "/projets/prj-1/risques", lu: false });
     expect(recues.find((n) => n.canal === "Teams (simulé)")?.texte).toBeUndefined();
     // Les notifications ne s'annulent pas et n'apparaissent pas comme une action de l'utilisateur
-    expect(depot.derniereAnnulable()?.libelle).not.toBe("Notifications");
+    expect(depot.derniereAnnulable()?.changements[0]?.collection).toBe("commentaires");
   });
 
   it("respecte les préférences et ne notifie pas l'auteur de l'action", () => {

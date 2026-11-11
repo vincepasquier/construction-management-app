@@ -106,7 +106,8 @@ export function supprimerProjet(depot: Depot, projetId: string, motif: string): 
     for (const c of COLLECTIONS) {
       if (c === "projets" || !META[c].parProjet) continue;
       for (const doc of depot.tous(c) as { id: string; projetId?: string }[]) {
-        if (doc.projetId && ids.has(doc.projetId)) { depot.supprimer(c, doc.id, { motif }); n++; }
+        // Les pièces figées (mandat signé, journal de chantier verrouillé) ne partent qu'avec le projet entier
+        if (doc.projetId && ids.has(doc.projetId)) { depot.supprimer(c, doc.id, { motif, origine: c === "mandats" || c === "journalChantier" ? "systeme" : undefined }); n++; }
       }
     }
     for (const id of ids) { depot.supprimer("projets", id, { motif }); n++; }

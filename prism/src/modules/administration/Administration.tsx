@@ -3,6 +3,8 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { EnTetePage, Onglets } from "@/app/ui";
 import { useDepot } from "@/donnees/hooks";
+import { Journal } from "../historique/Journal";
+import { Qualite } from "../qualite/Qualite";
 import { Secours } from "../secours/Secours";
 import { Connecteurs } from "./Connecteurs";
 import { Referentiels } from "./Referentiels";
@@ -12,6 +14,8 @@ const ONGLETS = [
   { id: "referentiels", libelle: "Référentiels" },
   { id: "types", libelle: "Types de projet" },
   { id: "connecteurs", libelle: "Connecteurs" },
+  { id: "qualite", libelle: "Qualité des données" },
+  { id: "journal", libelle: "Journal d'audit" },
   { id: "sauvegarde", libelle: "Sauvegarde" },
 ] as const;
 type Onglet = (typeof ONGLETS)[number]["id"];
@@ -28,6 +32,8 @@ export function Administration() {
       {onglet === "referentiels" && <Referentiels />}
       {onglet === "types" && <TypesProjet />}
       {onglet === "connecteurs" && <Connecteurs />}
+      {onglet === "qualite" && <Qualite />}
+      {onglet === "journal" && <Journal />}
       {onglet === "sauvegarde" && <Secours depot={depot} integre />}
     </>
   );

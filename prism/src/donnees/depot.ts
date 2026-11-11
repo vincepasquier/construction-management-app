@@ -307,6 +307,20 @@ export class Depot {
     for (const e of this.ecouteurs) e(entree);
   }
 
+  /**
+   * Inscrit au journal un événement qui ne modifie aucune donnée : un export, la consultation d'une
+   * archive, un contrôle. L'entrée n'est pas annulable.
+   */
+  consigner(libelle: string, o: { projetId?: ID; motif?: string; origine?: Origine } = {}): EntreeJournal {
+    const entree = this.nouvelleEntree({ libelle, operations: [], origine: o.origine ?? "saisie", motif: o.motif, projetId: o.projetId, irreversible: true });
+    entree.seq = ++this.seq;
+    this.journal.push(entree);
+    this.incrementer("journal");
+    this.persister({ docs: [], journal: [entree] });
+    this.notifier();
+    return entree;
+  }
+
   /** Défait un changement en mémoire (échec d'un groupe) */
   private defaire(c: Changement): void {
     const magasin = this.docs.get(c.collection)!;
@@ -333,6 +347,10 @@ export class Depot {
     for (let i = this.journal.length - 1; i >= 0 && i >= this.journal.length - 50; i--) {
       const e = this.journal[i];
       if (e.acteurId !== this.acteurId || e.annule || e.annuleePar) continue;
+      // Les écritures de service (notifications, exports consignés, synchronisations) ne comptent pas
+      // comme la « dernière action » de l'utilisateur : elles ne bloquent pas l'annulation de la précédente
+      const deService = e.origine === "systeme" || e.origine === "connecteur" || (e.changements.length === 0 && !e.volumes) || (e.changements.length > 0 && e.changements.every((c) => c.collection === "notifications"));
+      if (deService) continue;
       return e.irreversible ? undefined : e;
     }
     return undefined;

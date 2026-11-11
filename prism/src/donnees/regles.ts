@@ -40,8 +40,9 @@ const photosFigees: Regle = (o) => {
 };
 
 /** Un mandat signé ne se modifie plus : on en crée une nouvelle version */
-const mandatSigne: Regle = (o) => {
-  if (o.collection !== "mandats" || o.op === "creer") return undefined;
+const mandatSigne: Regle = (o, commande) => {
+  // L'élimination d'un projet entier (fin de conservation, suppression par un administrateur) passe par le système
+  if (o.collection !== "mandats" || o.op === "creer" || commande.origine === "systeme") return undefined;
   const avant = o.avant as unknown as Mandat;
   if (avant.statut !== "Signé" && avant.statut !== "Remplacé") return undefined;
   if (o.op === "supprimer") return "Un mandat signé est conservé : il ne peut pas être supprimé.";
@@ -51,8 +52,8 @@ const mandatSigne: Regle = (o) => {
     : undefined;
 };
 
-const journalVerrouille: Regle = (o) => {
-  if (o.collection !== "journalChantier" || o.op === "creer") return undefined;
+const journalVerrouille: Regle = (o, commande) => {
+  if (o.collection !== "journalChantier" || o.op === "creer" || commande.origine === "systeme") return undefined;
   return (o.avant as unknown as EntreeJournalChantier).verrouillee ? "Cette journée du journal de chantier est verrouillée." : undefined;
 };
 

@@ -119,3 +119,25 @@ describe("reprise de Chantier+", () => {
     expect(d.tous("clotures").length).toBe(origine.clotures.length);
   });
 });
+
+describe("suppression d'un projet", () => {
+  it("retire le projet, ses sous-projets et toutes leurs données, mandat signé compris", async () => {
+    const { Depot } = await import("./depot");
+    const { StockageMemoire } = await import("./stockage");
+    const { REGLES, autoriser } = await import("./regles");
+    const { chargerDemo, supprimerProjet } = await import("./initialisation");
+    const depot = new Depot(new StockageMemoire(), { autoriser, regles: REGLES });
+    await depot.ouvrir();
+    await chargerDemo(depot, { gouvernance: true, jour: "2026-11-11" });
+    const parent = depot.tous("projets").find((p) => p.numeroSource === "INF-2026-0312")!;
+    const avant = depot.tous("projets").length;
+    expect(depot.parProjet("mandats", parent.id)[0].statut).toBe("Signé");
+    expect(() => supprimerProjet(depot, parent.id, "")).toThrow(/motif/i);
+    expect(depot.tous("projets")).toHaveLength(avant);
+    const n = supprimerProjet(depot, parent.id, "Projet abandonné, saisi par erreur");
+    expect(n).toBeGreaterThan(10);
+    expect(depot.tous("projets")).toHaveLength(avant - 3);
+    expect(depot.parProjet("mandats", parent.id)).toHaveLength(0);
+    expect(depot.journal.at(-1)).toMatchObject({ motif: "Projet abandonné, saisi par erreur" });
+  });
+});

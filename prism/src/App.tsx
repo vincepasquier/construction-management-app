@@ -26,6 +26,8 @@ const Rapports = page(() => import("./modules/rapports/Rapports"), "Rapports");
 const ComInv = page(() => import("./modules/gouvernance/ComInv"), "ComInv");
 const DecisionsProjet = page(() => import("./modules/gouvernance/DecisionsProjet"), "DecisionsProjet");
 const Pilotage = page(() => import("./modules/pilotage/Pilotage"), "Pilotage");
+const PageHistorique = page(() => import("./modules/historique/PageHistorique"), "PageHistorique");
+const Archives = page(() => import("./modules/archives/Archives"), "Archives");
 const Ressources = page(() => import("./modules/ressources/Ressources"), "Ressources");
 const Organisation = page(() => import("./modules/organisation/Organisation"), "Organisation");
 const Entreprises = page(() => import("./modules/entreprises/Entreprises"), "Entreprises");
@@ -43,7 +45,7 @@ export default function App() {
           <Route path="cominv" element={<ComInv />} />
           <Route path="ressources" element={<Ressources />} />
           <Route path="entreprises" element={<Entreprises />} />
-          <Route path="archives" element={<EnConstruction titre="Archives" etape={4} />} />
+          <Route path="archives" element={<Archives />} />
           <Route path="acces" element={<Acces />} />
           <Route path="administration/*" element={<Administration />} />
           <Route path="projets/:projetId" element={<ProjetCourant />}>
@@ -63,6 +65,7 @@ export default function App() {
             <Route path="decisions" element={<DecisionsProjet />} />
             <Route path="validations" element={<Validations />} />
             <Route path="documents" element={<Documents />} />
+            <Route path="historique" element={<PageHistorique />} />
             <Route path="*" element={<EnConstruction titre="Module du projet" etape={2} />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
