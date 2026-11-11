@@ -1,3 +1,4 @@
+import { imprimer } from "@/app/hote";
 import { useEffect } from "react";
 import { Printer, X } from "lucide-react";
 import { cascade, equilibreMutation, grouper, reserve } from "@/domaine/lib/budget";
@@ -31,7 +32,7 @@ export function RapportMensuel({ b, onFermer }: { b: Budget; onFermer: () => voi
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-100 dark:bg-slate-950">
       <div className="pas-impression sticky top-0 z-10 flex items-center justify-end gap-2 border-b border-slate-200 bg-white/90 px-6 py-3 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
         <span className="mr-auto text-sm text-slate-500">Imprimez ou choisissez « Enregistrer au format PDF » dans la fenêtre d'impression.</span>
-        <Bouton libre variante="primaire" icone={<Printer size={15} />} onClick={() => window.print()}>Imprimer / PDF</Bouton>
+        <Bouton libre variante="primaire" icone={<Printer size={15} />} onClick={() => imprimer()}>Imprimer / PDF</Bouton>
         <Bouton libre icone={<X size={15} />} onClick={onFermer}>Fermer</Bouton>
       </div>
       <div className="zone-impression mx-auto my-6 max-w-[210mm] bg-white p-10 text-[12px] leading-relaxed text-slate-900 shadow-sm print:my-0 print:shadow-none">

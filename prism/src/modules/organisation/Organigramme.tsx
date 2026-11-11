@@ -1,3 +1,4 @@
+import { imprimer } from "@/app/hote";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Check, LayoutTemplate, Mail, Maximize2, Pencil, Phone, Printer, RefreshCw, Sparkles, Square, Wand2, X } from "lucide-react";
 import { useProjet, useDonnees } from "@/donnees/hooks";
@@ -84,7 +85,7 @@ export function OrganigrammeProjet() {
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2 pas-impression">
         {edition && <p className="mr-auto text-sm text-slate-500">Survolez une case pour ajouter un subordonné, la modifier ou la supprimer.</p>}
         <Bouton libre icone={<Maximize2 size={15} />} onClick={() => setPleinEcran(true)}>Plein écran</Bouton>
-        <Bouton libre icone={<Printer size={15} />} onClick={() => { setPleinEcran(true); setTimeout(() => window.print(), 300); }}>Imprimer</Bouton>
+        <Bouton libre icone={<Printer size={15} />} onClick={() => { setPleinEcran(true); setTimeout(() => imprimer(), 300); }}>Imprimer</Bouton>
         {edition && <Bouton icone={<RefreshCw size={15} />} onClick={async () => { if (await confirmer({ titre: "Régénérer l'organigramme", message: "L'organigramme actuel sera remplacé par une version générée à partir des données du projet.", action: "Régénérer" })) generer(); }}>Régénérer</Bouton>}
         <Bouton variante={edition ? "primaire" : "secondaire"} icone={edition ? <Check size={15} /> : <Pencil size={15} />} onClick={() => setEdition(!edition)}>{edition ? "Terminer" : "Modifier"}</Bouton>
       </div>
@@ -93,7 +94,7 @@ export function OrganigrammeProjet() {
         <div className="fixed inset-0 z-50 flex flex-col bg-slate-50 dark:bg-slate-950">
           <header className="pas-impression flex items-center gap-3 border-b border-slate-200 bg-white px-5 py-3 dark:border-slate-800 dark:bg-slate-900">
             <p className="min-w-0 flex-1 truncate font-semibold text-slate-900 dark:text-white">Organigramme · {projet.code} <span className="font-normal text-slate-500">{projet.nom}</span></p>
-            <Bouton libre variante="fantome" icone={<Printer size={15} />} onClick={() => window.print()}>Imprimer</Bouton>
+            <Bouton libre variante="fantome" icone={<Printer size={15} />} onClick={() => imprimer()}>Imprimer</Bouton>
             <button type="button" onClick={() => setPleinEcran(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Fermer"><X size={20} /></button>
           </header>
           <div className="zone-impression flex-1 overflow-auto">

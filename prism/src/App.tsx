@@ -1,5 +1,6 @@
+import { EN_ARTEFACT } from "./app/hote";
 import { lazy } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, MemoryRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Coquille } from "./app/Coquille";
 import { Introuvable } from "./app/Introuvable";
 import { ProjetCourant } from "./app/ProjetCourant";
@@ -35,9 +36,12 @@ const Entreprises = page(() => import("./modules/entreprises/Entreprises"), "Ent
 const Acces = page(() => import("./modules/acces/Acces"), "Acces");
 const Administration = page(() => import("./modules/administration/Administration"), "Administration");
 
+// Un artefact n'a qu'une adresse : les écrans s'y enchaînent en mémoire, sans toucher à l'URL
+const Routeur = EN_ARTEFACT ? MemoryRouter : BrowserRouter;
+
 export default function App() {
   return (
-    <BrowserRouter>
+    <Routeur>
       <Routes>
         <Route element={<Coquille />}>
           <Route index element={<MonTravail />} />
@@ -73,6 +77,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </Routeur>
   );
 }

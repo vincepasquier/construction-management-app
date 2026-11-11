@@ -1,5 +1,6 @@
 // Pilotage groupe : la même base de projets, lue selon quatre rôles — Finance, PMO, Direction et
 // Conseil d'administration. Les sous-projets sont compris dans leur projet parent (pas de double compte).
+import { imprimer } from "@/app/hote";
 import { CalendarCheck, Printer } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -270,7 +271,7 @@ export function Pilotage() {
     <div className="space-y-6 zone-impression">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-slate-600 dark:text-slate-300">Projets stratégiques ou suivis par le Conseil d'administration, au {formatDate(jour)}. Ce marquage se règle dans la fiche de chaque projet.</p>
-        <Bouton libre icone={<Printer size={15} />} className="pas-impression" onClick={() => window.print()}>Imprimer / PDF</Bouton>
+        <Bouton libre icone={<Printer size={15} />} className="pas-impression" onClick={() => imprimer()}>Imprimer / PDF</Bouton>
       </div>
       {suivis.length === 0 ? <Alerte type="info">Aucun projet n'est marqué « stratégique » ou « suivi par le Conseil d'administration ».</Alerte> : (
         <>

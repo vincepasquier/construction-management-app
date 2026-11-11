@@ -1,3 +1,4 @@
+import { imprimer } from "@/app/hote";
 import { Commentaires } from "@/modules/collaboration/Commentaires";
 // Fiche projet : l'état du projet en une page, lisible et imprimable, avec l'origine de chaque
 // donnée (système source, calcul, saisie).
@@ -65,7 +66,7 @@ export function Synthese({ complements }: { complements?: ReactNode }) {
         </span>}
         actions={<>
           {projet.numeroSource && <Bouton icone={<RefreshCw size={15} className={synchro ? "animate-spin" : ""} />} disabled={synchro} onClick={resynchroniser}>Synchroniser</Bouton>}
-          <Bouton libre icone={<Printer size={15} />} onClick={() => window.print()}>Imprimer / PDF</Bouton>
+          <Bouton libre icone={<Printer size={15} />} onClick={() => imprimer()}>Imprimer / PDF</Bouton>
           <Bouton variante="primaire" icone={<Pencil size={15} />} onClick={() => setEdition(true)}>Modifier la fiche</Bouton>
         </>} />
       {edition && <FicheEdition projet={projet} onFermer={() => setEdition(false)} />}

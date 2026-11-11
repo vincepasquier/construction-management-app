@@ -1,5 +1,6 @@
 // Traitements IA à réponse structurée : la sortie est contrainte par un schéma (Zod),
 // ce qui garantit un résultat directement exploitable par l'application.
+import { CONSIGNES_RISQUES } from "../src/domaine/ia/consignes";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import * as z from "zod/v4";
@@ -52,7 +53,7 @@ export const SchemaRisques = z.object({
   })),
 });
 
-export const SYSTEME_RISQUES = `Tu es directeur de projet expérimenté en infrastructure et génie civil en Suisse. À partir des données du projet, propose de 6 à 10 risques pertinents qui ne figurent pas déjà dans le registre existant. Sois concret et spécifique au projet (phase, ouvrages, contrats, planning, écarts financiers), évite les généralités. Évalue probabilité et impact de 1 à 5 et propose des mesures réalistes. Réponds en français.`;
+export { CONSIGNES_RISQUES as SYSTEME_RISQUES };
 
 // ---------------------------------------------------------------------------
 

@@ -167,7 +167,7 @@ function Descriptif({ ao, maj }: { ao: AppelOffres; maj: (p: Partial<AppelOffres
   return (
     <Carte titre="Descriptif selon CAN"
       sousTitre={ao.source ? `Importé de ${ao.source.fichier}${ao.source.logiciel ? ` · ${ao.source.logiciel}` : ""}${ao.source.date ? ` · ${formatDate(ao.source.date)}` : ""}` : "Positions du catalogue des articles normalisés, regroupées par chapitre"}
-      action={<div className="flex gap-2">
+      action={<div className="flex flex-wrap justify-end gap-2">
         <input ref={fichierCrbx} type="file" accept=".crbx,.e1s,.01s,.x1s" hidden onChange={(e) => { if (e.target.files?.[0]) void importerCrbx(e.target.files[0]); e.target.value = ""; }} />
         <Bouton taille="sm" icone={<FileArchive size={14} />} onClick={() => fichierCrbx.current?.click()} title="Fichier CRBX / SIA 451 exporté du logiciel de soumission">Importer CRBX</Bouton>
         <input ref={fichier} type="file" accept=".csv,.txt" hidden onChange={(e) => e.target.files?.[0] && importer(e.target.files[0])} />
@@ -307,7 +307,7 @@ function Comparatif({ ao, maj, nomEnt }: { ao: AppelOffres; maj: (p: Partial<App
       </Carte>
     )}
     <Carte titre="Comparatif des prix unitaires" sousTitre="Prix le plus bas en vert · écart > 30 % par rapport à la médiane signalé en orange"
-      action={<div className="flex gap-2">
+      action={<div className="flex flex-wrap justify-end gap-2">
         {ao.soumissions.length > 0 && <Bouton libre taille="sm" icone={<Download size={14} />} onClick={exporter}>Export</Bouton>}
         <input ref={fichiersOffres} type="file" multiple accept=".crbx,.e1s,.01s,.x1s" hidden onChange={(e) => { const fs = [...(e.target.files ?? [])]; if (fs.length) void importerOffres(fs); e.target.value = ""; }} />
         <Bouton taille="sm" icone={<FileArchive size={14} />} onClick={() => fichiersOffres.current?.click()} title="Un ou plusieurs fichiers CRBX remplis par les entreprises">Importer des offres CRBX</Bouton>

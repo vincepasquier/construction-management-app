@@ -17,6 +17,10 @@ body {
   font-feature-settings: "tnum" 1, "cv11" 1;
 }
 
+/* Un contenu large (tableau, frise, matrice) défile dans son propre cadre : il n'élargit jamais la
+   colonne qui le porte, donc jamais la page sur un écran étroit. */
+@layer base { .grid > * { min-width: 0; } }
+
 .num { font-variant-numeric: tabular-nums; }
 
 /* Barres de défilement discrètes */

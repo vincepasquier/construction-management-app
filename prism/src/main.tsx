@@ -3,21 +3,47 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import { Demarrage } from "./app/Demarrage";
 import { notifier } from "./app/etatUI";
+import { EN_ARTEFACT, enregistrerParHote, themeHote } from "./app/hote";
 import { Avis } from "./app/ui";
 import { Depot } from "./donnees/depot";
 import { brancherErreurs, FournisseurDepot, useDepot, useDonnees } from "./donnees/hooks";
 import { definirSeuilsCriticite } from "./domaine/lib/risques";
 import { brancherNotifications, rappelsDuJour } from "./donnees/notifications";
-import { brancherJournalExports } from "./outils/telechargement";
+import { brancherJournalExports, definirEnregistreur } from "./outils/telechargement";
 import { installerReferentiels } from "./donnees/initialisation";
 import { autoriser, REGLES } from "./donnees/regles";
 import { session } from "./donnees/session";
+import { StockageMemoire } from "./donnees/stockage";
 import { StockageIndexedDB } from "./donnees/stockageIndexedDB";
 import { Secours } from "./modules/secours/Secours";
 import "./index.css";
 
 const canal = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("prism") : null;
-const depot = new Depot(new StockageIndexedDB(), { autoriser, regles: REGLES, canal });
+let depot = new Depot(new StockageIndexedDB(), { autoriser, regles: REGLES, canal });
+
+if (EN_ARTEFACT) {
+  // Un artefact ne télécharge rien lui-même : la visionneuse propose le fichier, le lecteur confirme
+  definirEnregistreur(enregistrerParHote);
+  session.ecrire({ theme: themeHote() });
+}
+
+/**
+ * Ouvre la base. En artefact, le navigateur peut la refuser (aperçu, navigation privée) : l'application
+ * s'ouvre alors en mémoire. Une base vide y reçoit la démonstration, pour arriver sur des écrans remplis.
+ */
+async function ouvrirBase(): Promise<void> {
+  try {
+    await depot.ouvrir();
+  } catch (e) {
+    if (!EN_ARTEFACT) throw e;
+    depot = new Depot(new StockageMemoire(), { autoriser, regles: REGLES });
+    await depot.ouvrir();
+  }
+  if (EN_ARTEFACT && depot.estVide()) {
+    const { chargerPortefeuille } = await import("./donnees/demo/portefeuille");
+    await chargerPortefeuille(depot);
+  }
+}
 brancherErreurs((message) => notifier(message, "erreur"));
 
 /** Si un écran plante, on garde un accès à la sauvegarde plutôt qu'une page blanche */
@@ -45,7 +71,7 @@ function Amorce() {
   const [etat, setEtat] = useState<"ouverture" | "pret" | Error>("ouverture");
   useEffect(() => {
     let actif = true;
-    depot.ouvrir().then(() => {
+    ouvrirBase().then(() => {
       if (!actif) return;
       depot.acteurId = session.lire().utilisateurId ?? undefined;
       // Une base déjà remplie reçoit les référentiels ajoutés par les versions suivantes
@@ -63,7 +89,7 @@ function Amorce() {
     }).catch((e: unknown) => actif && setEtat(e instanceof Error ? e : new Error(String(e))));
     return () => { actif = false; };
   }, []);
-  if (etat === "ouverture") return <p className="flex h-full items-center justify-center text-sm text-slate-400">Ouverture de la base…</p>;
+  if (etat === "ouverture") return <p className="flex h-full items-center justify-center text-sm text-slate-400">{EN_ARTEFACT ? "Préparation de la démonstration…" : "Ouverture de la base…"}</p>;
   if (etat instanceof Error) return <Secours depot={depot} erreur={etat.message} />;
   return (
     <FournisseurDepot depot={depot}>

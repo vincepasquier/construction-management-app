@@ -47,7 +47,7 @@ export function Configuration() {
   );
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="space-y-6">
         <Carte titre="Seuils" sousTitre="Finances, santé des projets, risques, conservation">
           <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -3,6 +3,7 @@ import { ecrireXlsx, type Feuille } from "./xlsx";
 
 export function telechargerBlob(nom: string, blob: Blob): void {
   surExport?.(nom);
+  if (enregistreur) return void enregistreur(nom, blob);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -33,3 +34,7 @@ export async function telechargerDocx(nom: string, blocs: import("./docx").Bloc[
 let surExport: ((nom: string) => void) | undefined;
 /** Fait consigner chaque export au journal d'audit (branché au démarrage de l'application) */
 export const brancherJournalExports = (f: (nom: string) => void) => { surExport = f; };
+
+let enregistreur: ((nom: string, blob: Blob) => unknown) | undefined;
+/** Confie l'enregistrement des fichiers à l'hôte quand le navigateur ne peut pas télécharger lui-même (artefact) */
+export const definirEnregistreur = (f: (nom: string, blob: Blob) => unknown) => { enregistreur = f; };

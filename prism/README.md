@@ -111,6 +111,24 @@ référence doit changer. Ils ont été posés de mémoire et recoupés avec des
 texte de la norme ; une révision est entrée en vigueur en 2026. **À faire contrôler par une personne qui a
 la norme en main avant tout usage réel.**
 
+## Version en ligne, sans serveur (artefact claude.ai)
+
+`npm run artefact` construit l'application en une page et deux fichiers (`dist-artefact/prism.js` et
+`prism.css`), publiable telle quelle comme artefact claude.ai. Elle tourne seule dans le cadre restreint
+de l'artefact ; `src/app/hote.ts` réunit ce qui change par rapport au poste :
+
+| Sur le poste | En artefact |
+|---|---|
+| Une adresse par écran | Navigation en mémoire, l'adresse ne change pas |
+| Écran d'accueil vide | La démonstration se charge au premier lancement |
+| Téléchargement direct | Le fichier est proposé par la visionneuse, qui demande confirmation |
+| Assistant relayé par le serveur, avec la clé du poste | Assistant et suggestion de risques sur le compte Claude de la personne qui consulte, avec son accord |
+| Import d'un chiffrage par l'IA | Indisponible : il lit des fichiers côté serveur |
+| Impression en PDF | Indisponible : la visionneuse ne l'autorise pas ; les exports Word et Excel restent |
+
+Les données restent dans le navigateur de chaque personne, propres à l'artefact : rien n'est partagé
+entre lecteurs ni avec la version installée.
+
 ## Démonstration : onze projets complets
 
 « Charger la démonstration » installe un portefeuille de onze projets, chacun rempli sur tous ses écrans

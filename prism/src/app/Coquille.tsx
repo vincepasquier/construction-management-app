@@ -1,5 +1,6 @@
 // Coquille de l'application : navigation à deux niveaux (groupe, puis projet ouvert), barre du haut,
 // droits de page, raccourcis clavier.
+import { EN_ARTEFACT } from "./hote";
 import { ChevronDown, Eye, Lock, Menu, Moon, Search, Sparkles, Sun, Undo2 } from "lucide-react";
 import { lazy, Suspense, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -20,7 +21,11 @@ const Cloche = lazy(() => import("../modules/collaboration/Cloche").then((m) => 
 
 function useTheme() {
   const theme = session.utiliser((s) => s.theme);
-  useEffect(() => { document.documentElement.classList.toggle("dark", theme === "sombre"); }, [theme]);
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "sombre");
+    // En artefact, le fond de la page suit le même choix que l'application
+    if (EN_ARTEFACT) document.documentElement.dataset.theme = theme === "sombre" ? "dark" : "light";
+  }, [theme]);
   return [theme === "sombre", () => session.ecrire({ theme: theme === "sombre" ? "clair" : "sombre" })] as const;
 }
 

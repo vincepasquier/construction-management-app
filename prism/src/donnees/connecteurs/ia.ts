@@ -1,4 +1,6 @@
+import { EN_ARTEFACT } from "@/app/hote";
 import type { ChatMessage } from "@/domaine/types";
+import { appelViaClaude, demanderViaClaude } from "./iaArtefact";
 
 export type EvenementIA =
   | { type: "reflexion" }
@@ -13,6 +15,7 @@ export async function demanderAssistant(
   onEvenement: (e: EvenementIA) => void,
   signal?: AbortSignal,
 ): Promise<void> {
+  if (EN_ARTEFACT) return demanderViaClaude(messages, contexte, onEvenement, signal);
   let reponse: Response;
   try {
     reponse = await fetch("/api/assistant", {
@@ -48,6 +51,7 @@ export async function demanderAssistant(
 
 /** Appel d'un traitement IA à réponse structurée (import de chiffrage, suggestion de risques…) */
 export async function appelIA<T>(route: string, corps: unknown, signal?: AbortSignal): Promise<T> {
+  if (EN_ARTEFACT) return appelViaClaude<T>(route, corps, signal);
   let r: Response;
   try {
     r = await fetch(`/api/ia/${route}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corps), signal });

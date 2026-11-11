@@ -65,7 +65,7 @@ export function Lecteur({ archive, resultat, onFermer }: { archive: ArchiveRegis
         </Carte>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[15rem_minmax(0,1fr)]">
         <nav aria-label="Contenu de l'archive" className="self-start rounded-xl bg-white p-2 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
           {sections.map((c) => (
             <button key={c} type="button" onClick={() => { setCollection(c); setDetail(null); }} className={cx("flex w-full items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-left text-sm", collection === c ? "bg-brand-50 font-medium text-brand-700 dark:bg-sky-950 dark:text-sky-300" : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800")}>

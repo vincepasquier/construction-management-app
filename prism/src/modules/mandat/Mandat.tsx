@@ -1,3 +1,4 @@
+import { imprimer } from "@/app/hote";
 import { Commentaires } from "@/modules/collaboration/Commentaires";
 // Mandat de projet : rédaction selon le modèle du groupe, soumission, signatures, versions.
 import { Copy, Download, FilePlus2, Lock, PenLine, Plus, Printer, Save, Send, Trash2 } from "lucide-react";
@@ -91,7 +92,7 @@ export function Mandat() {
   const retirer = (action: () => void) => editable && <button type="button" aria-label="Retirer la ligne" className="rounded p-1 text-slate-300 hover:text-rose-600" onClick={action}><Trash2 size={14} /></button>;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="space-y-6 zone-impression">
         <h2 className="hidden text-xl font-semibold print:block">Mandat de projet · {projet.code} · version {mandat.version}</h2>
         {mandat.statut === "Signé" && !integre(mandat) && <Alerte type="erreur">Le contenu de ce mandat ne correspond plus à l'empreinte enregistrée à sa signature.</Alerte>}
@@ -144,8 +145,8 @@ export function Mandat() {
             <Champ libelle="Validation en Archiboard reçue le"><Saisie type="date" disabled={!editable} value={c.dateArchiboard ?? ""} onChange={(e) => maj({ dateArchiboard: e.target.value || undefined })} /></Champ>
           </>}
         </>, true)}
-        {rubrique("Jalons et livrables du projet", <div className="sm:col-span-2">
-          <table className="w-full text-sm">
+        {rubrique("Jalons et livrables du projet", <div className="overflow-x-auto sm:col-span-2">
+          <table className="w-full min-w-[38rem] text-sm">
             <thead><tr className="text-left text-xs text-slate-500"><th className="pb-1.5 font-medium">Phase</th><th className="w-40 pb-1.5 font-medium">Début estimé</th><th className="w-40 pb-1.5 font-medium">Fin estimée</th><th className="pb-1.5 font-medium">Livrables</th></tr></thead>
             <tbody>{c.phases.map((p) => {
               const obligatoire = PHASES_MANDAT.find((x) => x.phase === p.phase)?.obligatoire;
@@ -228,7 +229,7 @@ export function Mandat() {
             )}
             <div className="flex gap-2">
               <Bouton libre className="flex-1" icone={<Download size={15} />} onClick={exporter}>Word</Bouton>
-              <Bouton libre className="flex-1" icone={<Printer size={15} />} onClick={() => window.print()}>PDF</Bouton>
+              <Bouton libre className="flex-1" icone={<Printer size={15} />} onClick={() => imprimer()}>PDF</Bouton>
             </div>
             {(mandat.statut === "Signé" || mandat.statut === "Refusé" || mandat.statut === "Remplacé") && !lecture && versions[0].id === mandat.id && (
               <Bouton className="w-full" icone={<Copy size={15} />} onClick={() => { const v = nouvelleVersion(mandat, mandats, { auteurId: utilisateur?.id, date: aujourdhui() }); ajouter("mandats", { ...v, id: nouvelId("man") }); setChoisi(null); notifier(`Version ${v.version} créée en brouillon.`, "succes"); }}>Nouvelle version</Bouton>

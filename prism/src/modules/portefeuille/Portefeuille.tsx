@@ -1,3 +1,4 @@
+import { imprimer } from "@/app/hote";
 import { DemandeAcces } from "@/modules/acces/DemandesAcces";
 // Portefeuille : tous les projets du périmètre de l'utilisateur, en liste ou en tuiles, avec filtres,
 // regroupements, vues enregistrées et export.
@@ -87,7 +88,7 @@ export function Portefeuille() {
     <>
       <EnTetePage titre="Portefeuille" description={`${lignes.length} projet${lignes.length > 1 ? "s" : ""} dans votre périmètre au ${formatDate(jour)}`}
         actions={<>
-          <Bouton libre icone={<Printer size={15} />} onClick={() => window.print()}>Imprimer / PDF</Bouton>
+          <Bouton libre icone={<Printer size={15} />} onClick={() => imprimer()}>Imprimer / PDF</Bouton>
           {horsPerimetre > 0 && <Bouton libre variante="fantome" onClick={() => setDemande(true)} title="Demander l'accès à un projet qui n'est pas dans votre périmètre">Un projet manque ?</Bouton>}
           {droit.ecrire && <Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => setAjout(true)}>Ajouter un projet</Bouton>}
         </>} />

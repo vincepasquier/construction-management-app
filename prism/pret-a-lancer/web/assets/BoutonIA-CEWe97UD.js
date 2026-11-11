@@ -1,0 +1,1 @@
+import{Pt as e}from"./index-MM6TqBBj.js";import{R as t,s as n}from"./ui-CZjz0jkK.js";import{h as r,l as i}from"./hooks-BXSKiPQ8.js";var a=r();function o({question:r,children:o,variante:s}){let{lire:c}=i(`ia`);return c?(0,a.jsx)(n,{libre:!0,variante:s,icone:(0,a.jsx)(e,{size:15}),onClick:()=>t(r),children:o}):null}export{o as t};

@@ -1,3 +1,5 @@
+import { telechargerBlob } from "@/outils/telechargement";
+
 /** Génère un CSV compatible Excel (séparateur « ; », BOM UTF-8) et le télécharge */
 export function telechargerCSV(nom: string, entetes: string[], lignes: (string | number)[][]) {
   const echapper = (v: string | number) => {
@@ -9,10 +11,5 @@ export function telechargerCSV(nom: string, entetes: string[], lignes: (string |
 }
 
 export function telecharger(nomFichier: string, contenu: string, type: string) {
-  const url = URL.createObjectURL(new Blob([contenu], { type }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = nomFichier;
-  a.click();
-  URL.revokeObjectURL(url);
+  telechargerBlob(nomFichier, new Blob([contenu], { type }));
 }

@@ -84,11 +84,11 @@ export function EnTetePage({ titre, description, actions }: { titre: string; des
 export function Indicateur({ libelle, valeur, detail, tendance, icone, origine }: { libelle: string; valeur: ReactNode; detail?: ReactNode; tendance?: "bon" | "alerte" | "mauvais"; icone?: ReactNode; origine?: OrigineChamp }) {
   return (
     <Carte className="p-4">
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
         <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{libelle}</p>
         {origine ? <PastilleOrigine origine={origine} /> : icone && <span className="text-slate-400">{icone}</span>}
       </div>
-      <p className="mt-2 text-xl leading-tight font-semibold num text-slate-900 2xl:text-2xl dark:text-white" title={typeof valeur === "string" ? valeur : undefined}>{valeur}</p>
+      <p className="mt-2 text-lg leading-tight font-semibold num text-slate-900 sm:text-xl 2xl:text-2xl dark:text-white" title={typeof valeur === "string" ? valeur : undefined}>{valeur}</p>
       {detail && (
         <p className={clsx("mt-1 text-xs num",
           tendance === "bon" && "text-emerald-600",
