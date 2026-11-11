@@ -8,6 +8,8 @@ import { nouvelId } from "@/domaine/lib/id";
 import { appelIA } from "@/donnees/connecteurs/ia";
 import { contexteAssistant } from "@/modules/assistant/contexte";
 import { FormulaireAction, nouvelleAction } from "@/modules/taches/FormulaireAction";
+import { risquesARevoir } from "@/donnees/gouvernance";
+import { AnalyseRisque, PastilleScore, scoreResiduel } from "./AnalyseRisque";
 import { Avatar, Badge, BadgeStatut, Bouton, Carte, Champ, cx, EnTetePage, Indicateur, Liste, Modale, Onglets, Saisie, Tableau, Vide, Zone } from "@/app/ui";
 import type { Action, CategorieRisque, Risque, StatutRisque } from "@/domaine/types";
 
@@ -27,7 +29,7 @@ type SuggestionRisque = Pick<Risque, "titre" | "description" | "categorie" | "pr
 export function Risques() {
   const utilisateur = useUtilisateur();
   const d = useProjet();
-  const { personnes, entreprises, ajouter, modifier } = useDonnees();
+  const { personnes, entreprises, configurations, ajouter, modifier } = useDonnees();
   const [vue, setVue] = useState<"registre" | "personnes">("registre");
   const [cellule, setCellule] = useState<{ p: number; i: number } | null>(null);
   const [voirClos, setVoirClos] = useState(false);
@@ -58,6 +60,8 @@ export function Risques() {
     }
   };
 
+  const joursRevue = configurations.find((c) => c.id === "courante")?.joursRevueRisque ?? 90;
+  const aRevoir = new Set(risquesARevoir(d.risques, aujourdhui(), joursRevue).map((r) => r.id));
   const prochainCode = (decalage = 0) => `R-${String(d.risques.length + 1 + decalage).padStart(2, "0")}`;
   const nouveau = (): Risque => ({
     id: nouvelId("rsk"), projetId: projet.id, code: prochainCode(), titre: "", description: "", categorie: "Technique", probabilite: 3, impact: 3,
@@ -76,7 +80,7 @@ export function Risques() {
         <Indicateur libelle="Risques actifs" valeur={actifs.length} detail={`${d.risques.filter((r) => r.statut === "Clos").length} clos`} />
         <Indicateur libelle="Critiques" valeur={actifs.filter((r) => score(r) >= 15).length} tendance={actifs.some((r) => score(r) >= 15) ? "mauvais" : "bon"} detail="score ≥ 15" />
         <Indicateur libelle="Exposition pondérée" valeur={formatCompact(exposition(d.risques))} detail="CHF · impact × probabilité" />
-        <Indicateur libelle="Survenus" valeur={d.risques.filter((r) => r.statut === "Survenu").length} tendance={d.risques.some((r) => r.statut === "Survenu") ? "alerte" : undefined} />
+        <Indicateur libelle="À revoir" valeur={aRevoir.size} tendance={aRevoir.size ? "alerte" : "bon"} detail={`revue au-delà de ${joursRevue} jours · ${d.risques.filter((r) => r.statut === "Survenu").length} survenu(s)`} />
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-3">
@@ -126,10 +130,10 @@ export function Risques() {
                       return (
                         <tr key={r.id} className="cursor-pointer" onClick={() => setEdition(r)}>
                           <td className="max-w-md">
-                            <p className="font-medium"><span className="mr-1.5 text-xs text-slate-400">{r.code}</span>{r.titre}</p>
+                            <p className="font-medium"><span className="mr-1.5 text-xs text-slate-400">{r.code}</span>{r.titre}{r.nature === "Opportunité" && <span className="ml-2"><Badge couleur="vert">Opportunité</Badge></span>}{aRevoir.has(r.id) && <span className="ml-2"><Badge couleur="orange" titre="La dernière revue de ce risque dépasse le délai fixé">À revoir</Badge></span>}</p>
                             <p className="truncate text-xs text-slate-500">{r.categorie}{r.mesures && ` · ${r.mesures}`}</p>
                           </td>
-                          <td><BadgeCriticite r={r} /></td>
+                          <td className="whitespace-nowrap"><BadgeCriticite r={r} />{scoreResiduel(r) !== undefined && <span className="ml-1.5 inline-flex items-center gap-1 text-xs text-slate-400">→ <PastilleScore valeur={scoreResiduel(r)!} titre="Criticité résiduelle, après mesures" /></span>}</td>
                           <td className="num text-right">{r.impactFinancier ? formatCHF(r.impactFinancier) : "—"}</td>
                           <td>{resp ? <span className="inline-flex items-center gap-1.5 whitespace-nowrap"><Avatar nom={resp} taille={22} />{resp}</span> : <span className="text-slate-400">—</span>}</td>
                           <td><BadgeStatut statut={r.statut} />{nbActions > 0 && <p className="mt-1 text-xs text-slate-500">{nbActions} tâche(s)</p>}</td>
@@ -226,7 +230,7 @@ function FormulaireRisque({ initial, onFermer, onEnregistrer, onCreerTache }: { 
       <div className="grid gap-4 md:grid-cols-3">
         <Champ libelle="Intitulé" className="md:col-span-2"><Saisie value={r.titre} onChange={(e) => setR({ ...r, titre: e.target.value })} /></Champ>
         <Champ libelle="Catégorie"><Liste value={r.categorie} onChange={(e) => setR({ ...r, categorie: e.target.value as CategorieRisque })}>{CATEGORIES_RISQUE.map((c) => <option key={c}>{c}</option>)}</Liste></Champ>
-        <Champ libelle="Description / cause" className="md:col-span-3"><Zone rows={2} value={r.description} onChange={(e) => setR({ ...r, description: e.target.value })} /></Champ>
+        <Champ libelle="Description" className="md:col-span-3"><Zone rows={2} value={r.description} onChange={(e) => setR({ ...r, description: e.target.value })} /></Champ>
         <Champ libelle={`Probabilité : ${r.probabilite} – ${PROBA[r.probabilite]}`}>
           <input type="range" min={1} max={5} value={r.probabilite} onChange={(e) => setR({ ...r, probabilite: Number(e.target.value) })} className="w-full accent-brand-600" />
         </Champ>
@@ -249,6 +253,7 @@ function FormulaireRisque({ initial, onFermer, onEnregistrer, onCreerTache }: { 
         </Champ>
         <Champ libelle="Échéance de traitement"><Saisie type="date" value={r.echeance ?? ""} onChange={(e) => setR({ ...r, echeance: e.target.value || undefined })} /></Champ>
       </div>
+      <AnalyseRisque r={r} onChange={setR} />
       {liees.length > 0 && (
         <div className="mt-4 rounded-lg bg-slate-50 p-3 text-sm dark:bg-slate-800">
           <p className="mb-1 font-medium">Tâches de traitement</p>

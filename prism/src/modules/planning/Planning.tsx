@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { BoutonIA } from "@/modules/assistant/BoutonIA";
 import { Diamond, Plus } from "lucide-react";
 import { useProjet, useDonnees } from "@/donnees/hooks";
@@ -15,7 +16,7 @@ const COULEURS_LOT = ["#6366f1", "#0891b2", "#059669", "#d97706", "#db2777", "#7
 
 interface Glisse { id: string; mode: "deplacer" | "etirer"; x0: number; delta: number }
 
-export function Planning() {
+export function Planning({ onglets }: { onglets?: ReactNode } = {}) {
   const d = useProjet();
   const { personnes, modifier, ajouter, supprimer } = useDonnees();
   const [zoom, setZoom] = useState<Zoom>("mois");
@@ -81,6 +82,7 @@ export function Planning() {
           <BoutonIA question={"Analyse le planning : tâches en retard, chemin critique probable (selon les dépendances), impact sur les jalons et la date de réception, et propose des mesures de rattrapage."}>Analyse IA</BoutonIA>
           <Bouton variante="primaire" icone={<Plus size={16} />} onClick={() => setEdition({ id: nouvelId("t"), projetId: p.id, nom: "", debut: jour, fin: ajouterJours(jour, 14), avancement: 0, jalon: false, dependances: [], lotId: d.lots[0]?.id })}>Tâche</Bouton>
         </>} />
+      {onglets}
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Indicateur libelle="Avancement global" valeur={formatPct(avancementPlanning(d.taches), 0)} />

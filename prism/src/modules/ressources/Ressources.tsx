@@ -4,7 +4,8 @@ import { useProjet, useDonnees } from "@/donnees/hooks";
 import { aujourdhui, formatDate } from "@/domaine/lib/format";
 import { nouvelId } from "@/domaine/lib/id";
 import { libelleCFC } from "@/domaine/data/cfc";
-import { Avatar, Badge, Bouton, Carte, Champ, cx, EnTetePage, Liste, Modale, Saisie, Tableau } from "@/app/ui";
+import { Avatar, Badge, Bouton, Carte, Champ, cx, EnTetePage, Liste, Modale, Onglets, Saisie, Tableau } from "@/app/ui";
+import { Capacite } from "./Capacite";
 import type { Affectation, Lot, Personne, Role } from "@/domaine/types";
 
 const ROLES: Role[] = ["Directeur de projet", "Responsable de lot", "Conducteur de travaux", "Ingénieur", "Architecte", "Assistant(e) de projet", "Maître d'ouvrage"];
@@ -22,6 +23,7 @@ export function Ressources() {
   const [personne, setPersonne] = useState<Personne | null>(null);
   const [affectation, setAffectation] = useState<Affectation | null>(null);
   const [lot, setLot] = useState<Lot | null>(null);
+  const [onglet, setOnglet] = useState<"equipe" | "capacite">("equipe");
 
   const mois: string[] = [];
   const d0 = new Date(aujourdhui().slice(0, 7) + "-01");
@@ -35,6 +37,9 @@ export function Ressources() {
           <Bouton icone={<Plus size={15} />} onClick={() => setAffectation({ id: nouvelId("aff"), personneId: personnes[0]?.id ?? "", projetId: d.projet?.id ?? projets[0]?.id ?? "", pourcentage: 50, debut: aujourdhui(), fin: d.projet?.dateFin ?? aujourdhui() })}>Affectation</Bouton>
           <Bouton variante="primaire" icone={<UserPlus size={15} />} onClick={() => setPersonne({ id: nouvelId("per"), nom: "", role: "Responsable de lot", email: "", organisation: "", capacite: 100 })}>Personne</Bouton>
         </>} />
+      <div className="mb-5 pas-impression"><Onglets valeur={onglet} onChange={setOnglet} options={[{ id: "equipe", libelle: "Équipe et plan de charge" }, { id: "capacite", libelle: "Capacité des directions" }]} /></div>
+      {onglet === "capacite" && <Capacite />}
+      <div className={onglet === "equipe" ? undefined : "hidden"}>
 
       <Carte titre="Plan de charge" sousTitre="Somme des affectations tous projets confondus, rapportée à la capacité de chacun (12 prochains mois)">
         <div className="overflow-x-auto">
@@ -178,6 +183,7 @@ export function Ressources() {
           </div>
         </Modale>
       )}
+      </div>
     </>
   );
 }

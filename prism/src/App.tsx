@@ -15,7 +15,7 @@ const AppelsOffres = page(() => import("./modules/achats/AppelsOffres"), "Appels
 const AppelOffresDetail = page(() => import("./modules/achats/AppelOffresDetail"), "AppelOffresDetail");
 const Contrats = page(() => import("./modules/contrats/Contrats"), "Contrats");
 const ContratDetail = page(() => import("./modules/contrats/ContratDetail"), "ContratDetail");
-const Planning = page(() => import("./modules/planning/Planning"), "Planning");
+const Planification = page(() => import("./modules/planning/Planification"), "Planification");
 const Taches = page(() => import("./modules/taches/Taches"), "Taches");
 const Risques = page(() => import("./modules/risques/Risques"), "Risques");
 const Documents = page(() => import("./modules/documents/Documents"), "Documents");
@@ -47,7 +47,7 @@ export default function App() {
           <Route path="administration/*" element={<Administration />} />
           <Route path="projets/:projetId" element={<ProjetCourant />}>
             <Route index element={<SyntheseProjet />} />
-            <Route path="planning" element={<Planning />} />
+            <Route path="planning" element={<Planification />} />
             <Route path="taches" element={<Taches />} />
             <Route path="risques" element={<Risques />} />
             <Route path="organisation" element={<Organisation />} />
