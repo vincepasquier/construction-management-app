@@ -2,6 +2,7 @@
 // documenté (identifiants, relations, historique, manifeste), scellé par une empreinte SHA-256.
 // Le projet devient alors non modifiable ; l'archive se relit dans le lecteur intégré et sa
 // restaurabilité se contrôle à la demande.
+import { supprimerPhotosDesProjets } from "./photos";
 import type { ArchiveRegistre } from "../domaine/socle/types";
 import type { ID } from "../domaine/types";
 import { sha256 } from "../outils/empreinte";
@@ -21,6 +22,7 @@ const DESCRIPTION = [
   "« journal » : l'historique des modifications du projet (auteur, date, origine, ancienne et nouvelle valeur).",
   "« manifeste » : le nombre d'enregistrements par collection, vérifié à chaque contrôle.",
   "Les documents ne sont pas copiés : ils restent dans SharePoint, selon ses règles de conservation ; l'archive garde leurs liens.",
+  "Les photographies du chantier ne sont pas copiées non plus : l'archive garde leurs identifiants et leurs légendes ; les images restent dans le magasin de PRISM jusqu'à l'élimination de l'archive et figurent dans la sauvegarde complète.",
   "L'empreinte SHA-256 du fichier est conservée dans le registre des archives de PRISM.",
 ].join(" ");
 
@@ -165,6 +167,8 @@ export async function eliminerArchive(depot: Depot, a: ArchiveRegistre, motif: s
     depot.supprimer("archives", a.id, { origine: "systeme", motif });
   }, { origine: "systeme", motif, sansDetail: true });
   await depot.supprimerFichier(a.fichierId);
+  // Les photographies du projet partent avec lui : rien n'en garde plus la trace
+  await supprimerPhotosDesProjets(depot, ids);
 }
 
 export interface ResultatRecherche { collection: string; id: ID; extrait: string }

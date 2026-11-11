@@ -2,7 +2,8 @@
 import { peut } from "../domaine/socle/droits";
 import { commentaireExige, precedente, variation } from "../domaine/socle/periodes";
 import type { Mandat, PeriodeFinanciere } from "../domaine/socle/types";
-import type { EntreeJournalChantier } from "../domaine/types-chantier";
+import { regieFigee } from "../domaine/lib/chantier";
+import type { EntreeJournalChantier, Regie } from "../domaine/types-chantier";
 import type { Regle } from "./depot";
 import { META, moduleDe } from "./schema";
 
@@ -52,9 +53,33 @@ const mandatSigne: Regle = (o, commande) => {
     : undefined;
 };
 
-const journalVerrouille: Regle = (o, commande) => {
+const seulsChamps = (avant: object, apres: object, permis: string[]) => {
+  const a = avant as Record<string, unknown>, b = apres as Record<string, unknown>;
+  return Object.keys({ ...a, ...b }).every((k) => permis.includes(k) || JSON.stringify(a[k]) === JSON.stringify(b[k]));
+};
+
+/**
+ * Une journée verrouillée du journal de chantier ne se modifie plus. Seul un administrateur peut la
+ * rouvrir, en donnant un motif : la réouverture reste ainsi lisible dans le journal d'audit.
+ */
+const journalVerrouille: Regle = (o, commande, depot) => {
   if (o.collection !== "journalChantier" || o.op === "creer" || commande.origine === "systeme") return undefined;
-  return (o.avant as unknown as EntreeJournalChantier).verrouillee ? "Cette journée du journal de chantier est verrouillée." : undefined;
+  if (!(o.avant as unknown as EntreeJournalChantier).verrouillee) return undefined;
+  const reouverture = o.op === "modifier" && (o.apres as unknown as EntreeJournalChantier).verrouillee === false && seulsChamps(o.avant!, o.apres!, ["verrouillee"]);
+  if (reouverture) {
+    if (depot.acteur()?.acces?.profil !== "Administrateur") return "Seul un administrateur peut rouvrir une journée verrouillée du journal de chantier.";
+    return commande.motif?.trim() ? undefined : "Rouvrir une journée verrouillée exige un motif.";
+  }
+  return "Cette journée du journal de chantier est verrouillée.";
+};
+
+/** Un bon de régie validé ou facturé est contradictoire : seuls son statut et sa facture évoluent */
+const regieValidee: Regle = (o, commande) => {
+  if (o.collection !== "regies" || o.op === "creer" || commande.origine === "systeme") return undefined;
+  const avant = o.avant as unknown as Regie;
+  if (!regieFigee(avant)) return undefined;
+  if (o.op === "supprimer") return "Un bon de régie validé ne se supprime pas : contestez-le ou rouvrez-le d'abord.";
+  return seulsChamps(o.avant!, o.apres!, ["statut", "factureId", "remarques", "valideParId", "dateValidation"]) ? undefined : "Ce bon de régie est validé : rouvrez-le avant d'en modifier le contenu.";
 };
 
 /** La suppression d'une donnée sensible exige un motif, conservé dans le journal */
@@ -75,4 +100,4 @@ const periodeCommentee: Regle = (o, commande, depot) => {
   return commentaireExige(v, seuil) ? `L'atterrissage a varié de plus de ${seuil} % depuis la période précédente : un commentaire est exigé.` : undefined;
 };
 
-export const REGLES: Regle[] = [projetArchive, photosFigees, mandatSigne, journalVerrouille, motifObligatoire, periodeCommentee];
+export const REGLES: Regle[] = [projetArchive, photosFigees, mandatSigne, journalVerrouille, regieValidee, motifObligatoire, periodeCommentee];

@@ -1,7 +1,8 @@
 import { LienProjet as Link } from "@/app/chemins";
-import { AlertTriangle, CalendarClock, FileWarning, Receipt } from "lucide-react";
+import { AlertTriangle, CalendarClock, FileWarning, HardHat, Receipt } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useProjet, useDonnees } from "@/donnees/hooks";
+import { useProjet, useDonnees, useDroit } from "@/donnees/hooks";
+import { alertesChantier } from "@/domaine/lib/chantier";
 import { avancementPlanning, courbeEnS, tachesEnRetard } from "@/domaine/lib/finance";
 import { totaux as totauxBudget } from "@/domaine/lib/budget";
 import { useBudget } from "@/modules/finances/useBudget";
@@ -15,6 +16,7 @@ export function ComplementsConstruction() {
   const d = useProjet();
   const { personnes, entreprises } = useDonnees();
   const budget = useBudget();
+  const droitChantier = useDroit("chantier");
   if (!d.projet) return null;
   const p = d.projet;
   const jour = aujourdhui();
@@ -35,6 +37,7 @@ export function ComplementsConstruction() {
       const echue = f.echeance < jour;
       return { icone: <Receipt size={16} />, couleur: echue ? "text-rose-600" : "text-sky-600", texte: `Facture ${f.numero} ${entreprises.find((e) => e.id === c?.entrepriseId)?.nom ?? ""} – ${formatCHF(f.montantHT)} (${f.statut}${echue ? ", échue" : ""})`, lien: `/contrats/${c?.id}` };
     }),
+    ...(droitChantier.lire ? alertesChantier({ journal: d.journalChantier, reserves: d.reserves, receptions: d.receptions, regies: d.regies, constats: d.constats }, jour).map((texte) => ({ icone: <HardHat size={16} />, couleur: texte.includes("bloquante") || texte.includes("dépassé") ? "text-rose-600" : "text-amber-600", texte, lien: texte.includes("régie") ? "/chantier?onglet=regies" : "/chantier?onglet=reserves" })) : []),
   ];
 
   return (

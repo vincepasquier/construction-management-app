@@ -47,8 +47,9 @@ const SOURCES: Source[] = [
   { collection: "rapports", type: "Rapport", chemin: () => "rapports", titre: t("titre"), champs: ["type", "phase"], date: "date", responsable: "auteurId" },
   { collection: "autorisations", type: "Autorisation", chemin: () => "juridique", titre: t("type", "objet"), champs: ["autorite", "reference"], date: "dateDepot" },
   { collection: "servitudes", type: "Droit foncier", chemin: () => "juridique", titre: t("parcelle", "proprietaire"), champs: ["commune", "type", "remarque"] },
-  { collection: "reserves", type: "Réserve", chemin: () => "chantier", titre: t("numero", "libelle"), champs: ["description", "localisation"], date: "dateConstat" },
-  { collection: "constats", type: "Constat", chemin: () => "chantier", titre: t("numero", "titre"), champs: ["description", "localisation"], date: "date" },
+  { collection: "reserves", type: "Réserve", chemin: () => "chantier?onglet=reserves", titre: t("numero", "libelle"), champs: ["description", "localisation"], date: "dateConstat" },
+  { collection: "constats", type: "Constat", chemin: () => "chantier?onglet=constats", titre: t("numero", "titre"), champs: ["description", "localisation"], date: "date" },
+  { collection: "regies", type: "Bon de régie", chemin: () => "chantier?onglet=regies", titre: t("numero", "objet"), champs: ["remarques"], date: "date" },
   { collection: "partiesPrenantes", type: "Partie prenante", chemin: () => "organisation", titre: t("nom", "roleProjet"), champs: ["responsabilites", "remarques"] },
 ];
 

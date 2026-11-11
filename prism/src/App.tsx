@@ -27,6 +27,7 @@ const ComInv = page(() => import("./modules/gouvernance/ComInv"), "ComInv");
 const DecisionsProjet = page(() => import("./modules/gouvernance/DecisionsProjet"), "DecisionsProjet");
 const Pilotage = page(() => import("./modules/pilotage/Pilotage"), "Pilotage");
 const PageHistorique = page(() => import("./modules/historique/PageHistorique"), "PageHistorique");
+const Chantier = page(() => import("./modules/chantier/Chantier"), "Chantier");
 const Archives = page(() => import("./modules/archives/Archives"), "Archives");
 const Ressources = page(() => import("./modules/ressources/Ressources"), "Ressources");
 const Organisation = page(() => import("./modules/organisation/Organisation"), "Organisation");
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="appels-offres/:id" element={<AppelOffresDetail />} />
             <Route path="contrats" element={<Contrats />} />
             <Route path="contrats/:id" element={<ContratDetail />} />
+            <Route path="chantier" element={<Chantier />} />
             <Route path="juridique" element={<Juridique />} />
             <Route path="mandat" element={<MandatPhases />} />
             <Route path="rapports" element={<Rapports />} />
