@@ -22,3 +22,9 @@ export function telechargerJson(nom: string, contenu: unknown): void {
 
 /** Nom de fichier sans caractères gênants */
 export const nomFichier = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^\w.-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+
+/** Télécharge un document Word construit à partir de blocs */
+export async function telechargerDocx(nom: string, blocs: import("./docx").Bloc[], pied?: string): Promise<void> {
+  const { creerDocx, TYPE_DOCX } = await import("./docx");
+  telechargerBlob(`${nomFichier(nom)}.docx`, new Blob([creerDocx(blocs, { pied }) as BlobPart], { type: TYPE_DOCX }));
+}

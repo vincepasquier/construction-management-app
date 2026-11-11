@@ -21,6 +21,8 @@ const Risques = page(() => import("./modules/risques/Risques"), "Risques");
 const Documents = page(() => import("./modules/documents/Documents"), "Documents");
 const Validations = page(() => import("./modules/validations/Validations"), "Validations");
 const Juridique = page(() => import("./modules/juridique/Juridique"), "Juridique");
+const MandatPhases = page(() => import("./modules/mandat/MandatPhases"), "MandatPhases");
+const Rapports = page(() => import("./modules/rapports/Rapports"), "Rapports");
 const Ressources = page(() => import("./modules/ressources/Ressources"), "Ressources");
 const Organisation = page(() => import("./modules/organisation/Organisation"), "Organisation");
 const Entreprises = page(() => import("./modules/entreprises/Entreprises"), "Entreprises");
@@ -53,6 +55,8 @@ export default function App() {
             <Route path="contrats" element={<Contrats />} />
             <Route path="contrats/:id" element={<ContratDetail />} />
             <Route path="juridique" element={<Juridique />} />
+            <Route path="mandat" element={<MandatPhases />} />
+            <Route path="rapports" element={<Rapports />} />
             <Route path="validations" element={<Validations />} />
             <Route path="documents" element={<Documents />} />
             <Route path="*" element={<EnConstruction titre="Module du projet" etape={2} />} />
