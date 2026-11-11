@@ -1,6 +1,8 @@
 // Mise en place de la base : référentiels indispensables, puis l'un des trois départs possibles —
 // démonstration, reprise de Chantier+ ou base vide.
+import { aujourdhui } from "../domaine/lib/format";
 import type { Personne, Projet } from "../domaine/types";
+import { installerGouvernanceDemo } from "./demo/gouvernance";
 import { dataPlatformSimulee } from "./connecteurs/dataPlatformSimulee";
 import { importerProjet, synchroniser } from "./connecteurs/synchro";
 import { COMPLEMENTS_SOURCE, docsDemo, NUMEROS_DEMO, UTILISATEUR_DEMO } from "./demo";
@@ -35,8 +37,11 @@ function importer(depot: Depot, docs: DocsParCollection, libelle: string): void 
   if (operations.length) depot.executer({ libelle, origine: "import", operations, sansDetail: true });
 }
 
-/** Charge le jeu de démonstration (fictif) et le synchronise avec la source simulée */
-export async function chargerDemo(depot: Depot): Promise<void> {
+/**
+ * Charge le jeu de démonstration (fictif) et le synchronise avec la source simulée. Avec
+ * `gouvernance`, les projets reçoivent aussi mandats, périodes, rapports, séances et décisions.
+ */
+export async function chargerDemo(depot: Depot, o: { gouvernance?: boolean; jour?: string } = {}): Promise<void> {
   installerReferentiels(depot);
   importer(depot, docsDemo(), "Chargement des données de démonstration");
   const horodatage = new Date().toISOString();
@@ -50,6 +55,7 @@ export async function chargerDemo(depot: Depot): Promise<void> {
   await synchroniser(depot, dataPlatformSimulee, { horodatage });
   session.ecrire({ utilisateurId: UTILISATEUR_DEMO, dernierProjetId: null });
   depot.acteurId = UTILISATEUR_DEMO;
+  if (o.gouvernance) installerGouvernanceDemo(depot, o.jour ?? aujourdhui());
 }
 
 export interface RapportReprise {

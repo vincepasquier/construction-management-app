@@ -25,6 +25,7 @@ const MandatPhases = page(() => import("./modules/mandat/MandatPhases"), "Mandat
 const Rapports = page(() => import("./modules/rapports/Rapports"), "Rapports");
 const ComInv = page(() => import("./modules/gouvernance/ComInv"), "ComInv");
 const DecisionsProjet = page(() => import("./modules/gouvernance/DecisionsProjet"), "DecisionsProjet");
+const Pilotage = page(() => import("./modules/pilotage/Pilotage"), "Pilotage");
 const Ressources = page(() => import("./modules/ressources/Ressources"), "Ressources");
 const Organisation = page(() => import("./modules/organisation/Organisation"), "Organisation");
 const Entreprises = page(() => import("./modules/entreprises/Entreprises"), "Entreprises");
@@ -38,7 +39,7 @@ export default function App() {
         <Route element={<Coquille />}>
           <Route index element={<MonTravail />} />
           <Route path="portefeuille" element={<Portefeuille />} />
-          <Route path="pilotage" element={<EnConstruction titre="Pilotage groupe" etape={3} />} />
+          <Route path="pilotage" element={<Pilotage />} />
           <Route path="cominv" element={<ComInv />} />
           <Route path="ressources" element={<Ressources />} />
           <Route path="entreprises" element={<Entreprises />} />

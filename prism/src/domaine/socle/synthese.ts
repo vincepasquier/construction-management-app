@@ -56,6 +56,8 @@ export function syntheseDe(d: DonneesSynthese): SyntheseFinanciere {
   if (d.mode === "positions") {
     const t = totaux(calculerBudget(d.positions ?? { budget: [], lots: [], contrats: [], factures: [], facturesHorsCommande: [], offres: [], ajustements: [], mutations: [], appelsOffres: [] }));
     const vide = !d.positions?.budget.length && !d.positions?.contrats.length;
+    // Tant qu'aucune position budgétaire n'est saisie, les valeurs de la source tiennent lieu de synthèse
+    if (vide && d.releve) return { ...syntheseDe({ ...d, mode: "synthese" }), mode: "positions" };
     return completer(
       { budgetInitial: t.initial, budgetApprouve: t.revise, engage: t.engage, realise: t.facture, paye: t.paye, atterrissage: t.atterrissage, atterrissageDefavorable: t.atterrissageDefavorable },
       { mode: "positions", origines: partout("calcul"), reference: d.releve, dateSource: d.releve?.date, consolidee: false, vide },
@@ -79,12 +81,13 @@ export function syntheseDe(d: DonneesSynthese): SyntheseFinanciere {
 }
 
 /**
- * Additionne les synthèses d'un projet et de ses sous-projets. En mode « synthèse », le total que la
- * source donne pour le parent reste une valeur de contrôle : ce sont les sous-projets qui s'additionnent.
+ * Additionne les synthèses d'un projet et de ses sous-projets. Le total que la source donne pour le
+ * parent reste une valeur de contrôle : ce sont les sous-projets qui s'additionnent. Seul un parent
+ * qui tient ses propres positions budgétaires s'ajoute à ses sous-projets.
  */
 export function consolider(propre: SyntheseFinanciere, enfants: SyntheseFinanciere[]): SyntheseFinanciere {
   if (enfants.length === 0) return propre;
-  const base = propre.mode === "synthese" || propre.vide ? [] : [propre];
+  const base = propre.mode === "synthese" || propre.origines.budgetApprouve === "source" || propre.vide ? [] : [propre];
   const tous = [...base, ...enfants];
   const somme = Object.fromEntries(CHAMPS.map((c) => [c, tous.reduce((s, x) => s + x[c], 0)])) as unknown as ValeursSynthese;
   const origines = Object.fromEntries(CHAMPS.map((c) => {

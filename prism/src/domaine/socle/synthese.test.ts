@@ -57,4 +57,15 @@ describe("synthèse financière", () => {
     expect(sante({ ecartPct: 0, vide: false }, 3, seuils)).toBe("mauvais");
     expect(sante({ ecartPct: -50, vide: true }, 0, seuils)).toBe("bon");
   });
+
+  it("mode positions sans position budgétaire : les valeurs de la source tiennent lieu de synthèse, sans double compte", () => {
+    const vide = { budget: [], lots: [], contrats: [], factures: [], facturesHorsCommande: [], offres: [], ajustements: [], mutations: [], appelsOffres: [] };
+    const parent = syntheseDe({ mode: "positions", positions: vide, releve: releve({ budgetApprouve: 3000 }) });
+    expect(parent).toMatchObject({ mode: "positions", budgetApprouve: 3000, vide: false });
+    expect(parent.origines.budgetApprouve).toBe("source");
+    expect(syntheseDe({ mode: "positions", positions: vide })).toMatchObject({ budgetApprouve: 0, vide: true });
+    // Le total de la source pour le parent ne s'ajoute pas à celui de ses sous-projets
+    const enfants = [syntheseDe({ mode: "positions", positions: vide, releve: releve({ budgetApprouve: 1200 }) }), syntheseDe({ mode: "positions", positions: vide, releve: releve({ budgetApprouve: 1700 }) })];
+    expect(consolider(parent, enfants)).toMatchObject({ budgetApprouve: 2900, consolidee: true });
+  });
 });
