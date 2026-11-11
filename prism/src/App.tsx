@@ -23,6 +23,8 @@ const Validations = page(() => import("./modules/validations/Validations"), "Val
 const Juridique = page(() => import("./modules/juridique/Juridique"), "Juridique");
 const MandatPhases = page(() => import("./modules/mandat/MandatPhases"), "MandatPhases");
 const Rapports = page(() => import("./modules/rapports/Rapports"), "Rapports");
+const ComInv = page(() => import("./modules/gouvernance/ComInv"), "ComInv");
+const DecisionsProjet = page(() => import("./modules/gouvernance/DecisionsProjet"), "DecisionsProjet");
 const Ressources = page(() => import("./modules/ressources/Ressources"), "Ressources");
 const Organisation = page(() => import("./modules/organisation/Organisation"), "Organisation");
 const Entreprises = page(() => import("./modules/entreprises/Entreprises"), "Entreprises");
@@ -37,7 +39,7 @@ export default function App() {
           <Route index element={<MonTravail />} />
           <Route path="portefeuille" element={<Portefeuille />} />
           <Route path="pilotage" element={<EnConstruction titre="Pilotage groupe" etape={3} />} />
-          <Route path="cominv" element={<EnConstruction titre="ComInv" etape={3} />} />
+          <Route path="cominv" element={<ComInv />} />
           <Route path="ressources" element={<Ressources />} />
           <Route path="entreprises" element={<Entreprises />} />
           <Route path="archives" element={<EnConstruction titre="Archives" etape={4} />} />
@@ -57,6 +59,7 @@ export default function App() {
             <Route path="juridique" element={<Juridique />} />
             <Route path="mandat" element={<MandatPhases />} />
             <Route path="rapports" element={<Rapports />} />
+            <Route path="decisions" element={<DecisionsProjet />} />
             <Route path="validations" element={<Validations />} />
             <Route path="documents" element={<Documents />} />
             <Route path="*" element={<EnConstruction titre="Module du projet" etape={2} />} />

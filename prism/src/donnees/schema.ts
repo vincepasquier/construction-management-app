@@ -155,7 +155,12 @@ export const COLLECTIONS = Object.keys(META) as NomCollection[];
 
 /** Les séances de chantier relèvent du module chantier, les autres de la gouvernance */
 export function moduleDe(collection: NomCollection, doc?: unknown): ModuleApp {
-  if (collection === "seances" && (doc as { type?: string } | undefined)?.type === "Chantier") return "chantier";
+  if (collection === "seances") {
+    const s = doc as { type?: string; projetId?: string } | undefined;
+    if (s?.type === "Chantier") return "chantier";
+    // Séance propre à un projet (comité de pilotage, séance de projet) : elle relève du suivi du projet
+    if (s?.projetId && s.type !== "ComInv") return "taches";
+  }
   return META[collection].module;
 }
 

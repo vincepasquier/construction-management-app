@@ -378,6 +378,10 @@ export interface PointSeance {
   statut: "Ouvert" | "Clos";
   actionId?: ID;
   decisionId?: ID;
+  /** Pour un point de nature « Décision » : ce qui sera porté au registre des décisions */
+  decision?: { statut: Decision["statut"]; montant?: number; restreint?: boolean; conditions: ConditionSuivie[] };
+  /** Séance où le point a été ouvert (il garde son numéro tant qu'il reste ouvert) */
+  origineSeanceId?: ID;
 }
 
 export interface ParticipantSeance {
