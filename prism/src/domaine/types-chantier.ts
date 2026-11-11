@@ -42,6 +42,15 @@ export interface Reception {
   finGarantie?: string;
   participants?: string;
   remarques?: string;
+  lieu?: string;
+  /** Date de l'avis d'achèvement donné par l'entrepreneur */
+  avisAchevement?: string;
+  /** Documents remis à la réception (dossier de l'ouvrage, plans conformes, procès-verbaux d'essais…) */
+  documentsRemis?: string;
+  /** Sûreté fournie pour la durée du délai de dénonciation */
+  surete?: string;
+  /** Réception différée : date prévue de la nouvelle vérification commune */
+  secondeVerification?: string;
 }
 
 export interface EffectifChantier {

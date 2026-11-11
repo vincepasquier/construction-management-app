@@ -57,7 +57,7 @@ describe("moteur de notifications", () => {
   });
 
   it("prévient les signataires d'un mandat soumis, puis à chaque relance", () => {
-    const projet = depot.tous("projets").find((p) => p.code === "NUM-2026-0021")!;
+    const projet = depot.tous("projets").find((p) => p.code === "DFI-2026-0021")!;
     const personnes = depot.tous("personnes");
     const contenu = contenuInitial(projet, { auteur: depot.acteur(), sponsor: personnes.find((p) => p.id === "per-pmo"), chef: personnes.find((p) => p.id === "per-dubois"), budget: 250_000 });
     Object.assign(contenu, { benefices: "x", impactsEnvironnementaux: "Aucun", impactsSociaux: "x", motifs: { ...contenu.motifs, efficience: true }, objectifs: [{ id: "o", objectif: "x", critere: "y", approbateur: "" }], ressources: [{ id: "r", provenance: "x", joursHommes: 10, confirmee: true }], phases: contenu.phases.map((p) => (p.applicable ? { ...p, debut: "2026-12-01", fin: "2027-06-01" } : p)) });

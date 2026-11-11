@@ -16,7 +16,7 @@ describe("sauvegarde et restauration", () => {
     const zip = await creerSauvegarde(d, "2026-11-11T12:00:00.000Z");
 
     const lue = lireSauvegarde(zip);
-    expect(lue.resume).toMatchObject({ type: "prism", projets: 11, fichiers: 1 });
+    expect(lue.resume).toMatchObject({ type: "prism", projets: 14, fichiers: 1 });
     if (lue.type !== "prism") throw new Error("type inattendu");
 
     const d2 = new Depot(new StockageMemoire());

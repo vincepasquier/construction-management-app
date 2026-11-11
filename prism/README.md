@@ -60,6 +60,9 @@ Réglages du serveur, dans `.env` (modèle : `.env.example`) :
   planning et phases SIA, autorisations et foncier.
 - Suivi de chantier : journal, séances de chantier, constats avec photographies, réserves, réceptions et
   garanties, bons de régie, métrés contradictoires — utilisable au téléphone.
+- Documents Word structurés selon la **SIA 118** : contrat d'entreprise ou de mandat, avenant,
+  procès-verbal de réception (sans défaut, défauts mineurs, réception différée), situation mensuelle avec
+  calcul de l'acompte, bon de régie, liste des réserves.
 
 **Assistant IA** : répond à partir des données du projet ouvert, réduites à ce que l'utilisateur a le
 droit de lire.
@@ -100,8 +103,17 @@ n'enregistre dans IndexedDB que ce qui a changé. Les écrans ne s'abonnent qu'a
 - **Exploitation.** Authentification Entra ID, chiffrement, sauvegardes automatiques, supervision,
   environnements séparés et test d'intrusion relèvent de l'infrastructure du groupe.
 
+## Références à la SIA 118
+
+Les documents renvoient à la norme sans en reproduire le texte. Les numéros d'articles sont ceux de
+l'édition 2013 et sont réunis dans `src/domaine/lib/sia118.ts` : c'est le seul fichier à corriger si une
+référence doit changer. Ils ont été posés de mémoire et recoupés avec des sources publiques, pas avec le
+texte de la norme ; une révision est entrée en vigueur en 2026. **À faire contrôler par une personne qui a
+la norme en main avant tout usage réel.**
+
 ## Données
 
-Aucune donnée réelle n'est dans le dépôt : le jeu de démonstration est fictif. Au premier lancement, PRISM
+Les six directions de la démonstration sont celles du groupe (DG, DGC, DFI, DEN, DDE, DSE) ; les projets,
+les personnes, les entreprises et les montants sont fictifs. Aucune donnée réelle n'est dans le dépôt. Au premier lancement, PRISM
 propose de reprendre les données de Chantier+ présentes dans le navigateur, sans rien y effacer ; un
 fichier de projet ou une sauvegarde Chantier+ s'importe aussi depuis *Administration → Sauvegarde*.

@@ -17,8 +17,8 @@ import { enregistrerSeance } from "../seances";
 const SYSTEME = { origine: "systeme" as const };
 
 /** Projets dont le dossier est volontairement laissé incomplet, pour que les vues aient quelque chose à montrer */
-const SANS_MANDAT = new Set(["NUM-2026-0021", "INF-2026-0312-02"]);
-const SANS_RAPPORT = new Set(["NUM-2025-0177", "ENR-2025-0098"]);
+const SANS_MANDAT = new Set(["DFI-2026-0021", "DSE-2026-0312-02"]);
+const SANS_RAPPORT = new Set(["DFI-2025-0177", "DDE-2025-0098"]);
 
 const BENEFICES: Record<string, string> = {
   construction: "Ouvrage remis en état pour plusieurs décennies, sécurité des usagers améliorée, réseaux renouvelés en une seule intervention.",
@@ -50,7 +50,7 @@ export function installerGouvernanceDemo(depot: Depot, jour: string): void {
         { id: `pp-${pid}-3`, projetId: pid, personneId: "per-fin", roleProjet: "Finance", interne: true, responsabilites: "Contrôle de gestion et arrêts de période." },
         { id: `pp-${pid}-4`, projetId: pid, nom: type?.id === "construction" ? "Commune et riverains" : "Utilisateurs des directions concernées", roleProjet: type?.id === "construction" ? "Riverain / tiers" : "Utilisateur", interne: type?.id !== "construction", remarques: "À informer avant chaque étape visible." },
       ];
-      if (code !== "INF-2026-0312-02") for (const x of parties) depot.ajouter("partiesPrenantes", x, SYSTEME);
+      if (code !== "DSE-2026-0312-02") for (const x of parties) depot.ajouter("partiesPrenantes", x, SYSTEME);
 
       // Mandat signé, sauf pour les projets dont le dossier reste à compléter
       const s = syntheseProjet(depot, pid);
@@ -63,9 +63,12 @@ export function installerGouvernanceDemo(depot: Depot, jour: string): void {
         { id: `obj-${pid}-2`, objectif: "Tenir l'enveloppe financière", critere: "Coût final dans le budget approuvé", approbateur: "Finance" },
       ];
       contenu.perimetre = p.description;
+      const direction = depot.parId("directions", p.directionId ?? "");
+      contenu.client = type?.id === "construction" ? p.maitreOuvrage || "Exploitation des réseaux de chaleur" : `Utilisateurs de la ${direction?.nom ?? "direction concernée"}`;
+      contenu.autresParties = `Contrôle de gestion (Finance), PMO du groupe${type?.id === "construction" ? ", commune et riverains" : ""}`;
       contenu.impactsEnvironnementaux = type?.id === "construction" ? "Nuisances de chantier limitées par le phasage ; matériaux d'excavation valorisés sur place." : "Aucun";
       contenu.impactsSociaux = "Information régulière des personnes concernées ; accompagnement au changement.";
-      contenu.preavisComInv = ["ENR-2025-0098", "INF-2026-0240", "INF-2026-0312"].includes(code);
+      contenu.preavisComInv = ["DDE-2025-0098", "DSE-2026-0240", "DSE-2026-0312"].includes(code);
       contenu.composanteIT = type?.id === "numerique";
       contenu.descriptionIT = type?.id === "numerique" ? "Solution métier reposant sur l'environnement informatique du groupe ; l'informatique valide l'architecture, la sécurité et les interfaces." : "";
       contenu.phases = contenu.phases.map((ph, i) => (ph.applicable ? { ...ph, debut: ajouterJours(p.dateDebut, -120 + i * 40), fin: i === contenu.phases.length - 1 ? p.dateFin : ajouterJours(p.dateDebut, -80 + i * 40), livrables: ["Mandat de projet signé", "", "Dossier de projet et devis", "", "Ouvrage ou solution en service"][i] } : ph));
@@ -92,7 +95,7 @@ export function installerGouvernanceDemo(depot: Depot, jour: string): void {
       depot.ajouter("periodesFinancieres", photographier(p.id, encore, `${avant}-03T08:00:00.000Z`, recule(0.82, 1), "per-fin"), SYSTEME);
       depot.ajouter("periodesFinancieres", photographier(p.id, avant, `${mois}-03T08:00:00.000Z`, recule(0.91, 0.6), "per-fin", Math.abs(s.ecartPct) > 1 ? "Première alerte sur l'atterrissage, à confirmer le mois prochain." : undefined), SYSTEME);
       // Le dernier mois reste à arrêter pour deux projets : c'est le travail qui attend la Finance
-      if (!["NUM-2025-0177", "INF-2026-0240"].includes(p.numeroSource ?? "")) depot.ajouter("periodesFinancieres", photographier(p.id, mois, `${moisDe(jour)}-03T08:00:00.000Z`, recule(0.97, 0.9), "per-fin", Math.abs(s.ecartPct) > 1 ? "Écart expliqué par les avenants en cours ; mesures engagées." : undefined), SYSTEME);
+      if (!["DFI-2025-0177", "DSE-2026-0240"].includes(p.numeroSource ?? "")) depot.ajouter("periodesFinancieres", photographier(p.id, mois, `${moisDe(jour)}-03T08:00:00.000Z`, recule(0.97, 0.9), "per-fin", Math.abs(s.ecartPct) > 1 ? "Écart expliqué par les avenants en cours ; mesures engagées." : undefined), SYSTEME);
     }
 
     // Rapports de phase validés pour les phases terminées
@@ -118,16 +121,16 @@ export function installerGouvernanceDemo(depot: Depot, jour: string): void {
       for (const a of [annee, annee + 1]) {
         if (String(a) > p.dateFin.slice(0, 4)) continue;
         depot.ajouter("estimationsCharge", { id: `jh-${p.id}-${a}-1`, projetId: p.id, annee: a, phase: p.phaseGroupe, directionId: p.directionId, competence: "Direction de projet", joursHommes: base }, SYSTEME);
-        depot.ajouter("estimationsCharge", { id: `jh-${p.id}-${a}-2`, projetId: p.id, annee: a, phase: p.phaseGroupe, directionId: typeDe(p)?.id === "numerique" ? p.directionId : "dir-num", competence: "Informatique", joursHommes: Math.round(base / 4) }, SYSTEME);
-        depot.ajouter("estimationsCharge", { id: `jh-${p.id}-${a}-3`, projetId: p.id, annee: a, phase: p.phaseGroupe, directionId: "dir-fin", competence: "Finance", joursHommes: 8 }, SYSTEME);
+        depot.ajouter("estimationsCharge", { id: `jh-${p.id}-${a}-2`, projetId: p.id, annee: a, phase: p.phaseGroupe, directionId: typeDe(p)?.id === "numerique" ? p.directionId : "dir-dfi", competence: "Informatique", joursHommes: Math.round(base / 4) }, SYSTEME);
+        depot.ajouter("estimationsCharge", { id: `jh-${p.id}-${a}-3`, projetId: p.id, annee: a, phase: p.phaseGroupe, directionId: "dir-dfi", competence: "Finance", joursHommes: 8 }, SYSTEME);
       }
     });
-    for (const [directionId, jh] of [["dir-inf", 260], ["dir-enr", 220], ["dir-num", 160], ["dir-fin", 90]] as const) {
+    for (const [directionId, jh] of [["dir-dse", 260], ["dir-dde", 220], ["dir-den", 180], ["dir-dfi", 200], ["dir-dgc", 60], ["dir-dg", 40]] as const) {
       for (const a of [annee, annee + 1]) depot.ajouter("capacites", { id: `cap-${directionId}-${a}-toutes`, directionId, annee: a, joursHommes: jh }, SYSTEME);
     }
 
     // Scénario défavorable et appréciation
-    const critique = racines.find((p) => p.numeroSource === "NUM-2025-0177");
+    const critique = racines.find((p) => p.numeroSource === "DFI-2025-0177");
     if (critique) {
       const s = syntheseProjet(depot, critique.id);
       depot.ajouter("scenarios", { id: `sce-${critique.id}`, projetId: critique.id, nom: "Reprise manuelle des espaces non conformes", type: "Défavorable", valide: true, lignes: [{ id: "l1", libelle: "Atterrissage de référence", montant: Math.round(s.atterrissage) }, { id: "l2", libelle: "Reprise manuelle de 400 espaces de projet", montant: 45_000, annee }, { id: "l3", libelle: "Prolongation de l'assistance externe", montant: 28_000, annee: annee + 1 }] }, SYSTEME);
@@ -143,11 +146,11 @@ export function installerGouvernanceDemo(depot: Depot, jour: string): void {
     lieu: "Salle du conseil", statut: "Diffusée", prochaineSeance: ajouterJours(jour, 10),
     participants: [{ personneId: "per-cominv", presence: "Présent", diffusion: true }, { personneId: "per-dir", presence: "Présent", diffusion: true }, { personneId: "per-fin", presence: "Présent", diffusion: true }, { personneId: "per-pmo", presence: "Présent", diffusion: true }, { personneId: "per-keller", presence: "Excusé", diffusion: true }],
     points: [
-      point("1.1", "INF-2026-0312", { titre: "Crédit d'étude pour la centrale de chauffe", texte: "Le comité accorde le crédit d'étude et demande une variante avec stockage thermique.", responsableId: "per-dir", decision: { statut: "Approuvée", montant: 480_000, conditions: [{ id: "cnd-demo-1", texte: "Présenter la variante avec stockage thermique", responsableId: "per-dir", echeance: ajouterJours(jour, -5), statut: "En cours" }, { id: "cnd-demo-2", texte: "Confirmer les subventions cantonales", responsableId: "per-fin", echeance: ajouterJours(jour, 40), statut: "À traiter" }] } }),
-      point("1.2", "ENR-2026-0154", { titre: "Libération de la troisième tranche", texte: "Tranche libérée conformément au mandat.", statut: "Clos", decision: { statut: "Approuvée", montant: 2_100_000, conditions: [] } }),
-      point("1.3", "NUM-2025-0177", { titre: "Demande de crédit complémentaire", texte: "Décision reportée à la prochaine séance, dans l'attente du mandat révisé.", responsableId: "per-dubois", echeance: ajouterJours(jour, 10), decision: { statut: "Reportée", montant: 73_000, conditions: [] } }),
-      point("1.4", "FIN-2026-0009", { titre: "Arbitrage des priorités du portefeuille", texte: "Piste de travail : regrouper deux projets d'organisation.", nature: "Note de travail", decision: { statut: "Note de travail", restreint: true, conditions: [] } }),
-      point("1.5", "INF-2025-0601", { titre: "Chiffrer l'effet de l'avenant du giratoire sur l'atterrissage", nature: "Tâche", responsableId: projets.find((p) => p.id === parCode("INF-2025-0601"))?.directeurId, echeance: ajouterJours(jour, 7), decision: undefined }),
+      point("1.1", "DSE-2026-0312", { titre: "Crédit d'étude pour la centrale de chauffe", texte: "Le comité accorde le crédit d'étude et demande une variante avec stockage thermique.", responsableId: "per-dir", decision: { statut: "Approuvée", montant: 480_000, conditions: [{ id: "cnd-demo-1", texte: "Présenter la variante avec stockage thermique", responsableId: "per-dir", echeance: ajouterJours(jour, -5), statut: "En cours" }, { id: "cnd-demo-2", texte: "Confirmer les subventions cantonales", responsableId: "per-fin", echeance: ajouterJours(jour, 40), statut: "À traiter" }] } }),
+      point("1.2", "DDE-2026-0154", { titre: "Libération de la troisième tranche", texte: "Tranche libérée conformément au mandat.", statut: "Clos", decision: { statut: "Approuvée", montant: 2_100_000, conditions: [] } }),
+      point("1.3", "DFI-2025-0177", { titre: "Demande de crédit complémentaire", texte: "Décision reportée à la prochaine séance, dans l'attente du mandat révisé.", responsableId: "per-dubois", echeance: ajouterJours(jour, 10), decision: { statut: "Reportée", montant: 73_000, conditions: [] } }),
+      point("1.4", "DFI-2026-0009", { titre: "Arbitrage des priorités du portefeuille", texte: "Piste de travail : regrouper deux projets d'organisation.", nature: "Note de travail", decision: { statut: "Note de travail", restreint: true, conditions: [] } }),
+      point("1.5", "DSE-2025-0601", { titre: "Chiffrer l'effet de l'avenant du giratoire sur l'atterrissage", nature: "Tâche", responsableId: projets.find((p) => p.id === parCode("DSE-2025-0601"))?.directeurId, echeance: ajouterJours(jour, 7), decision: undefined }),
     ],
   };
   const origine = depot.acteurId;

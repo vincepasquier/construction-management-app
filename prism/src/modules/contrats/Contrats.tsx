@@ -6,8 +6,9 @@ import { avenantsEnAttente, factureDuContrat, montantContrat } from "@/domaine/l
 import { aujourdhui, formatCHF, formatCompact, formatDate } from "@/domaine/lib/format";
 import { nouvelId } from "@/domaine/lib/id";
 import { CFC_OPTIONS, libelleCFC } from "@/domaine/data/cfc";
-import { Badge, BadgeStatut, Bouton, Carte, Champ, EnTetePage, Indicateur, Liste, Modale, Onglets, Progression, Saisie, Tableau, Vide } from "@/app/ui";
-import type { Contrat, StatutContrat, TypeContrat } from "@/domaine/types";
+import { Badge, BadgeStatut, Bouton, Carte, Champ, EnTetePage, Indicateur, Liste, Modale, Onglets, Progression, Saisie, Tableau, Vide, Zone } from "@/app/ui";
+import { REGLEMENTS_MANDAT, sia } from "@/domaine/lib/sia118";
+import type { ConditionsContrat, Contrat, StatutContrat, TypeContrat } from "@/domaine/types";
 
 export const STATUTS_CONTRAT: StatutContrat[] = ["En préparation", "Signé", "En cours", "Réceptionné", "Clôturé"];
 export const TYPES_CONTRAT: TypeContrat[] = ["Contrat d'entreprise", "Mandat", "Fourniture"];
@@ -107,6 +108,10 @@ export function FormulaireContrat({ projetId, numeroSuggere, initial, onFermer, 
     montantInitial: 0, dateSignature: aujourdhui(), retenuePct: 10, statut: "En préparation", avenants: [],
   });
   const maj = (p: Partial<Contrat>) => setC((x) => ({ ...x, ...p }));
+  const k = c.conditions ?? {};
+  const mandat = c.type === "Mandat";
+  // Une section vidée ne laisse pas d'objet vide dans le contrat
+  const majK = (p: Partial<ConditionsContrat>) => setC((x) => { const suite = Object.fromEntries(Object.entries({ ...x.conditions, ...p }).filter(([, v]) => v !== undefined && v !== "")); return { ...x, conditions: Object.keys(suite).length ? (suite as ConditionsContrat) : undefined }; });
   return (
     <Modale ouverte onFermer={onFermer} titre={initial ? "Modifier le contrat" : "Nouveau contrat"}
       pied={<><Bouton libre onClick={onFermer}>Annuler</Bouton><Bouton variante="primaire" disabled={!c.numero || !c.entrepriseId || !c.cfc} onClick={() => { onEnregistrer(c); onFermer(); }}>Enregistrer</Bouton></>}>
@@ -129,10 +134,31 @@ export function FormulaireContrat({ projetId, numeroSuggere, initial, onFermer, 
           </Liste>
         </Champ>
         <Champ libelle="Montant initial HT (CHF)"><Saisie type="number" value={c.montantInitial || ""} onChange={(e) => maj({ montantInitial: Number(e.target.value) })} /></Champ>
-        <Champ libelle="Retenue de garantie (%)" aide="Usuel selon SIA 118 : 10 % sur les acomptes"><Saisie type="number" value={c.retenuePct} onChange={(e) => maj({ retenuePct: Number(e.target.value) })} /></Champ>
+        <Champ libelle="Retenue de garantie (%)" aide={`Usuel : 10 % sur les acomptes (${sia("retenue")})`}><Saisie type="number" value={c.retenuePct} onChange={(e) => maj({ retenuePct: Number(e.target.value) })} /></Champ>
         <Champ libelle="Date de signature"><Saisie type="date" value={c.dateSignature} onChange={(e) => maj({ dateSignature: e.target.value })} /></Champ>
         <Champ libelle="Statut"><Liste value={c.statut} onChange={(e) => maj({ statut: e.target.value as StatutContrat })}>{STATUTS_CONTRAT.map((s) => <option key={s}>{s}</option>)}</Liste></Champ>
       </div>
+      <details className="mt-5 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50" open={!!initial?.conditions}>
+        <summary className="cursor-pointer text-sm font-semibold text-slate-900 dark:text-white">Conditions du contrat <span className="font-normal text-slate-500">· reprises dans le document de contrat{mandat ? "" : ", selon la structure de la SIA 118"}</span></summary>
+        <div className="mt-4 grid grid-cols-2 gap-4">
+          <Champ libelle={mandat ? "Mode de rémunération" : "Nature des prix"}><Liste value={k.typePrix ?? ""} onChange={(e) => majK({ typePrix: (e.target.value || undefined) as ConditionsContrat["typePrix"] })}><option value="">—</option>{(mandat ? ["Honoraires au temps", "Honoraires forfaitaires"] : ["Prix unitaires", "Prix global", "Prix forfaitaire", "Régie"]).map((x) => <option key={x}>{x}</option>)}</Liste></Champ>
+          <Champ libelle="Délai de paiement (jours)"><Saisie type="number" value={k.delaiPaiementJours ?? ""} placeholder="30" onChange={(e) => majK({ delaiPaiementJours: e.target.value === "" ? undefined : Number(e.target.value) })} /></Champ>
+          <Champ libelle={mandat ? "Début des prestations" : "Début des travaux"}><Saisie type="date" value={k.debutTravaux ?? ""} onChange={(e) => majK({ debutTravaux: e.target.value || undefined })} /></Champ>
+          <Champ libelle={mandat ? "Fin des prestations" : "Achèvement des travaux"}><Saisie type="date" value={k.finTravaux ?? ""} onChange={(e) => majK({ finTravaux: e.target.value || undefined })} /></Champ>
+          {mandat ? <>
+            <Champ libelle="Règlement SIA applicable"><Liste value={k.reglement ?? ""} onChange={(e) => majK({ reglement: e.target.value || undefined })}><option value="">—</option>{REGLEMENTS_MANDAT.map((x) => <option key={x}>{x}</option>)}</Liste></Champ>
+            <Champ libelle="Phases couvertes" aide="Selon la SIA 112, ex. 31 à 53"><Saisie value={k.phases ?? ""} onChange={(e) => majK({ phases: e.target.value || undefined })} /></Champ>
+          </> : <>
+            <Champ libelle="Peine conventionnelle (CHF par jour ouvrable)"><Saisie type="number" value={k.peineParJour ?? ""} onChange={(e) => majK({ peineParJour: e.target.value === "" ? undefined : Number(e.target.value) })} /></Champ>
+            <Champ libelle="Plafond de la peine (% du contrat)"><Saisie type="number" value={k.peinePlafondPct ?? ""} onChange={(e) => majK({ peinePlafondPct: e.target.value === "" ? undefined : Number(e.target.value) })} /></Champ>
+            <Champ libelle="Sûreté pendant le délai de dénonciation" aide={`${sia("surete")} : remplace la retenue après la réception`}><Liste value={k.surete ?? ""} onChange={(e) => majK({ surete: (e.target.value || undefined) as ConditionsContrat["surete"] })}><option value="">—</option>{["Cautionnement solidaire", "Garantie bancaire", "Retenue en espèces", "Aucune"].map((x) => <option key={x}>{x}</option>)}</Liste></Champ>
+            <Champ libelle="Montant de la sûreté (% du décompte final)"><Saisie type="number" value={k.suretePct ?? ""} onChange={(e) => majK({ suretePct: e.target.value === "" ? undefined : Number(e.target.value) })} /></Champ>
+            <Champ libelle="Direction des travaux" className="col-span-2"><Saisie value={k.directionTravaux ?? ""} onChange={(e) => majK({ directionTravaux: e.target.value || undefined })} placeholder="Bureau et personne qui représentent le maître de l'ouvrage sur le chantier" /></Champ>
+          </>}
+          <Champ libelle="Pièces du contrat, dans l'ordre de priorité" aide="Une par ligne. Laissé vide : la liste usuelle (contrat, offre, conditions particulières, descriptif et plans, norme SIA 118, autres normes)" className="col-span-2"><Zone rows={3} value={k.elements ?? ""} onChange={(e) => majK({ elements: e.target.value || undefined })} /></Champ>
+          <Champ libelle="For"><Saisie value={k.for ?? ""} onChange={(e) => majK({ for: e.target.value || undefined })} placeholder="Siège du maître de l'ouvrage" /></Champ>
+        </div>
+      </details>
     </Modale>
   );
 }

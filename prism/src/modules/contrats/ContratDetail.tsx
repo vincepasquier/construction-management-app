@@ -5,7 +5,8 @@ import { useEffect, useState } from "react";
 import { BoutonIA } from "@/modules/assistant/BoutonIA";
 import { useParams, useSearchParams } from "react-router-dom";
 import { LienProjet as Link, useNaviguerProjet as useNavigate } from "@/app/chemins";
-import { ArrowLeft, Check, FileCheck2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Download, FileCheck2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { exporterAvenant, exporterContrat } from "./exportContrat";
 import { useDonnees } from "@/donnees/hooks";
 import { avenantsEnAttente, factureDuContrat, montantContrat } from "@/domaine/lib/finance";
 import { ajouterJours, aujourdhui, formatCHF, formatDate } from "@/domaine/lib/format";
@@ -31,7 +32,7 @@ export function ContratDetail() {
   const [facture, setFacture] = useState<Facture | null>(null);
   const [params, setParams] = useSearchParams();
   const lecture = useLectureSeule();
-  const { validations, personnes } = useDonnees();
+  const { validations, personnes, lots } = useDonnees();
   const c = contrats.find((x) => x.id === id);
 
   const nouvelleFacture = (): Facture | null => c ? {
@@ -83,6 +84,7 @@ export function ContratDetail() {
         description={<span className="flex flex-wrap items-center gap-2"><BadgeStatut statut={c.statut} /> {c.objet} · {c.type} · CFC {c.cfc} {libelleCFC(c.cfc)} · signé le {formatDate(c.dateSignature)}
           {ao && <Link to={`/appels-offres/${ao.id}`} className="text-brand-600 hover:underline">· issu de {ao.numero}</Link>}</span>}
         actions={<>
+          <Bouton libre icone={<Download size={15} />} title="Document de contrat, structuré selon la SIA 118" onClick={() => void exporterContrat(projet!, c, { entreprise: ent, lot: lots.find((l) => l.id === c.lotId)?.nom, ao })}>Contrat (Word)</Bouton>
           <Bouton icone={<Pencil size={15} />} onClick={() => setEdition(true)}>Modifier</Bouton>
           <BoutonIA question={`Fais le point sur le contrat ${c.numero} (${ent?.nom}) : situation financière, avenants, factures en cours, retenue de garantie, et signale tout point à contrôler (dépassement, facture échue, avenant sans décision).`}>Analyse IA</BoutonIA>
           <Bouton variante="danger" icone={<Trash2 size={15} />} onClick={async () => {
@@ -130,7 +132,7 @@ export function ContratDetail() {
                     </div>
                   ) : <BadgeStatut statut={a.statut} />}
                   {a.statut === "Demandé" && !circuitDe(a.id) && <button title="Faire valider" onClick={() => faireValider("Avenant", a.id)} className="text-slate-300 hover:text-brand-600"><FileCheck2 size={14} /></button>}
-                  <button onClick={() => setAvenant(a)} className="text-slate-300 hover:text-slate-600"><Pencil size={14} /></button>
+                  <button onClick={() => setAvenant(a)} title="Ouvrir l'avenant" aria-label={`Ouvrir l'avenant ${a.numero}`} className="text-slate-300 hover:text-slate-600"><Pencil size={14} /></button>
                 </li>
               ))}
             </ul>
@@ -178,6 +180,7 @@ export function ContratDetail() {
         <Modale ouverte onFermer={() => setAvenant(null)} titre="Avenant"
           pied={<>
             {c.avenants.some((x) => x.id === avenant.id) && <Bouton variante="fantome" className="mr-auto text-rose-600" onClick={() => { modifier("contrats", c.id, { avenants: c.avenants.filter((x) => x.id !== avenant.id) }); setAvenant(null); }}>Supprimer</Bouton>}
+            {c.avenants.some((x) => x.id === avenant.id) && <Bouton libre icone={<Download size={14} />} onClick={() => void exporterAvenant(projet!, c, avenant, { entreprise: ent })}>Word</Bouton>}
             <Bouton libre onClick={() => setAvenant(null)}>Annuler</Bouton>
             <Bouton variante="primaire" disabled={!avenant.objet} onClick={() => { majAvenant(avenant); setAvenant(null); }}>Enregistrer</Bouton>
           </>}>
@@ -185,6 +188,8 @@ export function ContratDetail() {
             <Champ libelle="Numéro"><Saisie value={avenant.numero} onChange={(e) => setAvenant({ ...avenant, numero: e.target.value })} /></Champ>
             <Champ libelle="Date"><Saisie type="date" value={avenant.date} onChange={(e) => setAvenant({ ...avenant, date: e.target.value })} /></Champ>
             <Champ libelle="Objet" className="col-span-2"><Saisie value={avenant.objet} onChange={(e) => setAvenant({ ...avenant, objet: e.target.value })} /></Champ>
+            <Champ libelle="Motif de la modification" className="col-span-2"><Saisie value={avenant.motif ?? ""} onChange={(e) => setAvenant({ ...avenant, motif: e.target.value || undefined })} placeholder="Demande du maître, imprévu de chantier, erreur du descriptif…" /></Champ>
+            <Champ libelle="Effet sur le délai (jours ouvrables)" aide="Vide ou 0 : sans effet"><Saisie type="number" value={avenant.incidenceDelaiJours ?? ""} onChange={(e) => setAvenant({ ...avenant, incidenceDelaiJours: e.target.value === "" ? undefined : Number(e.target.value) })} /></Champ>
             <Champ libelle="Montant HT (négatif = moins-value)"><Saisie type="number" value={avenant.montant || ""} onChange={(e) => setAvenant({ ...avenant, montant: Number(e.target.value) })} /></Champ>
             <Champ libelle="Statut"><Liste value={avenant.statut} onChange={(e) => setAvenant({ ...avenant, statut: e.target.value as Avenant["statut"] })}><option>Demandé</option><option>Approuvé</option><option>Refusé</option></Liste></Champ>
           </div>

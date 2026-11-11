@@ -35,7 +35,7 @@ describe("démonstration avec gouvernance", () => {
     expect(Math.min(...indices)).toBeLessThan(70);
     // Deux projets démarrés n'ont pas encore arrêté la période du mois dernier
     expect(lignes.filter((l) => !l.periode.existante && l.projet.dateDebut <= JOUR).length).toBe(2);
-    expect(lignes.filter((l) => !l.mandatSigne).map((l) => l.projet.code)).toEqual(["NUM-2026-0021"]);
+    expect(lignes.filter((l) => !l.mandatSigne).map((l) => l.projet.code)).toEqual(["DFI-2026-0021"]);
   });
 
   it("porte la séance du comité au registre : décisions, condition échue, tâche, note restreinte", () => {
@@ -52,7 +52,7 @@ describe("démonstration avec gouvernance", () => {
 
   it("met une direction en surcharge", () => {
     const bilan = bilanCapacite(depot.tous("estimationsCharge"), depot.tous("capacites"), 2027);
-    expect(bilan.length).toBe(4);
+    expect(bilan.length).toBe(6);
     expect(bilan.every((l) => l.capacite > 0)).toBe(true);
   });
 });
@@ -63,9 +63,9 @@ describe("ordre du jour du comité", () => {
     const candidats = candidatsComInv(depot, depot.tous("projets"));
     const codes = candidats.map((c) => c.projet.numeroSource ?? c.projet.code);
     // La centrale de chauffe a déjà sa décision ; le poste de transformation et le collecteur attendent
-    expect(codes).toContain("ENR-2025-0098");
-    expect(codes).toContain("INF-2026-0240");
-    expect(codes).not.toContain("INF-2026-0312");
+    expect(codes).toContain("DDE-2025-0098");
+    expect(codes).toContain("DSE-2026-0240");
+    expect(codes).not.toContain("DSE-2026-0312");
     expect(candidats[0].montant).toBeGreaterThan(0);
   });
 });

@@ -16,7 +16,7 @@ beforeEach(async () => {
 
 describe("archivage d'un projet", () => {
   it("écrit un fichier ouvert et documenté : projet, sous-projets, collections, références, journal, manifeste", () => {
-    const parent = depot.tous("projets").find((p) => p.numeroSource === "INF-2026-0312")!;
+    const parent = depot.tous("projets").find((p) => p.numeroSource === "DSE-2026-0312")!;
     depot.modifier("projets", parent.id, { lieu: "Quartier des Moulins, secteur nord" });
     const a = construireArchive(depot, parent.id, "2026-11-11T10:00:00.000Z");
     expect(a.format).toBe(FORMAT_ARCHIVE);

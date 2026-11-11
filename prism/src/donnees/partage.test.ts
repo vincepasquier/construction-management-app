@@ -48,7 +48,7 @@ describe("demande d'accès à un projet", () => {
 
 describe("reprise de la structure d'un projet", () => {
   it("copie lots, fonctions, parties prenantes, jalons et risques, sans finances ni titulaires", () => {
-    depot.ajouter("projets", { id: "nouveau", code: "INF-2027-0001", nom: "Réaménagement RC 602", maitreOuvrage: "", lieu: "", phase: "11 Énoncé des besoins", dateDebut: "2027-02-02", dateFin: "2028-06-30", tauxTVA: 8.1, couleur: "#000", description: "", provisoire: true });
+    depot.ajouter("projets", { id: "nouveau", code: "DSE-2027-0001", nom: "Réaménagement RC 602", maitreOuvrage: "", lieu: "", phase: "11 Énoncé des besoins", dateDebut: "2027-02-02", dateFin: "2028-06-30", tauxTVA: 8.1, couleur: "#000", description: "", provisoire: true });
     const r = dupliquerStructure(depot, "prj-1", "nouveau", "2026-11-11");
     expect(r.lots).toBe(depot.parProjet("lots", "prj-1").length);
     expect(r.fonctions).toBe(depot.parProjet("organigramme", "prj-1").length);

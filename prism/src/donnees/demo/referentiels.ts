@@ -1,5 +1,6 @@
 // Référentiels de départ : types de projet, directions, portefeuilles et configuration.
-// Tout est modifiable dans l'administration ; rien ici ne décrit une organisation réelle.
+// Tout est modifiable dans l'administration. Les directions sont celles du groupe ; les projets, les
+// personnes et les montants de la démonstration sont fictifs.
 import type { Configuration, Direction, Portefeuille, Programme, TypeProjet } from "../../domaine/socle/types";
 import { PHASES_GROUPE } from "../../domaine/socle/types";
 import type { ModuleApp } from "../../domaine/types";
@@ -48,14 +49,16 @@ export const TYPES_PROJET: TypeProjet[] = [
 ];
 
 export const DIRECTIONS: Direction[] = [
-  { id: "dir-inf", code: "INF", nom: "Infrastructures et construction" },
-  { id: "dir-enr", code: "ENR", nom: "Énergie et réseaux" },
-  { id: "dir-num", code: "NUM", nom: "Numérique" },
-  { id: "dir-fin", code: "FIN", nom: "Finances et services" },
+  { id: "dir-dg", code: "DG", nom: "Direction Générale" },
+  { id: "dir-dgc", code: "DGC", nom: "Direction Gouvernance et communication" },
+  { id: "dir-dfi", code: "DFI", nom: "Direction Finance et Informatique" },
+  { id: "dir-den", code: "DEN", nom: "Direction Énergie" },
+  { id: "dir-dde", code: "DDE", nom: "Direction Distribution Electricité" },
+  { id: "dir-dse", code: "DSE", nom: "Direction Solutions Energie" },
 ];
 
 export const PORTEFEUILLES: Portefeuille[] = [
-  { id: "pf-inv", nom: "Investissements d'infrastructure", description: "Ouvrages et réseaux" },
+  { id: "pf-inv", nom: "Investissements d'infrastructure", description: "Ouvrages, réseaux et installations de production" },
   { id: "pf-num", nom: "Feuille de route numérique", description: "Projets de transformation numérique" },
   { id: "pf-org", nom: "Excellence opérationnelle", description: "Organisation et amélioration continue" },
 ];

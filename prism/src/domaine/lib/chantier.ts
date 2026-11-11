@@ -51,7 +51,7 @@ export function changerStatutReserve(r: Reserve, statut: Reserve["statut"], jour
 
 // ------------------------------------------------------------------------------------ Réceptions
 
-/** SIA 118 : deux ans pour dénoncer les défauts (art. 172), cinq ans de prescription (art. 180) */
+/** SIA 118 : deux ans pour dénoncer les défauts, cinq ans de prescription (renvois dans sia118.ts) */
 export const DUREE_DENONCIATION_ANS = 2;
 export const DUREE_PRESCRIPTION_ANS = 5;
 
@@ -184,7 +184,7 @@ export const avancementMetre = (cumul: number, contrat: Contrat) => { const m = 
 
 export const METEOS = ["Beau", "Nuageux", "Pluie", "Neige", "Gel", "Vent fort"] as const;
 export const TYPES_EVENEMENT = ["Livraison", "Visite", "Incident", "Sécurité", "Arrêt", "Autre"] as const;
-/** Conditions qui peuvent justifier une interruption (SIA 118, art. 60 et suivants) */
+/** Conditions météorologiques qui peuvent justifier une interruption des travaux */
 export const INTEMPERIES: readonly EntreeJournalChantier["meteo"][] = ["Pluie", "Neige", "Gel", "Vent fort"];
 
 export const effectifTotal = (e: EntreeJournalChantier) => e.effectifs.reduce((t, x) => t + (x.personnes || 0), 0);
@@ -275,4 +275,19 @@ export function resumeChantier(d: DonneesChantier, jour: string): string {
     for (const c of [...d.constats].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8)) lignes.push(`- ${c.numero} du ${c.date}, ${c.type} : ${c.titre}${suitesConstat(c).length ? ` (suite : ${suitesConstat(c).join(", ").toLowerCase()})` : ", sans suite"}`);
   }
   return lignes.join("\n");
+}
+
+// ------------------------------------------------------------------------- Acompte sur situation
+
+export interface Acompte { cumul: number; retenue: number; netCumul: number; anterieurNet: number; acompteHT: number; tva: number; acompteTTC: number }
+
+/**
+ * Acompte demandé pour une situation : prestations cumulées, moins la retenue, moins ce qui a déjà
+ * été demandé pour les mois précédents. La retenue s'applique au cumul, pas au seul mois.
+ */
+export function acompteSituation(s: Pick<Situation, "montantCumul" | "montantAnterieur">, retenuePct: number, tauxTVA: number): Acompte {
+  const part = 1 - (retenuePct || 0) / 100;
+  const cumul = s.montantCumul, retenue = arrondi(cumul * (1 - part)), netCumul = arrondi(cumul - retenue);
+  const anterieurNet = arrondi(s.montantAnterieur * part), acompteHT = arrondi(netCumul - anterieurNet), tva = arrondi(acompteHT * (tauxTVA || 0) / 100);
+  return { cumul, retenue, netCumul, anterieurNet, acompteHT, tva, acompteTTC: arrondi(acompteHT + tva) };
 }

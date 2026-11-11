@@ -16,7 +16,7 @@ export function blocsSeance(s: Seance, o: { nomPersonne: (id?: string) => string
   if (absents.length) blocs.push({ type: "paragraphe", texte: `Excusés et absents : ${absents.map((a) => `${a[0]} (${a[1]})`).join(", ")}` });
   blocs.push({ type: "sousTitre", texte: "Points traités" });
   blocs.push({
-    type: "tableau", entetes: ["N°", "Objet et décision", "Nature", "Responsable", "Délai", "État"], largeurs: [0.6, 4, 1.1, 1.5, 1, 0.8],
+    type: "tableau", entetes: ["N°", "Objet et décision", "Nature", "Responsable", "Délai", "État"], largeurs: [0.6, 3.5, 1.25, 1.5, 1.25, 0.8],
     lignes: s.points.map((p) => [
       p.numero,
       `${o.codeProjet(p.projetId) && !s.projetId ? `[${o.codeProjet(p.projetId)}] ` : ""}${p.titre}${p.texte ? `\n${p.texte}` : ""}${p.decision?.montant ? `\nMontant : ${formatCHF(p.decision.montant)}` : ""}${p.decision?.conditions.length ? `\nConditions : ${p.decision.conditions.map((c) => c.texte).join(" ; ")}` : ""}`,

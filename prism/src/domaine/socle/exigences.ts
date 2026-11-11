@@ -233,6 +233,7 @@ export const VERTICALE_CONSTRUCTION: { fonction: string; etat: EtatExigence; rem
   { fonction: "Reprise du classeur de suivi financier et des exports de factures", etat: R, remarque: "Par fichier, avec contrôle des totaux avant import" },
   { fonction: "Appels d'offres : descriptif, fichiers CRBX (SIA 451), comparatif, évaluation", etat: R, remarque: "Appels d'offres ; les soumissions restent établies dans le logiciel de devis" },
   { fonction: "Contrats, avenants, factures, retenues de garantie", etat: R, remarque: "Contrats et factures" },
+  { fonction: "Documents de contrat structurés selon la SIA 118 : contrat, avenant, procès-verbal de réception, situation et acompte, bon de régie", etat: R, remarque: "Word, depuis le contrat et le suivi de chantier ; les renvois d'articles sont ceux de l'édition 2013, réunis dans un seul fichier, et restent à contrôler avec l'édition applicable au contrat" },
   { fonction: "Planning, phases SIA, lots", etat: R, remarque: "Planification" },
   { fonction: "Autorisations, servitudes et emprises", etat: R, remarque: "Autorisations et foncier" },
   { fonction: "Journal de chantier", etat: R, remarque: "Suivi de chantier → Journal ; verrouillage après une semaine" },

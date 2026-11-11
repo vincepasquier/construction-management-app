@@ -37,7 +37,7 @@ describe("contrôles de qualité des données", () => {
   });
 
   it("signale les corrections locales comme à corriger dans le système source", () => {
-    const p = depot.tous("projets").find((x) => x.numeroSource === "ENR-2026-0154")!;
+    const p = depot.tous("projets").find((x) => x.numeroSource === "DDE-2026-0154")!;
     surcharger(depot, p.id, "nom", "Compteurs intelligents – tranche 3", "Libellé erroné dans la source");
     const a = regles(`${p.id}|surcharge-nom`);
     expect(a).toHaveLength(1);
@@ -46,7 +46,7 @@ describe("contrôles de qualité des données", () => {
   });
 
   it("contrôle la fraîcheur, la cohérence des dates et l'unicité des codes", () => {
-    const p = depot.tous("projets").find((x) => x.numeroSource === "NUM-2025-0177")!;
+    const p = depot.tous("projets").find((x) => x.numeroSource === "DFI-2025-0177")!;
     depot.modifier("projets", p.id, { synchro: { ...p.synchro!, date: "2026-10-01T00:00:00.000Z" }, dateFin: "2020-01-01", code: "RC601" }, { origine: "systeme" });
     expect(regles(`${p.id}|fraicheur`)).toHaveLength(1);
     expect(regles(`${p.id}|dates`)).toHaveLength(1);

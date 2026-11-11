@@ -61,8 +61,8 @@ describe("portefeuille", () => {
     monter("/portefeuille", "p20133-vincent-pasquier");
     const table = screen.getByRole("table");
     expect(within(table).getByText("RC601")).toBeTruthy();
-    expect(within(table).getByText("INF-2026-0312")).toBeTruthy();
-    expect(within(table).queryByText("INF-2026-0312-01")).toBeNull();
+    expect(within(table).getByText("DSE-2026-0312")).toBeTruthy();
+    expect(within(table).queryByText("DSE-2026-0312-01")).toBeNull();
   });
 
   it("ne montre que le périmètre d'un utilisateur restreint", () => {

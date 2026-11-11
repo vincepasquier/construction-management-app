@@ -7,7 +7,7 @@ import { StockageMemoire } from "./stockage";
 
 let depot: Depot;
 // Projet dont la source ne tient pas d'atterrissage : la saisie du responsable fait foi
-const PROJET = "ENR-2026-0154";
+const PROJET = "DDE-2026-0154";
 let pid = "";
 
 beforeEach(async () => {

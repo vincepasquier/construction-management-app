@@ -1,0 +1,1 @@
+import{Ft as e}from"./index-CSQGI991.js";import{M as t,s as n}from"./ui-s7TSR9LI.js";import{h as r,l as i}from"./hooks-C5iQ1gnn.js";var a=r();function o({question:r,children:o,variante:s}){let{lire:c}=i(`ia`);return c?(0,a.jsx)(n,{libre:!0,variante:s,icone:(0,a.jsx)(e,{size:15}),onClick:()=>t(r),children:o}):null}export{o as t};

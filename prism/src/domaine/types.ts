@@ -352,6 +352,33 @@ export interface Avenant {
   objet: string;
   montant: number;
   statut: StatutAvenant;
+  /** Pourquoi la commande est modifiée (demande du maître, imprévu, erreur du descriptif…) */
+  motif?: string;
+  /** Effet sur le délai contractuel, en jours ouvrables (0 ou vide : aucun) */
+  incidenceDelaiJours?: number;
+}
+
+/** Conditions du contrat reprises dans le document de contrat (structure de la SIA 118) */
+export interface ConditionsContrat {
+  typePrix?: "Prix unitaires" | "Prix global" | "Prix forfaitaire" | "Régie" | "Honoraires au temps" | "Honoraires forfaitaires";
+  debutTravaux?: string;
+  finTravaux?: string;
+  /** Peine conventionnelle par jour ouvrable de retard (CHF) et plafond en % du montant du contrat */
+  peineParJour?: number;
+  peinePlafondPct?: number;
+  delaiPaiementJours?: number;
+  /** Sûreté pour la durée du délai de dénonciation des défauts */
+  surete?: "Cautionnement solidaire" | "Garantie bancaire" | "Retenue en espèces" | "Aucune";
+  suretePct?: number;
+  /** Direction des travaux, représentant du maître de l'ouvrage */
+  directionTravaux?: string;
+  /** Pièces du contrat, une par ligne, dans l'ordre de priorité ; vide : liste usuelle */
+  elements?: string;
+  /** Mandats : règlement SIA concernant les prestations et honoraires */
+  reglement?: string;
+  /** Phases SIA couvertes par un mandat */
+  phases?: string;
+  for?: string;
 }
 
 export type TypeContrat = "Contrat d'entreprise" | "Mandat" | "Fourniture";
@@ -376,6 +403,7 @@ export interface Contrat {
   /** Répartition du montant initial sur les positions budgétaires (sinon : par code CFC) */
   repartition?: Repartition[];
   remarques?: string;
+  conditions?: ConditionsContrat;
 }
 
 export type TypeFacture = "Acompte" | "Situation" | "Régie" | "Décompte final";

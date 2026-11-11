@@ -1,6 +1,7 @@
 // Métrés contradictoires : quantités relevées chaque mois par position du contrat. La situation
 // du mois (antérieur, mois, cumul) sert à contrôler la facture de l'entreprise.
-import { CheckCheck, Plus, Ruler } from "lucide-react";
+import { CheckCheck, Download, Plus, Ruler } from "lucide-react";
+import { exporterSituation } from "./exportChantier";
 import { useState } from "react";
 import { notifier } from "@/app/etatUI";
 import { PanneauFiche, type ChampSchema } from "@/app/formulaire/Formulaire";
@@ -88,6 +89,7 @@ export function Metres() {
         <TableDonnees id="metres" lignes={s.lignes} colonnes={colonnes} cle={(l) => l.position || l.libelle} onOuvrir={lecture ? undefined : ouvrir} grouperPar=""
           barre={<>
             {!lecture && aConfirmer.length > 0 && <Bouton icone={<CheckCheck size={15} />} title="Les relevés du mois sont reconnus par l'entreprise" onClick={() => grouper(`Métrés de ${moisEnClair(periode)} reconnus contradictoirement (${contrat.numero})`, () => { for (const m of aConfirmer) modifier("metres", m.id, { statut: "Contradictoire" }); })}>Reconnaître les {aConfirmer.length} relevé(s) du mois</Bouton>}
+            {s.lignes.length > 0 && <Bouton libre icone={<Download size={15} />} title="Métré du mois et calcul de l'acompte, retenue déduite" onClick={() => void exporterSituation(projet, contrat, s, periode, { entreprise: entreprises.find((e) => e.id === contrat.entrepriseId)?.nom })}>Situation (Word)</Bouton>}
             {bouton}
           </>}
           vide={<Vide icone={<Ruler size={22} />} titre="Aucun relevé pour ce contrat" texte={descriptif.length ? "Relevez les quantités exécutées, position par position : le descriptif de l'appel d'offres et les prix de l'offre retenue sont proposés." : "Relevez les quantités exécutées, position par position. Les positions des mois précédents sont reproposées chaque mois."} action={bouton} />} />

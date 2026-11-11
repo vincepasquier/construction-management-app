@@ -24,11 +24,13 @@ describe("initialisation de la base", () => {
     const d = await nouveau();
     await chargerDemo(d);
     const projets = d.tous("projets");
-    expect(projets).toHaveLength(11);
+    expect(projets).toHaveLength(14);
+    // Chacune des six directions du groupe porte au moins un projet
+    expect(new Set(projets.map((p) => p.directionId)).size).toBe(6);
     expect(projets.filter((p) => p.typeProjetId === "construction").length).toBeGreaterThanOrEqual(5);
-    const parent = projets.find((p) => p.numeroSource === "INF-2026-0312")!;
+    const parent = projets.find((p) => p.numeroSource === "DSE-2026-0312")!;
     expect(projets.filter((p) => p.parentId === parent.id)).toHaveLength(2);
-    expect(d.tous("relevesSource")).toHaveLength(11);
+    expect(d.tous("relevesSource")).toHaveLength(14);
     expect(d.tous("typesProjet").length).toBeGreaterThan(2);
     expect(d.acteur()?.acces?.profil).toBe("Administrateur");
     expect(d.tous("executionsSynchro")).toHaveLength(1);
@@ -48,11 +50,11 @@ describe("source simulée et synchronisation", () => {
     const d = await nouveau();
     installerReferentiels(d);
     await expect(importerProjet(d, dataPlatformSimulee, "XX-0000")).rejects.toBeInstanceOf(NumeroInconnu);
-    const p = await importerProjet(d, dataPlatformSimulee, "ENR-2025-0098", "2026-11-11T08:00:00.000Z");
-    expect(p).toMatchObject({ code: "ENR-2025-0098", typeProjetId: "investissement", directionId: "dir-enr" });
+    const p = await importerProjet(d, dataPlatformSimulee, "DDE-2025-0098", "2026-11-11T08:00:00.000Z");
+    expect(p).toMatchObject({ code: "DDE-2025-0098", typeProjetId: "investissement", directionId: "dir-dde" });
     expect(origineChamp(p, "nom")).toBe("source");
     expect(origineChamp(p, "lieu")).toBe("saisie");
-    await importerProjet(d, dataPlatformSimulee, "enr-2025-0098", "2026-11-11T08:00:00.000Z");
+    await importerProjet(d, dataPlatformSimulee, "dde-2025-0098", "2026-11-11T08:00:00.000Z");
     expect(d.tous("projets")).toHaveLength(1);
     expect(d.tous("facturesSource").length).toBeGreaterThan(2);
   });
@@ -60,7 +62,7 @@ describe("source simulée et synchronisation", () => {
   it("est idempotente à date égale et fait avancer le réalisé à une date ultérieure", async () => {
     const d = await nouveau();
     installerReferentiels(d);
-    const p = await importerProjet(d, dataPlatformSimulee, "ENR-2025-0098", "2026-06-01T08:00:00.000Z");
+    const p = await importerProjet(d, dataPlatformSimulee, "DDE-2025-0098", "2026-06-01T08:00:00.000Z");
     const r1 = d.parId("relevesSource", `rel-${p.id}`)!.realise;
     const meme = await synchroniser(d, dataPlatformSimulee, { horodatage: "2026-06-01T09:00:00.000Z" });
     expect(meme).toMatchObject({ lus: 1, modifies: 0, crees: 0, statut: "Réussie" });
@@ -73,7 +75,7 @@ describe("source simulée et synchronisation", () => {
   it("conserve une correction locale jusqu'à ce qu'elle soit levée", async () => {
     const d = await nouveau();
     installerReferentiels(d);
-    const p = await importerProjet(d, dataPlatformSimulee, "NUM-2026-0021", "2026-11-11T08:00:00.000Z");
+    const p = await importerProjet(d, dataPlatformSimulee, "DFI-2026-0021", "2026-11-11T08:00:00.000Z");
     surcharger(d, p.id, "nom", "PRISM", "Nom de travail du projet");
     await synchroniser(d, dataPlatformSimulee, { horodatage: "2026-12-11T08:00:00.000Z" });
     const apres = d.parId("projets", p.id)!;
@@ -131,7 +133,7 @@ describe("suppression d'un projet", () => {
     const depot = new Depot(new StockageMemoire(), { autoriser, regles: REGLES });
     await depot.ouvrir();
     await chargerDemo(depot, { gouvernance: true, jour: "2026-11-11" });
-    const parent = depot.tous("projets").find((p) => p.numeroSource === "INF-2026-0312")!;
+    const parent = depot.tous("projets").find((p) => p.numeroSource === "DSE-2026-0312")!;
     const avant = depot.tous("projets").length;
     expect(depot.parProjet("mandats", parent.id)[0].statut).toBe("Signé");
     expect(() => supprimerProjet(depot, parent.id, "")).toThrow(/motif/i);

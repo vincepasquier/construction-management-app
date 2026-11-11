@@ -11,7 +11,8 @@ import { ajouterJours, aujourdhui, formatDate } from "@/domaine/lib/format";
 import { nouvelId } from "@/domaine/lib/id";
 import type { Reception, Reserve } from "@/domaine/types-chantier";
 import { useDonnees, useProjet, useUtilisateur } from "@/donnees/hooks";
-import { exporterReserves } from "./exportChantier";
+import { RESULTAT_RECEPTION, sia, SIA118 } from "@/domaine/lib/sia118";
+import { exporterReception, exporterReserves } from "./exportChantier";
 import { enIds, enPhotos, Photos } from "./Photos";
 
 const COULEUR_STATUT: Record<Reserve["statut"], CouleurBadge> = { Ouverte: "orange", "Levée annoncée": "bleu", "Levée": "vert", "Contestée": "rouge" };
@@ -60,7 +61,7 @@ export function Reserves({ creer, onCree }: { creer?: boolean; onCree?: () => vo
 
   const champs: ChampSchema<Reserve>[] = [
     { cle: "libelle", libelle: "Défaut constaté", type: "texte", obligatoire: true, large: true },
-    { cle: "gravite", libelle: "Gravité", type: "liste", options: GRAVITES, obligatoire: true, aide: "Une réserve bloquante empêche la réception" },
+    { cle: "gravite", libelle: "Gravité", type: "liste", options: GRAVITES, obligatoire: true, aide: `Bloquante : défaut majeur, la réception est différée (${sia("defautsMajeurs")}). Les autres sont des défauts mineurs (${SIA118.defautsMineurs})` },
     { cle: "statut", libelle: "État", type: "liste", options: STATUTS_RESERVE, obligatoire: true },
     { cle: "localisation", libelle: "Localisation", type: "texte", large: true },
     { cle: "entrepriseId", libelle: "Entreprise", type: "entreprise" },
@@ -76,10 +77,16 @@ export function Reserves({ creer, onCree }: { creer?: boolean; onCree?: () => vo
     { cle: "contratId", libelle: "Contrat", type: "liste", options: d.contrats.map((c) => ({ valeur: c.id, libelle: `${c.numero} · ${nomEntreprise(c.entrepriseId)}` })), large: true },
     { cle: "date", libelle: "Date de la réception", type: "date", obligatoire: true },
     { cle: "type", libelle: "Type", type: "liste", options: ["Partielle", "Finale"], obligatoire: true },
-    { cle: "resultat", libelle: "Résultat", type: "liste", options: ["Acceptée", "Acceptée avec réserves", "Refusée"], obligatoire: true, large: true, aide: "Une réception refusée n'ouvre pas le délai de garantie" },
+    { cle: "lieu", libelle: "Lieu", type: "texte" },
+    { cle: "avisAchevement", libelle: "Avis d'achèvement reçu le", type: "date", aide: `La vérification commune suit l'avis de l'entrepreneur (${sia("verification")})` },
+    { cle: "resultat", libelle: "Résultat de la vérification commune", type: "liste", obligatoire: true, large: true, aide: "Défauts majeurs : l'ouvrage n'est pas reçu et les délais de garantie ne courent pas",
+      options: (["Acceptée", "Acceptée avec réserves", "Refusée"] as const).map((v) => ({ valeur: v, libelle: `${RESULTAT_RECEPTION[v].libelle} (${SIA118[RESULTAT_RECEPTION[v].renvoi]})` })) },
+    { cle: "secondeVerification", libelle: "Nouvelle vérification commune prévue le", type: "date", visible: (r) => r.resultat === "Refusée" },
     { cle: "debutGarantie", libelle: "Début de la garantie", type: "date", visible: (r) => r.resultat !== "Refusée", aide: "Laissé vide : la date de la réception" },
-    { cle: "finGarantie", libelle: "Fin du délai de dénonciation", type: "date", visible: (r) => r.resultat !== "Refusée", aide: "Laissé vide : deux ans après la réception (SIA 118, art. 172)" },
-    { cle: "participants", libelle: "Participants", type: "texte", large: true },
+    { cle: "finGarantie", libelle: "Fin du délai de dénonciation", type: "date", visible: (r) => r.resultat !== "Refusée", aide: `Laissé vide : deux ans après la réception (${sia("denonciation")})` },
+    { cle: "surete", libelle: "Sûreté remise", type: "texte", large: true, visible: (r) => r.resultat !== "Refusée", aide: `Cautionnement solidaire ou garantie bancaire, montant, échéance (${sia("surete")})` },
+    { cle: "participants", libelle: "Participants", type: "texte", large: true, aide: "Maître de l'ouvrage, direction des travaux, entrepreneur" },
+    { cle: "documentsRemis", libelle: "Documents remis", type: "zone", large: true, aide: "Un par ligne : plans conformes à l'exécution, procès-verbaux d'essais, notices…" },
     { cle: "remarques", libelle: "Remarques", type: "zone", large: true },
   ];
   const receptionExiste = (r: Reception) => d.receptions.some((x) => x.id === r.id);
@@ -132,7 +139,7 @@ export function Reserves({ creer, onCree }: { creer?: boolean; onCree?: () => vo
         </div>
       </Carte>
 
-      <Carte titre="Réceptions et garanties" sousTitre="Chaque réception acceptée ouvre le délai de dénonciation des défauts (deux ans) ; la prescription est de cinq ans" action={boutonReception}>
+      <Carte titre="Réceptions et garanties" sousTitre={`Chaque réception ouvre le délai de dénonciation des défauts, deux ans (${sia("denonciation")}) ; la prescription est de cinq ans (${SIA118.prescription})`} action={boutonReception}>
         {d.receptions.length === 0 ? <Vide icone={<ShieldCheck size={22} />} titre="Aucune réception" texte="Enregistrez les réceptions partielles et finales : les dates de garantie sont proposées, et les garanties qui arrivent à échéance sont signalées trois mois avant." action={boutonReception} /> : (
           <Tableau>
             <thead><tr><th>Date</th><th>Ouvrage reçu</th><th>Contrat</th><th>Type</th><th>Résultat</th><th className="text-right">Réserves ouvertes</th><th>Garantie jusqu'au</th></tr></thead>
@@ -143,7 +150,7 @@ export function Reserves({ creer, onCree }: { creer?: boolean; onCree?: () => vo
               return (
                 <tr key={x.id} className={lecture ? undefined : "cursor-pointer"} onClick={lecture ? undefined : () => setReception(x)}>
                   <td className="whitespace-nowrap">{formatDate(x.date)}</td><td className="font-medium">{x.objet}</td><td>{contrat ? `${contrat.numero} · ${nomEntreprise(contrat.entrepriseId)}` : "—"}</td><td>{x.type}</td>
-                  <td><Badge couleur={COULEUR_RESULTAT[x.resultat]}>{x.resultat}</Badge>{siennes.length > 0 && resultatReception(siennes) !== x.resultat && x.resultat !== "Refusée" && <span className="ml-2 text-xs text-slate-500" title="D'après l'état actuel des réserves rattachées">→ {resultatReception(siennes).toLowerCase()}</span>}</td>
+                  <td><Badge couleur={COULEUR_RESULTAT[x.resultat]} titre={`${RESULTAT_RECEPTION[x.resultat].libelle} (${sia(RESULTAT_RECEPTION[x.resultat].renvoi)})`}>{x.resultat === "Refusée" ? "Différée" : x.resultat}</Badge>{siennes.length > 0 && resultatReception(siennes) !== x.resultat && x.resultat !== "Refusée" && <span className="ml-2 text-xs text-slate-500" title="D'après l'état actuel des réserves rattachées">→ {resultatReception(siennes).toLowerCase()}</span>}</td>
                   <td className="text-right num">{siennes.filter(reserveOuverte).length || "—"}<span className="text-slate-400"> / {siennes.length}</span></td>
                   <td>{g ? <span className="flex items-center gap-2 whitespace-nowrap">{formatDate(g.fin)}<Badge couleur={COULEUR_GARANTIE[g.etat]}>{g.etat === "En cours" ? `${Math.round(g.joursRestants / 30)} mois` : g.etat}</Badge></span> : "—"}</td>
                 </tr>
@@ -173,6 +180,12 @@ export function Reserves({ creer, onCree }: { creer?: boolean; onCree?: () => vo
             if (receptionExiste(v)) modifier("receptions", v.id, propre); else ajouter("receptions", propre);
             setReception(null);
           }}
+          enfants={(v) => receptionExiste(v) && (
+            <div className="mt-5 flex flex-wrap items-center gap-3 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50">
+              <p className="min-w-0 flex-1 text-sm text-slate-600 dark:text-slate-300">Procès-verbal de réception, dans l'ordre de la SIA 118 : vérification commune, résultat, défauts à éliminer, délais, signatures.</p>
+              <Bouton libre icone={<Download size={15} />} onClick={() => { const contrat = d.contrats.find((c) => c.id === v.contratId); void exporterReception(projet, v, d.reserves.filter((r) => r.receptionId === v.id), { contrat: contrat ? `${contrat.numero} – ${contrat.objet}` : undefined, entreprise: nomEntreprise(contrat?.entrepriseId) || undefined, nomEntreprise }); }}>Procès-verbal (Word)</Bouton>
+            </div>
+          )}
           onSupprimer={receptionExiste(reception) ? async () => { if (await supprimer("receptions", reception.id, { quoi: "la réception", message: "Les réserves rattachées sont conservées, sans réception." })) setReception(null); } : undefined} />
       )}
     </div>

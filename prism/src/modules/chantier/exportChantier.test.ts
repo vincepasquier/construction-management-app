@@ -47,3 +47,54 @@ describe("documents Word du chantier", () => {
     expect(constat).toContain("Fouille de 2,4 m sans blindage.");
   });
 });
+
+describe("documents fondés sur la SIA 118", () => {
+  const projetComplet = { ...projet, maitreOuvrage: "Groupe (démonstration)", lieu: "Village", tauxTVA: 8.1 } as Projet;
+  const reserve = (x: Partial<Reserve>): Reserve => ({ id: "r", projetId: "p", numero: "R-001", libelle: "Joint non étanche", gravite: "Mineure", statut: "Ouverte", dateConstat: "2026-06-30", delai: "2026-07-31", photos: [], receptionId: "x", ...x });
+  const texte = (blocs: Parameters<typeof creerDocx>[0]) => texteDe(blocs).replace(/\s+/g, " ");
+
+  it("écrit le procès-verbal d'une réception avec défauts mineurs : résultat coché, délais, sûreté", async () => {
+    const { blocsReception } = await import("./exportChantier");
+    const blocs = blocsReception(projetComplet, { id: "x", projetId: "p", objet: "Collecteur, tronçon 1", date: "2026-06-30", type: "Partielle", resultat: "Acceptée avec réserves", avisAchevement: "2026-06-12", surete: "Cautionnement solidaire de 10 %", documentsRemis: "Plans conformes\nRapport d'inspection caméra", participants: "MO, DT, entreprise" },
+      [reserve({}), reserve({ id: "2", numero: "R-002", statut: "Levée", dateLevee: "2026-07-10" })], { contrat: "C-03", entreprise: "Hydro SA", nomEntreprise: () => "Hydro SA" });
+    const cases = blocs.find((b) => b.type === "cases");
+    expect(cases?.type === "cases" && cases.elements.map((e) => e.coche)).toEqual([false, true, false]);
+    const t = texte(blocs);
+    expect(t).toContain("Procès-verbal de réception partielle");
+    expect(t).toContain("SIA 118, art. 158");
+    expect(t).toContain("Défauts mineurs (2)");
+    expect(t).toContain("Levée le 10.07.2026");
+    expect(t).toContain("jusqu'au 30.06.2028");
+    expect(t).toContain("30.06.2031");
+    expect(t).toContain("Cautionnement solidaire de 10 %");
+    expect(t).toContain("Rapport d'inspection caméra");
+    expect(t).toContain("édition 2013");
+  });
+
+  it("n'ouvre aucun délai quand la réception est différée pour défaut majeur", async () => {
+    const { blocsReception } = await import("./exportChantier");
+    const blocs = blocsReception(projetComplet, { id: "x", projetId: "p", objet: "Regard R12", date: "2026-06-30", type: "Partielle", resultat: "Refusée", secondeVerification: "2026-08-20" },
+      [reserve({ gravite: "Bloquante", libelle: "Enrobage insuffisant" }), reserve({ id: "2", numero: "R-002" })], { nomEntreprise: () => "" });
+    const cases = blocs.find((b) => b.type === "cases");
+    expect(cases?.type === "cases" && cases.elements.map((e) => e.coche)).toEqual([false, false, true]);
+    const t = texte(blocs);
+    expect(t).toContain("Défauts majeurs (1)");
+    expect(t).toContain("Défauts mineurs (1)");
+    expect(t).toContain("L'ouvrage n'est pas reçu");
+    expect(t).toContain("Nouvelle vérification commune prévue le 20.08.2026");
+    expect(t).not.toContain("Délai de dénonciation des défauts (");
+  });
+
+  it("calcule l'acompte d'une situation : retenue sur le cumul, acomptes antérieurs déduits", async () => {
+    const { blocsSituation } = await import("./exportChantier");
+    const { acompteSituation, situation } = await import("@/domaine/lib/chantier");
+    const m = (periode: string, quantite: number) => ({ id: periode + quantite, projetId: "p", contratId: "c", position: "221.311", libelle: "Grave", unite: "m3", periode, quantite, prixUnitaire: 100, statut: "Contradictoire" as const });
+    const s = situation([m("2026-08", 1000), m("2026-09", 500)], "c", "2026-09");
+    expect(acompteSituation(s, 10, 8.1)).toEqual({ cumul: 150_000, retenue: 15_000, netCumul: 135_000, anterieurNet: 90_000, acompteHT: 45_000, tva: 3_645, acompteTTC: 48_645 });
+    const t = texte(blocsSituation(projetComplet, { id: "c", projetId: "p", numero: "C-01", entrepriseId: "e", cfc: "461", objet: "Génie civil", type: "Contrat d'entreprise", montantInitial: 2_000_000, dateSignature: "2026-01-15", retenuePct: 10, statut: "En cours", avenants: [] }, s, "2026-09", { entreprise: "Routes SA" }));
+    expect(t).toContain("Situation de septembre 2026");
+    expect(t).toContain("SIA 118, art. 141 ss");
+    expect(t).toContain("Retenue de 10 % (SIA 118, art. 149 ss)");
+    expect(t).toMatch(/Acompte de la période, TVA comprise\s+48[\s’' ]?645\.00/);
+  });
+});

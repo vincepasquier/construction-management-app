@@ -236,7 +236,7 @@ export function TableDonnees<T>({ id, lignes, colonnes, cle, onOuvrir, actions, 
                 const nombre = c.type === "montant" || c.type === "nombre" || c.type === "pourcent";
                 const tri = vue.tri?.colonne === c.id ? vue.tri.sens : null;
                 return (
-                  <th key={c.id} style={{ width: c.largeur }} aria-sort={tri === "asc" ? "ascending" : tri === "desc" ? "descending" : undefined}
+                  <th key={c.id} style={{ width: c.largeur, minWidth: c.edition ? c.largeur : undefined }} aria-sort={tri === "asc" ? "ascending" : tri === "desc" ? "descending" : undefined}
                     className={cx("whitespace-nowrap px-4 py-2.5 text-xs font-medium uppercase tracking-wide text-slate-500", nombre ? "text-right" : "text-left")}>
                     <button type="button" className="inline-flex items-center gap-1 uppercase tracking-wide hover:text-slate-800 dark:hover:text-white" onClick={() => trier(c.id)}>
                       {c.titre}

@@ -47,8 +47,8 @@ describe("recherche transverse", () => {
   it("filtre par direction et par période", () => {
     const index = construireIndex(depot, undefined);
     const projets = depot.tous("projets");
-    const enr = chercher(index, "", { type: "Projet", directionId: "dir-enr" }, projets);
-    expect(enr.length).toBe(3);
+    const enr = chercher(index, "", { type: "Projet", directionId: "dir-dde" }, projets);
+    expect(enr.length).toBe(2);
     expect(chercher(index, "", { type: "Projet", du: "2028-01-01" }, projets).every((r) => (r.date ?? "") >= "2028-01-01")).toBe(true);
   });
 });

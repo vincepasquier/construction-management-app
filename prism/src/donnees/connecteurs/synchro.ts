@@ -10,7 +10,7 @@ import type { ProjetSource, SourceProjets } from "./source";
 export const CHAMPS_SOURCE = ["nom", "description", "dateDebut", "dateFin", "statutSource", "compteAnalytique", "directionId", "directeurId"] as const;
 type ChampSource = (typeof CHAMPS_SOURCE)[number];
 
-const COULEURS: Record<string, string> = { INF: "#136bb0", ENR: "#0d9488", NUM: "#7c3aed", FIN: "#b45309" };
+const COULEURS: Record<string, string> = { DSE: "#136bb0", DDE: "#0d9488", DEN: "#ca8a04", DFI: "#7c3aed", DGC: "#be185d", DG: "#475569" };
 
 const idProjet = (numero: string) => `prj-${numero.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
