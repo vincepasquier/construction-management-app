@@ -1,6 +1,7 @@
 // Droits et règles d'intégrité appliqués par le dépôt à chaque écriture.
 import { peut } from "../domaine/socle/droits";
-import type { Mandat } from "../domaine/socle/types";
+import { commentaireExige, precedente, variation } from "../domaine/socle/periodes";
+import type { Mandat, PeriodeFinanciere } from "../domaine/socle/types";
 import type { EntreeJournalChantier } from "../domaine/types-chantier";
 import type { Regle } from "./depot";
 import { META, moduleDe } from "./schema";
@@ -62,4 +63,15 @@ const motifObligatoire: Regle = (o, commande) => {
   return commande.motif?.trim() ? undefined : `Un motif est exigé pour supprimer « ${META[o.collection].libelle.toLowerCase()} ».`;
 };
 
-export const REGLES: Regle[] = [projetArchive, photosFigees, mandatSigne, journalVerrouille, motifObligatoire];
+/** Arrêter une période dont l'atterrissage a bougé au-delà du seuil exige un commentaire */
+const periodeCommentee: Regle = (o, commande, depot) => {
+  if (o.collection !== "periodesFinancieres" || o.op !== "creer") return undefined;
+  if (commande.origine && commande.origine !== "saisie") return undefined;
+  const p = o.apres as unknown as PeriodeFinanciere;
+  if (p.commentaire?.trim()) return undefined;
+  const seuil = depot.parId("configurations", "courante")?.seuilVariationPct ?? 2;
+  const v = variation(precedente(depot.parProjet("periodesFinancieres", p.projetId), p.mois)?.valeurs, p.valeurs);
+  return commentaireExige(v, seuil) ? `L'atterrissage a varié de plus de ${seuil} % depuis la période précédente : un commentaire est exigé.` : undefined;
+};
+
+export const REGLES: Regle[] = [projetArchive, photosFigees, mandatSigne, journalVerrouille, motifObligatoire, periodeCommentee];

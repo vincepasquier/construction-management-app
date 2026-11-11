@@ -14,8 +14,9 @@ import { OngletFactures } from "@/modules/finances/OngletFactures";
 import { OngletClotures } from "@/modules/finances/OngletClotures";
 import { ImportSuiviFinancier } from "@/modules/finances/ImportSuiviFinancier";
 import { RapportMensuel } from "@/modules/finances/RapportMensuel";
+import { OngletSource } from "@/modules/finances/Source";
 
-type Onglet = "synthese" | "positions" | "mutations" | "previsions" | "engagements" | "factures" | "clotures";
+type Onglet = "synthese" | "positions" | "mutations" | "previsions" | "engagements" | "factures" | "clotures" | "source";
 
 export function Finances() {
   const b = useBudget();
@@ -48,6 +49,7 @@ export function Finances() {
           { id: "engagements", libelle: "Commandes et offres" },
           { id: "factures", libelle: "Factures", compte: aAffecter || undefined },
           { id: "clotures", libelle: "Clôtures", compte: b.d.clotures.length },
+          { id: "source", libelle: "Système source" },
         ]} />
       </div>
 
@@ -58,6 +60,7 @@ export function Finances() {
       {onglet === "engagements" && <OngletEngagements b={b} />}
       {onglet === "factures" && <OngletFactures b={b} />}
       {onglet === "clotures" && <OngletClotures b={b} />}
+      {onglet === "source" && <OngletSource />}
 
       {importIA && <ImportChiffrage projetId={b.d.projet.id} onFermer={() => { setImportIA(false); setOnglet("positions"); }} />}
       {importExcel && <ImportSuiviFinancier onFermer={() => setImportExcel(false)} onTermine={() => { setImportExcel(false); setOnglet("synthese"); }} />}

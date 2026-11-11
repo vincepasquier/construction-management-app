@@ -2,7 +2,8 @@ import { useSuppression } from "@/app/suppression";
 import { useState } from "react";
 import { CalendarCheck, Trash2 } from "lucide-react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useDonnees } from "@/donnees/hooks";
+import { useDonnees, useDepot } from "@/donnees/hooks";
+import { arreterPeriode } from "@/donnees/periodes";
 import { cascade, photographier } from "@/domaine/lib/budget";
 import { aujourdhui, formatCHF, formatCompact, formatDate } from "@/domaine/lib/format";
 import { nouvelId } from "@/domaine/lib/id";
@@ -14,6 +15,7 @@ import type { Budget } from "./useBudget";
 export function OngletClotures({ b }: { b: Budget }) {
   const { ajouter, supprimer, grouper, utilisateurId, personnes } = useDonnees();
   const supprimerAvecMotif = useSuppression();
+  const depot = useDepot();
   const clotures = b.d.clotures;
   const [nouvelle, setNouvelle] = useState(false);
   const [depuis, setDepuis] = useState<string>(clotures.at(-1)?.id ?? "");
@@ -95,6 +97,8 @@ export function OngletClotures({ b }: { b: Budget }) {
             // Une clôture est une photo : refaire le même mois remplace la précédente, ce que le journal consigne
             if (existante) supprimer("clotures", existante.id, { motif: "Clôture refaite pour le même mois" });
             ajouter("clotures", { id, projetId: b.d.projet!.id, mois, date: aujourdhui(), auteurId: utilisateurId ?? undefined, commentaire, ...photographier(b.toutes) });
+            // La clôture arrête aussi la période financière suivie au niveau du groupe
+            arreterPeriode(depot, b.d.projet!.id, mois, commentaire.trim() || "Voir la clôture mensuelle du projet (variation détaillée par position).");
           });
           setDepuis(id);
           setNouvelle(false);

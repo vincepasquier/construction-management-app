@@ -40,3 +40,7 @@ export function ajouterJours(iso: string, jours: number): string {
   d.setDate(d.getDate() + jours);
   return d.toISOString().slice(0, 10);
 }
+
+const MOIS_LONGS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+/** « 2026-09 » → « septembre 2026 » */
+export const moisEnClair = (mois: string) => `${MOIS_LONGS[Number(mois.slice(5, 7)) - 1] ?? ""} ${mois.slice(0, 4)}`.trim();
