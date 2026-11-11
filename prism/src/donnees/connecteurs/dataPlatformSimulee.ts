@@ -21,9 +21,27 @@ interface Fiche {
   atterrissage?: number;
   /** Rythme de dépense par rapport au planning (1 = conforme) */
   rythme?: number;
+  /** Parts du budget réalisée et engagée, quand elles sont connues plutôt que déduites du calendrier */
+  partRealisee?: number;
+  partEngagee?: number;
 }
 
+/** Projets du portefeuille de démonstration : leur contenu détaillé est dans donnees/demo/portefeuille */
+const PORTEFEUILLE: Fiche[] = [
+  { numero: "DEN-2024-0210", nom: "Réhabilitation du barrage de Valmont", description: "Mise en conformité du barrage : confortement du couronnement, agrandissement de l'évacuateur de crues, nouvelles vannes.", direction: "DEN", typeProjet: "construction", responsable: "Lucien Aymon", statut: "Ouvert", dateDebut: "2024-09-02", dateFin: "2028-06-30", budgetInitial: 37_500_000, budgetApprouve: 38_400_000, partRealisee: 0.27, partEngagee: 0.72 },
+  { numero: "DEN-2025-0045", nom: "Aménagement hydroélectrique Schiffenen–Morat – études", description: "Études, reconnaissances et procédure d'autorisation d'une galerie d'amenée entre les deux lacs et de sa centrale.", direction: "DEN", typeProjet: "construction", responsable: "Lucien Aymon", statut: "Ouvert", dateDebut: "2025-01-06", dateFin: "2028-03-31", budgetInitial: 24_000_000, budgetApprouve: 24_000_000, partRealisee: 0.3, partEngagee: 0.64 },
+  { numero: "DEN-2025-0127", nom: "Réseau de chauffage à distance des Vergers – étape 2", description: "4,1 km de conduites et 46 sous-stations pour raccorder la rive est du quartier.", direction: "DEN", typeProjet: "construction", responsable: "Maude Berset", statut: "Ouvert", dateDebut: "2025-03-03", dateFin: "2027-04-30", budgetInitial: 12_200_000, budgetApprouve: 12_600_000, partRealisee: 0.8, partEngagee: 0.91 },
+  { numero: "DEN-2026-0088", nom: "Centrale de chauffe à bois des Vergers", description: "Nouvelle centrale de 6 MW : deux chaudières à bois, électrofiltres et accumulateur.", direction: "DEN", typeProjet: "construction", responsable: "Maude Berset", statut: "Ouvert", dateDebut: "2026-01-12", dateFin: "2028-10-31", budgetInitial: 16_800_000, budgetApprouve: 16_800_000, partRealisee: 0.04, partEngagee: 0.11 },
+  { numero: "DDE-2025-0061", nom: "Mise en souterrain de la ligne 60 kV Les Granges – Praz-Riond", description: "9,6 km de liaison souterraine et démontage de 38 pylônes.", direction: "DDE", typeProjet: "construction", responsable: "Thomas Keller", statut: "Ouvert", dateDebut: "2025-02-03", dateFin: "2028-01-31", budgetInitial: 21_500_000, budgetApprouve: 21_500_000, partRealisee: 0.5, partEngagee: 0.86 },
+  { numero: "DDE-2023-0034", nom: "Nouveau poste 125/20 kV de Praz-Riond", description: "Remplacement de l'ancien poste par un poste 125/20 kV de 2 × 40 MVA.", direction: "DDE", typeProjet: "construction", responsable: "Samuel Oberson", statut: "Terminé techniquement", dateDebut: "2023-03-01", dateFin: "2026-12-18", budgetInitial: 16_900_000, budgetApprouve: 17_200_000, partRealisee: 0.98, partEngagee: 0.99 },
+  { numero: "DSE-2025-0073", nom: "Rénovation des installations énergétiques de l'hôpital des Trois-Sapins", description: "Pompes à chaleur sur sondes, production de froid, ventilation des blocs et régulation, en contracting.", direction: "DSE", typeProjet: "construction", responsable: "Vincent Pasquier", statut: "Ouvert", dateDebut: "2025-05-05", dateFin: "2027-05-28", budgetInitial: 9_600_000, budgetApprouve: 9_800_000, partRealisee: 0.7, partEngagee: 0.93 },
+  { numero: "DSE-2026-0105", nom: "Contracting énergétique du quartier des Tilleuls", description: "Chaleur, froid et électricité solaire pour 420 logements : études préliminaires et offre ferme.", direction: "DSE", typeProjet: "construction", responsable: "Vincent Pasquier", statut: "Ouvert", dateDebut: "2026-06-01", dateFin: "2029-06-29", budgetInitial: 6_400_000, budgetApprouve: 6_400_000, partRealisee: 0.03, partEngagee: 0.06 },
+  { numero: "DFI-2025-0140", nom: "Remplacement du système de facturation de l'énergie", description: "Nouvelle solution de facturation pour 140'000 clients, reprise des données et interfaces.", direction: "DFI", typeProjet: "numerique", responsable: "Amélie Dubois", statut: "Ouvert", dateDebut: "2025-09-01", dateFin: "2027-03-31", budgetInitial: 3_900_000, budgetApprouve: 4_200_000, atterrissage: 4_380_000, partRealisee: 0.61, partEngagee: 0.84 },
+  { numero: "DFI-2025-0018", nom: "Dématérialisation des factures fournisseurs", description: "Lecture automatique, circuit de visa et archivage électronique des 38'000 factures fournisseurs annuelles du groupe.", direction: "DFI", typeProjet: "numerique", responsable: "Amélie Dubois", statut: "Terminé techniquement", dateDebut: "2025-01-13", dateFin: "2026-03-31", budgetInitial: 620_000, budgetApprouve: 640_000, atterrissage: 618_000, partRealisee: 0.965, partEngagee: 0.965 },
+];
+
 export const CATALOGUE: Fiche[] = [
+  ...PORTEFEUILLE,
   { numero: "DSE-2025-0601", nom: "Réaménagement RC 601 – traversée du village", description: "Chantier coordonné avec le canton : chaussée, trottoirs, giratoire et renouvellement des réseaux souterrains.", direction: "DSE", typeProjet: "construction", responsable: "Claire Rochat", statut: "Ouvert", dateDebut: "2026-02-02", dateFin: "2027-06-30", budgetInitial: 7_500_000, budgetApprouve: 7_720_000, rythme: 0.68 },
   { numero: "DSE-2026-0240", nom: "Collecteur intercommunal vers STEP", description: "Collecteur DN 600 sur 3,4 km.", direction: "DSE", typeProjet: "construction", responsable: "Claire Rochat", statut: "Ouvert", dateDebut: "2026-09-01", dateFin: "2028-03-31", budgetInitial: 7_940_000, budgetApprouve: 7_940_000, rythme: 0.6 },
   { numero: "DSE-2026-0312", nom: "Centrale de chauffe du quartier des Moulins", description: "Chaufferie bois de 3 MW et réseau de distribution, première étape.", direction: "DSE", typeProjet: "construction", responsable: "Marc Délèze", statut: "Ouvert", dateDebut: "2026-04-01", dateFin: "2028-10-31", budgetInitial: 14_200_000, budgetApprouve: 14_200_000 },
@@ -36,7 +54,7 @@ export const CATALOGUE: Fiche[] = [
   { numero: "DFI-2026-0009", nom: "Refonte du processus d'investissement", description: "Simplification des demandes et du suivi des décisions d'investissement.", direction: "DFI", typeProjet: "organisation", responsable: "Olivier Schwab", statut: "Ouvert", dateDebut: "2026-03-02", dateFin: "2026-12-31", budgetInitial: 90_000, budgetApprouve: 90_000 },
   { numero: "DEN-2026-0118", nom: "Réhabilitation du groupe 2 de la centrale de Planchamp", description: "Remplacement de la roue, révision de l'alternateur et nouveau contrôle-commande du groupe hydroélectrique.", direction: "DEN", typeProjet: "investissement", responsable: "Lucien Aymon", statut: "Ouvert", dateDebut: "2026-03-02", dateFin: "2027-11-30", budgetInitial: 5_200_000, budgetApprouve: 5_200_000, rythme: 0.9 },
   { numero: "DGC-2026-0031", nom: "Rapport de durabilité et site institutionnel", description: "Premier rapport de durabilité du groupe et refonte du site institutionnel qui le publie.", direction: "DGC", typeProjet: "organisation", responsable: "Nathalie Crettaz", statut: "Ouvert", dateDebut: "2026-02-02", dateFin: "2027-01-29", budgetInitial: 180_000, budgetApprouve: 195_000, atterrissage: 204_000, rythme: 1.05 },
-  { numero: "DG-2026-0002", nom: "Stratégie 2035 – feuille de route du groupe", description: "Élaboration de la stratégie à dix ans et de sa feuille de route, avec les directions.", direction: "DG", typeProjet: "organisation", responsable: "Bernard Savioz", statut: "Ouvert", dateDebut: "2026-01-12", dateFin: "2026-12-18", budgetInitial: 240_000, budgetApprouve: 240_000 },
+  { numero: "DG-2026-0002", nom: "Stratégie 2035 – feuille de route du groupe", description: "Élaboration de la stratégie à dix ans et de sa feuille de route, avec les directions.", direction: "DG", typeProjet: "organisation", responsable: "Bernard Savioz", statut: "Ouvert", dateDebut: "2026-01-12", dateFin: "2026-12-18", budgetInitial: 240_000, budgetApprouve: 240_000, partRealisee: 0.86, partEngagee: 0.96 },
   { numero: "DEN-2024-0033", nom: "Assainissement de la conduite forcée du Gibloux", description: "Projet terminé, en attente de clôture.", direction: "DEN", typeProjet: "investissement", responsable: "Thomas Keller", statut: "Terminé techniquement", dateDebut: "2024-05-06", dateFin: "2026-06-26", budgetInitial: 2_400_000, budgetApprouve: 2_400_000, atterrissage: 2_352_000 },
   { numero: "DFI-2027-0003", nom: "Portail des raccordements", description: "Projet en préparation, non encore ouvert.", direction: "DFI", typeProjet: "numerique", responsable: "Amélie Dubois", statut: "En préparation", dateDebut: "2027-02-01", dateFin: "2027-11-30", budgetInitial: 310_000, budgetApprouve: 310_000 },
 ];
@@ -66,8 +84,8 @@ function avancement(f: Fiche, date: string): number {
 function etat(f: Fiche, date: string): ProjetSource {
   const alea = graine(f.numero);
   const part = avancement(f, date);
-  const realise = arrondi(f.budgetApprouve * part);
-  const engage = arrondi(Math.min(f.budgetApprouve * 1.04, realise + f.budgetApprouve * (part > 0 ? 0.18 + alea() * 0.12 : 0)));
+  const realise = arrondi(f.budgetApprouve * (f.partRealisee ?? part));
+  const engage = f.partEngagee !== undefined ? arrondi(f.budgetApprouve * f.partEngagee) : arrondi(Math.min(f.budgetApprouve * 1.04, realise + f.budgetApprouve * (part > 0 ? 0.18 + alea() * 0.12 : 0)));
 
   const parAnnee: ProjetSource["parAnnee"] = {};
   const a0 = Number(f.dateDebut.slice(0, 4)), a1 = Number(f.dateFin.slice(0, 4));

@@ -168,7 +168,7 @@ export function Avatar({ nom, taille = 28 }: { nom: string; taille?: number }) {
 
 export function Vide({ icone, titre, texte, action }: { icone?: ReactNode; titre: string; texte?: string; action?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center justify-center px-6 py-14 text-center">
+    <div data-vide="" className="flex flex-col items-center justify-center px-6 py-14 text-center">
       {icone && <div className="mb-3 rounded-full bg-slate-100 p-3 text-slate-400 dark:bg-slate-800">{icone}</div>}
       <p className="font-medium text-slate-900 dark:text-white">{titre}</p>
       {texte && <p className="mt-1 max-w-sm text-sm text-slate-500">{texte}</p>}

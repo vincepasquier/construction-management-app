@@ -56,16 +56,20 @@ export function MonTravail() {
         <Bloc titre="À valider" icone={<FileCheck2 size={15} />} compte={t.validations.length} vide="Aucune validation ne vous attend.">
           {t.validations.slice(0, 8).map((v) => (
             <li key={v.id}><Link to={cheminProjet(v.projetId, "validations")} className={ligne}>
-              <span className="min-w-0 flex-1 truncate">{v.titre}</span>
-              <span className="shrink-0 text-xs text-slate-500">{code(v.projetId)}{v.echeance ? ` · ${formatDate(v.echeance)}` : ""}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate">{v.titre}</span>
+                <span className="block text-xs text-slate-500">{code(v.projetId)}{v.echeance ? ` · échéance ${formatDate(v.echeance)}` : ""}</span>
+              </span>
             </Link></li>
           ))}
         </Bloc>
         <Bloc titre="Mes tâches" icone={<ListChecks size={15} />} compte={t.actions.length} vide="Aucune tâche ouverte.">
           {t.actions.slice(0, 8).map((a) => (
             <li key={a.id}><Link to={cheminProjet(a.projetId, "taches")} className={ligne}>
-              <span className="min-w-0 flex-1 truncate">{a.titre}</span>
-              <span className={`shrink-0 text-xs ${a.echeance && a.echeance < jour ? "font-semibold text-rose-600" : "text-slate-500"}`}>{code(a.projetId)}{a.echeance ? ` · ${formatDate(a.echeance)}` : ""}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate">{a.titre}</span>
+                <span className={`block text-xs ${a.echeance && a.echeance < jour ? "font-semibold text-rose-600" : "text-slate-500"}`}>{code(a.projetId)}{a.echeance ? ` · échéance ${formatDate(a.echeance)}` : ""}</span>
+              </span>
             </Link></li>
           ))}
         </Bloc>
@@ -73,8 +77,10 @@ export function MonTravail() {
           {t.risques.slice(0, 8).map((r) => (
             <li key={r.id}><Link to={cheminProjet(r.projetId, "risques")} className={ligne}>
               <span className="flex size-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold text-white" style={{ background: COULEUR_CRITICITE[criticite(score(r))] }}>{score(r)}</span>
-              <span className="min-w-0 flex-1 truncate">{r.titre}</span>
-              <span className="shrink-0 text-xs text-slate-500">{code(r.projetId)}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate">{r.titre}</span>
+                <span className="block text-xs text-slate-500">{code(r.projetId)}</span>
+              </span>
             </Link></li>
           ))}
         </Bloc>

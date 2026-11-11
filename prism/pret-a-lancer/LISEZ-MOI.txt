@@ -10,8 +10,12 @@ Aucune installation requise : seul node.exe est necessaire (Node.js 18 ou plus r
 3. Laissez la fenetre noire ouverte pendant l'utilisation.
 
 Premier lancement
-- "Charger la demonstration" installe un portefeuille fictif, dont un projet de
-  route avec deux semaines de suivi de chantier.
+- "Charger la demonstration" installe onze projets fictifs, remplis sur tous
+  les ecrans et chacun a un stade different (de l'etude a la cloture) :
+  barrage, amenagement hydroelectrique, reseau et centrale de chauffage a
+  distance, ligne et poste haute tension, hopital, contracting, et trois
+  projets sans chantier (DFI, DGC, DG). Un douzieme dossier, deja clos, sert
+  d'exemple dans l'ecran "Archives".
 - "Reprendre Chantier+" apparait si ce navigateur contient les donnees de
   Chantier+. Elles sont copiees ; rien n'est efface dans Chantier+.
 - Ne lancez pas Chantier+ et PRISM en meme temps : ils utilisent la meme adresse.

@@ -1,7 +1,7 @@
 import { lazy } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Coquille } from "./app/Coquille";
-import { EnConstruction } from "./app/EnConstruction";
+import { Introuvable } from "./app/Introuvable";
 import { ProjetCourant } from "./app/ProjetCourant";
 
 const page = <T extends Record<string, unknown>>(charger: () => Promise<T>, nom: keyof T) =>
@@ -68,7 +68,7 @@ export default function App() {
             <Route path="validations" element={<Validations />} />
             <Route path="documents" element={<Documents />} />
             <Route path="historique" element={<PageHistorique />} />
-            <Route path="*" element={<EnConstruction titre="Module du projet" etape={2} />} />
+            <Route path="*" element={<Introuvable />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

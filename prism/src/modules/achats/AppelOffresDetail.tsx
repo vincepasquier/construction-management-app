@@ -14,19 +14,20 @@ import { lireFichierCrb } from "@/domaine/lib/sia451";
 import { descriptifDepuisCrbx, entrepriseDepuisCrbx, lireFichier, soumissionDepuisCrbx } from "@/domaine/lib/importCrbx";
 import { nouvelId } from "@/domaine/lib/id";
 import { CHAPITRES_CAN, libelleCAN, UNITES } from "@/domaine/data/can";
-import { libelleCFC } from "@/domaine/data/cfc";
+import { libellePosition } from "@/domaine/data/cfc";
 import { Badge, BadgeStatut, Bouton, Carte, Champ, cx, EnTetePage, Indicateur, Liste, Modale, Onglets, Saisie, Tableau, useLectureSeule, Vide } from "@/app/ui";
 import { FormulaireAO } from "./AppelsOffres";
 import type { AppelOffres, Contrat, PositionCAN, Soumission } from "@/domaine/types";
 
 type Onglet = "descriptif" | "soumissions" | "evaluation";
+const ONGLETS: Onglet[] = ["descriptif", "soumissions", "evaluation"];
 
 export function AppelOffresDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { appelsOffres, entreprises, modifier, supprimer, ajouter, contrats, projets, factures } = useDonnees();
+  const { appelsOffres, entreprises, modifier, supprimer, ajouter, contrats, projets, factures, budget } = useDonnees();
   const [params] = useSearchParams();
-  const [onglet, setOnglet] = useState<Onglet>((params.get("onglet") as Onglet) ?? "soumissions");
+  const [onglet, setOnglet] = useState<Onglet>(ONGLETS.includes(params.get("onglet") as Onglet) ? (params.get("onglet") as Onglet) : "soumissions");
   const [edition, setEdition] = useState(false);
   const [adjudication, setAdjudication] = useState<string | null>(null);
   const ao = appelsOffres.find((a) => a.id === id);
@@ -56,7 +57,7 @@ export function AppelOffresDetail() {
       <Link to="/appels-offres" className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"><ArrowLeft size={14} /> Marchés & appels d'offres</Link>
       <EnTetePage
         titre={`${ao.numero} · ${ao.objet}`}
-        description={<span className="flex flex-wrap items-center gap-2"><BadgeStatut statut={ao.statut} /> CFC {ao.cfc} {libelleCFC(ao.cfc)} · Procédure {ao.procedure.toLowerCase()} · retour le {formatDate(ao.dateRetour)}</span>}
+        description={<span className="flex flex-wrap items-center gap-2"><BadgeStatut statut={ao.statut} /> CFC {ao.cfc} {libellePosition(ao.cfc, budget, ao.projetId)} · Procédure {ao.procedure.toLowerCase()} · retour le {formatDate(ao.dateRetour)}</span>}
         actions={<>
           <Bouton icone={<Pencil size={15} />} onClick={() => setEdition(true)}>Modifier</Bouton>
           <BoutonIA question={`Analyse les soumissions de l'appel d'offres ${ao.numero} (${ao.objet}) : compare les prix, repère les positions anormalement hautes ou basses (offres spéculatives), vérifie la cohérence avec l'estimation et propose une adjudication motivée selon les critères.`}>Analyse IA</BoutonIA>

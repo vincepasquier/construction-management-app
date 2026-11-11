@@ -45,7 +45,7 @@ export function Reserves({ creer, onCree }: { creer?: boolean; onCree?: () => vo
   const liste = (filtre === "ouvertes" ? d.reserves.filter(reserveOuverte) : d.reserves).slice().sort((a, b) => b.numero.localeCompare(a.numero, "fr", { numeric: true }));
 
   const colonnes: Colonne<Reserve>[] = [
-    { id: "numero", titre: "N°", valeur: (r) => r.numero, largeur: "5.5rem", rendu: (r) => <span className="num font-medium">{r.numero}</span> },
+    { id: "numero", titre: "N°", valeur: (r) => r.numero, largeur: "5.5rem", rendu: (r) => <span className="num whitespace-nowrap font-medium">{r.numero}</span> },
     { id: "libelle", titre: "Réserve", valeur: (r) => r.libelle, rendu: (r) => <span className="block max-w-sm truncate font-medium text-slate-900 dark:text-white" title={r.libelle}>{r.libelle}</span> },
     { id: "localisation", titre: "Localisation", valeur: (r) => r.localisation ?? "" },
     { id: "entreprise", titre: "Entreprise", valeur: (r) => nomEntreprise(r.entrepriseId), groupable: true },

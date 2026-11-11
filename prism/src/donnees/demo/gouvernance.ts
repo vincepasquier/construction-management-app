@@ -7,7 +7,7 @@ import { contenuInitial, creerMandat, signer, soumettre } from "../../domaine/so
 import { moisPrecedent, photographier } from "../../domaine/socle/periodes";
 import { changerStatut, indicateursFiges, rapportVide } from "../../domaine/socle/rapports";
 import { nouvelleSeance } from "../../domaine/socle/seances";
-import type { PartiePrenante, PointSeance, Seance } from "../../domaine/socle/types";
+import type { ContenuMandat, PartiePrenante, PointSeance, Seance } from "../../domaine/socle/types";
 import type { Projet } from "../../domaine/types";
 import type { Depot } from "../depot";
 import { completudeProjet } from "../gouvernance";
@@ -27,7 +27,25 @@ const BENEFICES: Record<string, string> = {
   organisation: "Processus plus court et plus lisible, décisions tracées, charge administrative réduite.",
 };
 
-export function installerGouvernanceDemo(depot: Depot, jour: string): void {
+/** Réglages propres à un portefeuille : sans eux, ce sont ceux du jeu d'essai d'origine */
+export interface OptionsGouvernance {
+  /** Contenu du mandat propre à chaque projet (clé : numéro du projet) et état voulu */
+  mandats?: Record<string, { contenu?: Partial<ContenuMandat>; etat?: "Signé" | "En signature" | "Brouillon" }>;
+  preavis?: string[];
+  /** Projets dont le dernier mois reste à arrêter */
+  aArreter?: string[];
+  sansRapport?: string[];
+  /** Projet qui reçoit un scénario défavorable ; `null` : aucun */
+  scenario?: string | null;
+  /** La séance du comité d'investissement est fournie par ailleurs */
+  sansComInv?: boolean;
+  /** Identifiants des personnes Finance et PMO, et direction qui porte l'informatique */
+  finance?: string;
+  pmo?: string;
+}
+
+export function installerGouvernanceDemo(depot: Depot, jour: string, o: OptionsGouvernance = {}): void {
+  const FIN = o.finance ?? "per-fin", PMO = o.pmo ?? "per-pmo";
   const acteur = depot.acteurId;
   const personnes = depot.tous("personnes");
   const nom = (id?: string) => personnes.find((p) => p.id === id)?.nom ?? "";
@@ -47,7 +65,7 @@ export function installerGouvernanceDemo(depot: Depot, jour: string): void {
       const parties: PartiePrenante[] = [
         ...(p.sponsorId ? [{ id: `pp-${pid}-1`, projetId: pid, personneId: p.sponsorId, roleProjet: "Sponsor", interne: true, responsabilites: "Arbitre les priorités et représente le projet devant les organes de décision." }] : []),
         ...(p.directeurId ? [{ id: `pp-${pid}-2`, projetId: pid, personneId: p.directeurId, roleProjet: "Chef de projet", interne: true, responsabilites: "Conduit le projet, tient le budget, le planning et les risques." }] : []),
-        { id: `pp-${pid}-3`, projetId: pid, personneId: "per-fin", roleProjet: "Finance", interne: true, responsabilites: "Contrôle de gestion et arrêts de période." },
+        { id: `pp-${pid}-3`, projetId: pid, personneId: FIN, roleProjet: "Finance", interne: true, responsabilites: "Contrôle de gestion et arrêts de période." },
         { id: `pp-${pid}-4`, projetId: pid, nom: type?.id === "construction" ? "Commune et riverains" : "Utilisateurs des directions concernées", roleProjet: type?.id === "construction" ? "Riverain / tiers" : "Utilisateur", interne: type?.id !== "construction", remarques: "À informer avant chaque étape visible." },
       ];
       if (code !== "DSE-2026-0312-02") for (const x of parties) depot.ajouter("partiesPrenantes", x, SYSTEME);
@@ -68,16 +86,20 @@ export function installerGouvernanceDemo(depot: Depot, jour: string): void {
       contenu.autresParties = `Contrôle de gestion (Finance), PMO du groupe${type?.id === "construction" ? ", commune et riverains" : ""}`;
       contenu.impactsEnvironnementaux = type?.id === "construction" ? "Nuisances de chantier limitées par le phasage ; matériaux d'excavation valorisés sur place." : "Aucun";
       contenu.impactsSociaux = "Information régulière des personnes concernées ; accompagnement au changement.";
-      contenu.preavisComInv = ["DDE-2025-0098", "DSE-2026-0240", "DSE-2026-0312"].includes(code);
+      contenu.preavisComInv = (o.preavis ?? ["DDE-2025-0098", "DSE-2026-0240", "DSE-2026-0312"]).includes(code);
       contenu.composanteIT = type?.id === "numerique";
       contenu.descriptionIT = type?.id === "numerique" ? "Solution métier reposant sur l'environnement informatique du groupe ; l'informatique valide l'architecture, la sécurité et les interfaces." : "";
       contenu.phases = contenu.phases.map((ph, i) => (ph.applicable ? { ...ph, debut: ajouterJours(p.dateDebut, -120 + i * 40), fin: i === contenu.phases.length - 1 ? p.dateFin : ajouterJours(p.dateDebut, -80 + i * 40), livrables: ["Mandat de projet signé", "", "Dossier de projet et devis", "", "Ouvrage ou solution en service"][i] } : ph));
       contenu.ressources = [{ id: `res-${pid}-1`, provenance: `Chefferie de projet – ${nom(p.directeurId) || "à désigner"}`, joursHommes: 60, confirmee: true }, { id: `res-${pid}-2`, provenance: "Direction métier", joursHommes: 25, confirmee: demarre }];
       if (!contenu.risques.length) contenu.risques = [{ id: `rsq-${pid}-1`, risque: "Disponibilité des ressources internes", reponse: "Faire confirmer les ressources par les responsables d'unité avant le lancement." }];
+      const propre = o.mandats?.[code];
+      if (propre?.contenu) Object.assign(contenu, propre.contenu);
+      const aSigner = propre?.etat ? propre.etat !== "Brouillon" : !SANS_MANDAT.has(code);
       let mandat = creerMandat(pid, contenu, { id: `man-${pid}`, auteurId: p.directeurId, date: ajouterJours(p.dateDebut, -150) });
-      if (!SANS_MANDAT.has(code) && contenu.chefProjet && contenu.commanditaire) {
+      if (aSigner && contenu.chefProjet && contenu.commanditaire) {
         mandat = soumettre(mandat, personnes, ajouterJours(p.dateDebut, -140));
-        for (const sg of mandat.signatures) mandat = signer(mandat, sg.role, ajouterJours(p.dateDebut, -130));
+        // « En signature » : le chef de projet a signé, les autres signatures sont attendues
+        for (const sg of mandat.signatures) if (propre?.etat !== "En signature" || sg.role === "Chef de projet") mandat = signer(mandat, sg.role, ajouterJours(p.dateDebut, -130));
       }
       depot.ajouter("mandats", mandat, SYSTEME);
 
@@ -92,17 +114,17 @@ export function installerGouvernanceDemo(depot: Depot, jour: string): void {
       const s = syntheseProjet(depot, p.id);
       const avant = moisPrecedent(mois), encore = moisPrecedent(avant);
       const recule = (part: number, derive: number) => ({ ...s, engage: s.engage * part, realise: s.realise * part, paye: s.paye * part, atterrissage: s.atterrissage - (s.atterrissage - s.budgetApprouve) * derive, atterrissageDefavorable: s.atterrissageDefavorable });
-      depot.ajouter("periodesFinancieres", photographier(p.id, encore, `${avant}-03T08:00:00.000Z`, recule(0.82, 1), "per-fin"), SYSTEME);
-      depot.ajouter("periodesFinancieres", photographier(p.id, avant, `${mois}-03T08:00:00.000Z`, recule(0.91, 0.6), "per-fin", Math.abs(s.ecartPct) > 1 ? "Première alerte sur l'atterrissage, à confirmer le mois prochain." : undefined), SYSTEME);
+      depot.ajouter("periodesFinancieres", photographier(p.id, encore, `${avant}-03T08:00:00.000Z`, recule(0.82, 1), FIN), SYSTEME);
+      depot.ajouter("periodesFinancieres", photographier(p.id, avant, `${mois}-03T08:00:00.000Z`, recule(0.91, 0.6), FIN, Math.abs(s.ecartPct) > 1 ? "Première alerte sur l'atterrissage, à confirmer le mois prochain." : undefined), SYSTEME);
       // Le dernier mois reste à arrêter pour deux projets : c'est le travail qui attend la Finance
-      if (!["DFI-2025-0177", "DSE-2026-0240"].includes(p.numeroSource ?? "")) depot.ajouter("periodesFinancieres", photographier(p.id, mois, `${moisDe(jour)}-03T08:00:00.000Z`, recule(0.97, 0.9), "per-fin", Math.abs(s.ecartPct) > 1 ? "Écart expliqué par les avenants en cours ; mesures engagées." : undefined), SYSTEME);
+      if (!(o.aArreter ?? ["DFI-2025-0177", "DSE-2026-0240"]).includes(p.numeroSource ?? "")) depot.ajouter("periodesFinancieres", photographier(p.id, mois, `${moisDe(jour)}-03T08:00:00.000Z`, recule(0.97, 0.9), FIN, Math.abs(s.ecartPct) > 1 ? "Écart expliqué par les avenants en cours ; mesures engagées." : undefined), SYSTEME);
     }
 
     // Rapports de phase validés pour les phases terminées
     for (const p of racines) {
       const phases = typeDe(p)?.phases ?? [];
       const rang = phases.indexOf(p.phaseGroupe ?? "");
-      if (rang <= 0 || SANS_RAPPORT.has(p.numeroSource ?? "")) continue;
+      if (rang <= 0 || (o.sansRapport ? o.sansRapport.includes(p.numeroSource ?? "") : SANS_RAPPORT.has(p.numeroSource ?? ""))) continue;
       const i = indicateursProjet(depot, p, jour);
       for (const phase of phases.slice(0, p.statut === "Terminé" ? phases.length : rang)) {
         if (phase === "Clôture") continue;
@@ -130,23 +152,25 @@ export function installerGouvernanceDemo(depot: Depot, jour: string): void {
     }
 
     // Scénario défavorable et appréciation
-    const critique = racines.find((p) => p.numeroSource === "DFI-2025-0177");
+    const critique = o.scenario === null ? undefined : racines.find((p) => p.numeroSource === (o.scenario ?? "DFI-2025-0177"));
     if (critique) {
       const s = syntheseProjet(depot, critique.id);
       depot.ajouter("scenarios", { id: `sce-${critique.id}`, projetId: critique.id, nom: "Reprise manuelle des espaces non conformes", type: "Défavorable", valide: true, lignes: [{ id: "l1", libelle: "Atterrissage de référence", montant: Math.round(s.atterrissage) }, { id: "l2", libelle: "Reprise manuelle de 400 espaces de projet", montant: 45_000, annee }, { id: "l3", libelle: "Prolongation de l'assistance externe", montant: 28_000, annee: annee + 1 }] }, SYSTEME);
-      depot.ajouter("appreciations", { id: `app-${critique.id}`, projetId: critique.id, auteurId: "per-pmo", date: ajouterJours(jour, -20), niveau: "À améliorer", texte: "Le périmètre a été sous-estimé au départ ; le suivi des risques est tenu, mais le mandat doit être révisé pour refléter la reprise manuelle." }, SYSTEME);
+      depot.ajouter("appreciations", { id: `app-${critique.id}`, projetId: critique.id, auteurId: PMO, date: ajouterJours(jour, -20), niveau: "À améliorer", texte: "Le périmètre a été sous-estimé au départ ; le suivi des risques est tenu, mais le mandat doit être révisé pour refléter la reprise manuelle." }, SYSTEME);
     }
   }, { origine: "systeme", sansDetail: true, irreversible: true });
+
+  if (o.sansComInv) return;
 
   // Séance du comité d'investissement : trois décisions, dont une à diffusion restreinte et une condition échue
   const parCode = (code: string) => projets.find((p) => (p.numeroSource ?? p.code) === code)?.id;
   const point = (n: string, code: string, x: Partial<PointSeance>): PointSeance => ({ id: `pt-demo-${n}`, numero: n, projetId: parCode(code), titre: "", texte: "", nature: "Décision", statut: "Ouvert", origineSeanceId: "sea-demo-1", ...x });
   const seance: Seance = {
-    ...nouvelleSeance([], { id: "sea-demo-1", type: "ComInv", date: ajouterJours(jour, -35), redacteurId: "per-pmo" }),
+    ...nouvelleSeance([], { id: "sea-demo-1", type: "ComInv", date: ajouterJours(jour, -35), redacteurId: PMO }),
     lieu: "Salle du conseil", statut: "Diffusée", prochaineSeance: ajouterJours(jour, 10),
-    participants: [{ personneId: "per-cominv", presence: "Présent", diffusion: true }, { personneId: "per-dir", presence: "Présent", diffusion: true }, { personneId: "per-fin", presence: "Présent", diffusion: true }, { personneId: "per-pmo", presence: "Présent", diffusion: true }, { personneId: "per-keller", presence: "Excusé", diffusion: true }],
+    participants: [{ personneId: "per-cominv", presence: "Présent", diffusion: true }, { personneId: "per-dir", presence: "Présent", diffusion: true }, { personneId: FIN, presence: "Présent", diffusion: true }, { personneId: PMO, presence: "Présent", diffusion: true }, { personneId: "per-keller", presence: "Excusé", diffusion: true }],
     points: [
-      point("1.1", "DSE-2026-0312", { titre: "Crédit d'étude pour la centrale de chauffe", texte: "Le comité accorde le crédit d'étude et demande une variante avec stockage thermique.", responsableId: "per-dir", decision: { statut: "Approuvée", montant: 480_000, conditions: [{ id: "cnd-demo-1", texte: "Présenter la variante avec stockage thermique", responsableId: "per-dir", echeance: ajouterJours(jour, -5), statut: "En cours" }, { id: "cnd-demo-2", texte: "Confirmer les subventions cantonales", responsableId: "per-fin", echeance: ajouterJours(jour, 40), statut: "À traiter" }] } }),
+      point("1.1", "DSE-2026-0312", { titre: "Crédit d'étude pour la centrale de chauffe", texte: "Le comité accorde le crédit d'étude et demande une variante avec stockage thermique.", responsableId: "per-dir", decision: { statut: "Approuvée", montant: 480_000, conditions: [{ id: "cnd-demo-1", texte: "Présenter la variante avec stockage thermique", responsableId: "per-dir", echeance: ajouterJours(jour, -5), statut: "En cours" }, { id: "cnd-demo-2", texte: "Confirmer les subventions cantonales", responsableId: FIN, echeance: ajouterJours(jour, 40), statut: "À traiter" }] } }),
       point("1.2", "DDE-2026-0154", { titre: "Libération de la troisième tranche", texte: "Tranche libérée conformément au mandat.", statut: "Clos", decision: { statut: "Approuvée", montant: 2_100_000, conditions: [] } }),
       point("1.3", "DFI-2025-0177", { titre: "Demande de crédit complémentaire", texte: "Décision reportée à la prochaine séance, dans l'attente du mandat révisé.", responsableId: "per-dubois", echeance: ajouterJours(jour, 10), decision: { statut: "Reportée", montant: 73_000, conditions: [] } }),
       point("1.4", "DFI-2026-0009", { titre: "Arbitrage des priorités du portefeuille", texte: "Piste de travail : regrouper deux projets d'organisation.", nature: "Note de travail", decision: { statut: "Note de travail", restreint: true, conditions: [] } }),

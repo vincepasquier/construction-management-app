@@ -3,9 +3,9 @@ import { formatCHF, formatDate } from "@/domaine/lib/format";
 import type { Seance } from "@/domaine/socle/types";
 import type { Bloc } from "@/outils/docx";
 
-export function blocsSeance(s: Seance, o: { nomPersonne: (id?: string) => string | undefined; codeProjet: (id?: string) => string | undefined; projet?: string }): Bloc[] {
+export function blocsSeance(s: Seance, o: { nomPersonne: (id?: string) => string | undefined; codeProjet: (id?: string) => string | undefined; projet?: string; fonctionPersonne?: (id?: string) => string | undefined }): Bloc[] {
   const qui = (p: { personneId?: string; nom?: string }) => o.nomPersonne(p.personneId) ?? p.nom ?? "";
-  const lignes = (presence: string) => s.participants.filter((p) => p.presence === presence).map((p) => [qui(p), p.organisation ?? "", p.diffusion ? "oui" : ""]);
+  const lignes = (presence: string) => s.participants.filter((p) => p.presence === presence).map((p) => [qui(p), p.organisation || o.fonctionPersonne?.(p.personneId) || "", p.diffusion ? "oui" : ""]);
   const blocs: Bloc[] = [
     { type: "titre", texte: `${s.titre} – procès-verbal` },
     { type: "champs", lignes: [...(o.projet ? [["Projet", o.projet] as [string, string]] : []), ["Date", formatDate(s.date)], ["Lieu", s.lieu ?? ""], ["Rédaction", o.nomPersonne(s.redacteurId) ?? ""], ["Prochaine séance", s.prochaineSeance ? formatDate(s.prochaineSeance) : ""]] },

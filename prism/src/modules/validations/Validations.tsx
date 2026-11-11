@@ -25,7 +25,8 @@ export function Validations() {
   const d = useProjet();
   const { personnes, modifier, ajouter, contrats, factures, utilisateurId, delegations } = useDonnees();
   const [params, setParams] = useSearchParams();
-  const [vue, setVue] = useState<Vue>("moi");
+  // On ouvre sur ce qui attend l'utilisateur ; sinon sur ses demandes, sinon sur l'ensemble des circuits
+  const [vue, setVue] = useState<Vue>(() => (d.validations.some((v) => attendDe(v, utilisateurId ?? "", delegations, aujourdhui())) ? "moi" : d.validations.some((v) => v.demandeurId === utilisateurId && v.statut === "En cours") ? "demandes" : d.validations.length ? "tous" : "moi"));
   const [nouveau, setNouveau] = useState<CircuitValidation | null>(null);
 
   // Ouverture depuis un autre module (« Faire valider » sur un document, une facture, un avenant)

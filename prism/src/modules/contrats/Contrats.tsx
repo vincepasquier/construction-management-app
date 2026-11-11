@@ -5,7 +5,7 @@ import { useProjet, useDonnees } from "@/donnees/hooks";
 import { avenantsEnAttente, factureDuContrat, montantContrat } from "@/domaine/lib/finance";
 import { aujourdhui, formatCHF, formatCompact, formatDate } from "@/domaine/lib/format";
 import { nouvelId } from "@/domaine/lib/id";
-import { CFC_OPTIONS, libelleCFC } from "@/domaine/data/cfc";
+import { CFC_OPTIONS, libellePosition } from "@/domaine/data/cfc";
 import { Badge, BadgeStatut, Bouton, Carte, Champ, EnTetePage, Indicateur, Liste, Modale, Onglets, Progression, Saisie, Tableau, Vide, Zone } from "@/app/ui";
 import { REGLEMENTS_MANDAT, sia } from "@/domaine/lib/sia118";
 import type { ConditionsContrat, Contrat, StatutContrat, TypeContrat } from "@/domaine/types";
@@ -55,9 +55,9 @@ export function Contrats() {
                   const attente = avenantsEnAttente(c);
                   return (
                     <tr key={c.id} className="cursor-pointer" onClick={() => navigate(`/contrats/${c.id}`)}>
-                      <td className="font-medium text-brand-700 dark:text-indigo-300">{c.numero}</td>
+                      <td className="whitespace-nowrap font-medium text-brand-700 dark:text-indigo-300">{c.numero}</td>
                       <td><p className="font-medium">{nomEnt(c.entrepriseId)}</p><p className="text-xs text-slate-500">{c.objet} · {c.type}</p></td>
-                      <td className="text-slate-500"><span className="num">{c.cfc}</span> {libelleCFC(c.cfc)}</td>
+                      <td className="text-slate-500"><span className="num">{c.cfc}</span> {libellePosition(c.cfc, d.budget)}</td>
                       <td className="num text-right">{formatCHF(montantContrat(c))}{attente > 0 && <div><Badge couleur="orange">+{formatCompact(attente)} en attente</Badge></div>}</td>
                       <td className="num text-right">{formatCHF(f.facture)}</td>
                       <td><div className="flex items-center gap-2"><Progression valeur={f.avancementPct} /><span className="num w-9 text-right text-xs text-slate-500">{f.avancementPct.toFixed(0)}%</span></div></td>
@@ -80,7 +80,7 @@ export function Contrats() {
                 return (
                   <tr key={f.id} className="cursor-pointer" onClick={() => c && navigate(`/contrats/${c.id}`)}>
                     <td className="num">{formatDate(f.date)}</td>
-                    <td><p className="font-medium">{c ? nomEnt(c.entrepriseId) : "?"}</p><p className="text-xs text-slate-500">{c?.numero}</p></td>
+                    <td><p className="font-medium">{c ? nomEnt(c.entrepriseId) : "?"}</p><p className="whitespace-nowrap text-xs text-slate-500">{c?.numero}</p></td>
                     <td>{f.numero}</td><td>{f.type}</td>
                     <td className={echue ? "font-medium text-rose-600" : ""}>{formatDate(f.echeance)}</td>
                     <td className="num text-right">{formatCHF(f.montantHT)}</td>

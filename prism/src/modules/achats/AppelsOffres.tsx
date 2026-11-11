@@ -10,7 +10,7 @@ import { useProjet, useDonnees } from "@/donnees/hooks";
 import { montantNetSoumission } from "@/domaine/lib/finance";
 import { aujourdhui, formatCHF, formatDate, joursEntre } from "@/domaine/lib/format";
 import { nouvelId } from "@/domaine/lib/id";
-import { CFC_OPTIONS, libelleCFC } from "@/domaine/data/cfc";
+import { CFC_OPTIONS, libellePosition } from "@/domaine/data/cfc";
 import { Bouton, Carte, Champ, EnTetePage, Liste, Modale, Onglets, Saisie, Tableau, Vide } from "@/app/ui";
 import type { AppelOffres, ProcedureAO, StatutAO } from "@/domaine/types";
 
@@ -24,7 +24,8 @@ export function AppelsOffres() {
   const [depuisCrbx, setDepuisCrbx] = useState<AppelOffres | null>(null);
   const fichierCrbx = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const [filtre, setFiltre] = useState<"tous" | "cours" | "termines">("cours");
+  // On ouvre sur les appels d'offres en cours ; s'il n'y en a plus, sur l'ensemble plutôt que sur une liste vide
+  const [filtre, setFiltre] = useState<"tous" | "cours" | "termines">(() => (d.appelsOffres.length === 0 || d.appelsOffres.some((a) => !["Adjugé", "Annulé"].includes(a.statut)) ? "cours" : "tous"));
   const [creation, setCreation] = useState(false);
   if (!d.projet) return null;
   const jour = aujourdhui();
@@ -78,7 +79,7 @@ export function AppelsOffres() {
           <Vide icone={<Gavel size={22} />} titre="Aucun appel d'offres" texte="Créez un appel d'offres pour préparer le descriptif CAN et recevoir les soumissions." />
         ) : (
           <Tableau>
-            <thead><tr><th>N°</th><th>Objet</th><th>CFC</th><th>Procédure</th><th>Retour des offres</th><th>Offres</th><th className="!text-right">Estimation</th><th className="!text-right">Meilleure offre</th><th>Avancement du marché</th></tr></thead>
+            <thead><tr><th>N°</th><th>Objet</th><th>Procédure</th><th>Retour des offres</th><th>Offres</th><th className="!text-right">Estimation</th><th className="!text-right">Meilleure offre</th><th>Avancement du marché</th></tr></thead>
             <tbody>
               {liste.map((a) => {
                 const montants = a.soumissions.map((s) => montantNetSoumission(a, s)).filter((m) => m > 0);
@@ -87,9 +88,8 @@ export function AppelsOffres() {
                 const jours = joursEntre(jour, a.dateRetour);
                 return (
                   <tr key={a.id} className="cursor-pointer" onClick={() => navigate(`/appels-offres/${a.id}`)}>
-                    <td className="font-medium text-brand-700 dark:text-indigo-300">{a.numero}</td>
-                    <td className="font-medium">{a.objet}</td>
-                    <td className="text-slate-500"><span className="num">{a.cfc}</span> {libelleCFC(a.cfc)}</td>
+                    <td className="whitespace-nowrap font-medium text-brand-700 dark:text-indigo-300">{a.numero}</td>
+                    <td className="min-w-64"><p className="font-medium">{a.objet}</p><p className="text-xs text-slate-500">CFC <span className="num">{a.cfc}</span> {libellePosition(a.cfc, d.budget)}</p></td>
                     <td>{a.procedure}</td>
                     <td>
                       {formatDate(a.dateRetour)}

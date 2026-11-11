@@ -107,6 +107,15 @@ export function libelleCFC(code: string): string {
   return CFC[code] ?? "";
 }
 
+/**
+ * Désignation d'un code dans un projet : celle de la position budgétaire du projet quand elle existe
+ * (un projet d'infrastructure nomme ses positions à sa façon), sinon celle du référentiel.
+ */
+export function libellePosition(code: string, budget: { projetId?: string; cfc: string; libelle: string }[] = [], projetId?: string): string {
+  const ligne = budget.find((b) => b.cfc === code && (!projetId || b.projetId === projetId));
+  return ligne?.libelle || libelleCFC(code);
+}
+
 /** Chaîne des parents d'un code CFC : "211" → ["2", "21", "211"] */
 export function cheminCFC(code: string): string[] {
   return Array.from({ length: code.length }, (_, i) => code.slice(0, i + 1));

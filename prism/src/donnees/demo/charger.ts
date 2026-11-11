@@ -1,5 +1,5 @@
-// Chargement du jeu de démonstration (fictif). Module à part : l'application ne le télécharge que
-// lorsque l'utilisateur choisit « Charger la démonstration ».
+// Jeu d'essai d'origine (les deux projets de Chantier+ et quelques projets de la source) : il sert
+// aux tests. La démonstration proposée à l'utilisateur est le portefeuille de demo/portefeuille.
 import { aujourdhui } from "../../domaine/lib/format";
 import { dataPlatformSimulee } from "../connecteurs/dataPlatformSimulee";
 import { importerProjet, synchroniser } from "../connecteurs/synchro";
@@ -8,16 +8,14 @@ import { importer, installerReferentiels } from "../initialisation";
 import { session } from "../session";
 import { installerChantierDemo } from "./chantier";
 import { installerGouvernanceDemo } from "./gouvernance";
-import { installerSimulation } from "./simulation";
 import { COMPLEMENTS_SOURCE, docsDemo, NUMEROS_DEMO, UTILISATEUR_DEMO } from "./index";
 
 /**
  * Charge le jeu de démonstration et le synchronise avec la source simulée. Avec `gouvernance`,
  * les projets reçoivent aussi mandats, périodes, rapports, séances et décisions ; avec `chantier`,
- * le projet de route reçoit deux semaines de suivi de chantier ; avec `simulation`, chaque
- * direction reçoit un projet rempli de bout en bout.
+ * le projet de route reçoit deux semaines de suivi de chantier.
  */
-export async function chargerDemo(depot: Depot, o: { gouvernance?: boolean; chantier?: boolean; simulation?: boolean; jour?: string } = {}): Promise<void> {
+export async function chargerDemo(depot: Depot, o: { gouvernance?: boolean; chantier?: boolean; jour?: string } = {}): Promise<void> {
   installerReferentiels(depot);
   importer(depot, docsDemo(), "Chargement des données de démonstration");
   const horodatage = new Date().toISOString();
@@ -33,5 +31,4 @@ export async function chargerDemo(depot: Depot, o: { gouvernance?: boolean; chan
   depot.acteurId = UTILISATEUR_DEMO;
   if (o.gouvernance) installerGouvernanceDemo(depot, o.jour ?? aujourdhui());
   if (o.chantier) await installerChantierDemo(depot, o.jour ?? aujourdhui());
-  if (o.simulation) installerSimulation(depot, o.jour ?? aujourdhui());
 }

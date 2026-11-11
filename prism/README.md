@@ -111,9 +111,42 @@ référence doit changer. Ils ont été posés de mémoire et recoupés avec des
 texte de la norme ; une révision est entrée en vigueur en 2026. **À faire contrôler par une personne qui a
 la norme en main avant tout usage réel.**
 
+## Démonstration : onze projets complets
+
+« Charger la démonstration » installe un portefeuille de onze projets, chacun rempli sur tous ses écrans
+et arrêté à un stade différent. Les dates sont relatives au jour du chargement : chaque projet garde son
+stade quel que soit le jour où on l'ouvre.
+
+| Direction | Projet | Stade |
+|---|---|---|
+| DEN | Réhabilitation du barrage de Valmont | Réalisation, gros œuvre en cours |
+| DEN | Aménagement hydroélectrique Schiffenen–Morat – études | Étude du projet, procédure d'autorisation |
+| DEN | Réseau de chauffage à distance des Vergers – étape 2 | Mise en service, réceptions en cours |
+| DEN | Centrale de chauffe à bois des Vergers | Appels d'offres, une offre à adjuger |
+| DDE | Mise en souterrain de la ligne 60 kV | Réalisation, servitudes en cours |
+| DDE | Nouveau poste 125/20 kV de Praz-Riond | Clôture, garanties en cours |
+| DSE | Rénovation énergétique de l'hôpital des Trois-Sapins | Réalisation en site occupé |
+| DSE | Contracting énergétique du quartier des Tilleuls | Études préliminaires, mandat en signature |
+| DFI | Remplacement du système de facturation | Réalisation (projet numérique) |
+| DGC | Rapport de durabilité et site institutionnel | Réalisation (projet d'organisation) |
+| DG | Stratégie 2035 | Étude, arbitrages avant le conseil d'administration |
+
+Un douzième dossier, « Dématérialisation des factures fournisseurs » (DFI), est clos et archivé : il
+n'apparaît que dans l'écran *Archives*, dont il est l'exemple (archive scellée, contrôlée, consultable).
+
+Les huit projets de construction portent chacun mandat, budget par position, appels d'offres avec offres
+comparées, contrats et avenants, factures, planning, risques, séances et procès-verbaux, journal de
+chantier, constats, réserves, réceptions, régies, métrés, autorisations et servitudes, rapports et
+documents. Les trois autres portent le socle : mandat, finances de la source, jalons, risques, séances,
+rapports, documents. Le portefeuille est construit par `src/donnees/demo/portefeuille/` à travers le dépôt,
+avec les mêmes fonctions que les écrans ; `portefeuille.test.ts` en vérifie le contenu et la cohérence.
+
 ## Données
 
 Les six directions de la démonstration sont celles du groupe (DG, DGC, DFI, DEN, DDE, DSE) ; les projets,
-les personnes, les entreprises et les montants sont fictifs. Aucune donnée réelle n'est dans le dépôt. Au premier lancement, PRISM
+les personnes, les entreprises et les montants sont fictifs. « Schiffenen–Morat » reprend le nom d'un projet
+public connu : son contenu dans la démonstration (budget, marchés, calendrier, intervenants) est inventé.
+Les codes de frais (CFC) des projets d'infrastructure sont indicatifs ; l'écran affiche la désignation de
+la position budgétaire du projet. Aucune donnée réelle n'est dans le dépôt. Au premier lancement, PRISM
 propose de reprendre les données de Chantier+ présentes dans le navigateur, sans rien y effacer ; un
 fichier de projet ou une sauvegarde Chantier+ s'importe aussi depuis *Administration → Sauvegarde*.

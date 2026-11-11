@@ -185,7 +185,7 @@ export function Synthese({ complements }: { complements?: ReactNode }) {
               {i.type?.champs.filter((c) => projet.donneesType?.[c.cle]).map((c) => <Info2 key={c.cle} libelle={c.libelle}>{c.type === "date" ? formatDate(projet.donneesType![c.cle]) : projet.donneesType![c.cle]}</Info2>)}
               <div className="col-span-2">
                 <Info2 libelle="Avancement">
-                  <span className="mt-1 flex items-center gap-2"><Progression valeur={i.avancement} /><span className="num text-xs text-slate-500">{Math.round(i.avancement)} %</span></span>
+                  <span className="mt-1 flex items-center gap-2"><Progression valeur={i.avancement} /><span className="num whitespace-nowrap text-xs text-slate-500">{Math.round(i.avancement)} %</span></span>
                 </Info2>
               </div>
             </dl>

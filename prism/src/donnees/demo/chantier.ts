@@ -12,7 +12,7 @@ import { enregistrerSeance } from "../seances";
 const PROJET = "prj-1";
 
 /** Image de démonstration : un croquis, pour montrer la galerie sans embarquer de vraie photo */
-function croquis(titre: string, ciel: string, sol: string, motif: string): Blob {
+export function croquis(titre: string, ciel: string, sol: string, motif: string): Blob {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
 <rect width="800" height="600" fill="${ciel}"/><rect y="360" width="800" height="240" fill="${sol}"/>${motif}
 <rect x="0" y="548" width="800" height="52" fill="#0f172a" opacity=".72"/>

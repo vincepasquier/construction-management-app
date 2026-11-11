@@ -11,7 +11,7 @@ import { useDonnees } from "@/donnees/hooks";
 import { avenantsEnAttente, factureDuContrat, montantContrat } from "@/domaine/lib/finance";
 import { ajouterJours, aujourdhui, formatCHF, formatDate } from "@/domaine/lib/format";
 import { nouvelId } from "@/domaine/lib/id";
-import { libelleCFC } from "@/domaine/data/cfc";
+import { libellePosition } from "@/domaine/data/cfc";
 import { useLectureSeule, BadgeStatut, Bouton, Carte, Champ, EnTetePage, Indicateur, Liste, Modale, Progression, Saisie, Tableau, Vide } from "@/app/ui";
 import { FormulaireContrat } from "./Contrats";
 import { ParcoursMarche } from "@/modules/achats/ParcoursMarche";
@@ -32,7 +32,7 @@ export function ContratDetail() {
   const [facture, setFacture] = useState<Facture | null>(null);
   const [params, setParams] = useSearchParams();
   const lecture = useLectureSeule();
-  const { validations, personnes, lots } = useDonnees();
+  const { validations, personnes, lots, budget } = useDonnees();
   const c = contrats.find((x) => x.id === id);
 
   const nouvelleFacture = (): Facture | null => c ? {
@@ -81,7 +81,7 @@ export function ContratDetail() {
       <Link to="/contrats" className="mb-3 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700"><ArrowLeft size={14} /> Contrats</Link>
       <EnTetePage
         titre={`${c.numero} · ${ent?.nom ?? "?"}`}
-        description={<span className="flex flex-wrap items-center gap-2"><BadgeStatut statut={c.statut} /> {c.objet} · {c.type} · CFC {c.cfc} {libelleCFC(c.cfc)} · signé le {formatDate(c.dateSignature)}
+        description={<span className="flex flex-wrap items-center gap-2"><BadgeStatut statut={c.statut} /> {c.objet} · {c.type} · CFC {c.cfc} {libellePosition(c.cfc, budget, c.projetId)} · signé le {formatDate(c.dateSignature)}
           {ao && <Link to={`/appels-offres/${ao.id}`} className="text-brand-600 hover:underline">· issu de {ao.numero}</Link>}</span>}
         actions={<>
           <Bouton libre icone={<Download size={15} />} title="Document de contrat, structuré selon la SIA 118" onClick={() => void exporterContrat(projet!, c, { entreprise: ent, lot: lots.find((l) => l.id === c.lotId)?.nom, ao })}>Contrat (Word)</Bouton>

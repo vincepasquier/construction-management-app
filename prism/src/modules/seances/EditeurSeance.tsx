@@ -36,6 +36,7 @@ export function EditeurSeance({ initiale, onFermer }: { initiale: Seance; onFerm
   const mesProjets = projetsAccessibles(utilisateur, projets.filter((p) => !p.archive)).sort((a, b) => a.code.localeCompare(b.code));
   const tries = [...personnes].sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
   const nomPersonne = (id?: string) => personnes.find((p) => p.id === id)?.nom;
+  const fonctionPersonne = (id?: string) => personnes.find((p) => p.id === id)?.fonction;
   const existe = !!depot.parId("seances", s.id);
   const candidats = transverse ? candidatsComInv(depot, mesProjets).filter((x) => !s.points.some((p) => p.projetId === x.projet.id && p.titre === x.titre)) : [];
 
@@ -48,7 +49,7 @@ export function EditeurSeance({ initiale, onFermer }: { initiale: Seance; onFerm
       notifier(e instanceof ErreurDepot ? e.message : "La séance n'a pas pu être enregistrée.", "erreur");
     }
   };
-  const exporter = () => void telechargerDocx(`PV ${s.titre} ${s.date}`, blocsSeance(s, { nomPersonne, codeProjet: (id) => projets.find((p) => p.id === id)?.code, projet: s.projetId ? `${projets.find((p) => p.id === s.projetId)?.code} – ${projets.find((p) => p.id === s.projetId)?.nom}` : undefined }), `${s.titre} · ${formatDate(s.date)}`);
+  const exporter = () => void telechargerDocx(`PV ${s.titre} ${s.date}`, blocsSeance(s, { nomPersonne, fonctionPersonne, codeProjet: (id) => projets.find((p) => p.id === id)?.code, projet: s.projetId ? `${projets.find((p) => p.id === s.projetId)?.code} – ${projets.find((p) => p.id === s.projetId)?.nom}` : undefined }), `${s.titre} · ${formatDate(s.date)}`);
 
   return (
     <div className="space-y-6">

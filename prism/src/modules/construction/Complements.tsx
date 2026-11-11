@@ -9,7 +9,7 @@ import { useBudget } from "@/modules/finances/useBudget";
 import { aujourdhui, formatCHF, formatCompact, formatDate, formatPct } from "@/domaine/lib/format";
 import { Avatar, Carte, Progression } from "@/app/ui";
 import { FrisePhases } from "@/modules/planning/FrisePhases";
-import { libelleCFC } from "@/domaine/data/cfc";
+import { libellePosition } from "@/domaine/data/cfc";
 
 /** Blocs propres aux projets de construction, ajoutés à la synthèse du projet */
 export function ComplementsConstruction() {
@@ -92,7 +92,7 @@ export function ComplementsConstruction() {
                 <div key={l.id} className="flex flex-wrap items-center gap-4 px-5 py-3.5">
                   <div className="w-56 min-w-0">
                     <p className="truncate text-sm font-medium text-slate-900 dark:text-white"><span className="text-slate-400">{l.code}</span> {l.nom}</p>
-                    {l.cfc.length > 0 && <p className="truncate text-xs text-slate-500">CFC {l.cfc.map((c) => `${c} ${libelleCFC(c)}`).join(" · ")}</p>}
+                    {l.cfc.length > 0 && <p className="truncate text-xs text-slate-500">CFC {l.cfc.map((c) => `${c} ${libellePosition(c, d.budget)}`).join(" · ")}</p>}
                   </div>
                   <div className="flex items-center gap-2 text-xs text-slate-500">{resp && <Avatar nom={resp} taille={22} />}{resp ?? "Non attribué"}</div>
                   <div className="ml-auto grid w-full grid-cols-3 gap-4 text-right text-sm sm:w-auto sm:min-w-[330px]">

@@ -1,0 +1,193 @@
+// Direction Distribution Electricité : une ligne haute tension en cours de mise en souterrain et un
+// poste de transformation terminé, sous garantie. Projets de démonstration, entièrement fictifs.
+import type { FicheProjet } from "./types";
+
+/** Ligne haute tension : chantier linéaire en pleine réalisation */
+export const LIGNE_HT: FicheProjet = {
+  numero: "DDE-2025-0061", cle: "lht", chef: "pf-keller",
+  complements: { phase: "52 Exécution de l'ouvrage", phaseGroupe: "Réalisation", lieu: "Les Granges – Praz-Riond", maitreOuvrage: "Groupe – Direction Distribution Electricité", sponsorId: "pf-dir-dde", portefeuilleId: "pf-inv", priorite: "Haute", classification: "Renouvellement", strategique: true, donneesType: { typeOuvrage: "Réseau" } },
+  equipe: [["pf-keller", 60], ["pf-monney", 100], ["pf-wicht", 20]],
+  mandat: {
+    contenu: {
+      motifs: { croissance: true, efficience: false, maintenance: true, legal: false },
+      contexte: "La ligne aérienne 60 kV entre les postes des Granges et de Praz-Riond date de 1958. Ses pylônes arrivent en fin de vie et sa capacité ne suffit plus à évacuer la production photovoltaïque de la plaine. Les communes traversées demandent depuis longtemps sa mise en souterrain.",
+      benefices: "Capacité de transport doublée, pertes réduites, 38 pylônes supprimés du paysage, exposition aux intempéries supprimée.",
+      perimetre: "9,6 km de liaison souterraine 60 kV en batterie de tubes, deux forages dirigés (rivière et autoroute), tirage et jonction des câbles, raccordement aux deux postes, démontage de la ligne aérienne.",
+      exclusions: "L'adaptation des travées dans les postes est traitée par le projet du poste de Praz-Riond et par l'exploitation.",
+      impactsEnvironnementaux: "Chantier en zone agricole sur 6 km : suivi pédologique, décapage séparé des horizons, remise en culture garantie. Valeurs de rayonnement non ionisant respectées au droit des habitations.",
+      impactsSociaux: "Quarante-deux propriétaires fonciers concernés par une servitude ; indemnités de culture selon le barème agricole.",
+      projetsConnexes: "Nouveau poste 125/20 kV de Praz-Riond ; raccordement des centrales photovoltaïques de la plaine.",
+    },
+    objectifs: [["Mettre la liaison souterraine en service avant l'hiver 2027", "Liaison sous tension à la date prévue", "Sponsor"], ["Rendre les terres agricoles sans perte de rendement durable", "Attestation du pédologue pour toutes les parcelles", "Direction Distribution Electricité"], ["Tenir le budget", "Coût final inférieur ou égal à 21,5 millions", "Finance"]],
+  },
+  risques: [
+    ["Rocher non prévu sur le tracé", "Technique", 4, 3, 400_000, "Le secteur du Bois-Murat a déjà demandé un avenant ; 1,2 km restent à ouvrir dans la même formation.", "Sondages à la pelle tous les 100 m avant l'ouverture ; prix unitaire de brise-roche convenu.", "Réduire"],
+    ["Refus de servitude sur la parcelle 742", "Juridique", 3, 4, 150_000, "Le propriétaire refuse le passage ; une procédure d'expropriation est engagée.", "Variante de tracé par le chemin communal étudiée en parallèle ; calendrier de la procédure suivi par le service juridique.", "Réduire"],
+    ["Retard de livraison des câbles", "Délais", 3, 4, 250_000, "Deux tourets sur douze sont annoncés avec six semaines de retard.", "Ordre de tirage adapté : les tronçons livrés sont tirés en premier.", "Réduire"],
+    ["Tassement des sols agricoles après remblayage", "Environnement", 3, 3, 120_000, "Les sols limoneux de la plaine sont sensibles au compactage par temps humide.", "Arrêt des travaux au-delà du seuil d'humidité fixé par le pédologue ; sous-solage à la remise en culture.", "Réduire"],
+    ["Dommage à un réseau tiers lors des fouilles", "Sécurité", 2, 4, 80_000, "Gazoduc et fibres optiques croisés à huit reprises.", "Sondages à la main, présence de l'exploitant du gazoduc à chaque croisement.", "Réduire"],
+  ],
+  planning: [["Forages dirigés sous la rivière et l'autoroute", -300, -170, 100, "L1"], ["Fouilles et batterie de tubes, secteur 1", -280, -120, 100, "L1"], ["Fouilles et batterie de tubes, secteur 2", -130, 20, 85, "L1"], ["Fouilles et batterie de tubes, secteur 3", 10, 150, 0, "L1"], ["Tirage des câbles, secteur 1", -90, -20, 100, "L2"], ["Tirage des câbles, secteurs 2 et 3", 30, 190, 0, "L2"], ["Jonctions, extrémités et essais", 60, 250, 10, "L2"], ["Remise en culture des terres", -60, 260, 30, "L1"], ["Démontage de la ligne aérienne", 300, 420, 0, "L3"]],
+  jalons: [["Approbation des plans", -480], ["Fin des forages dirigés", -170], ["Fin du génie civil du secteur 2", 20, 25], ["Fin du génie civil du secteur 3", 150, 25], ["Essais haute tension", 250, 25], ["Mise en service", 280, 25], ["Fin du démontage de la ligne aérienne", 420, 25]],
+  actions: [["Faire le point sur la procédure d'expropriation de la parcelle 742", 10, "Haute", "En cours", "pf-wicht"], ["Adapter l'ordre de tirage aux livraisons de câbles", 7, "Haute", "En cours", "pf-monney"], ["Organiser les sondages à la pelle du secteur 3", 15, "Normale", "À faire", "pf-monney"], ["Convoquer l'exploitant du gazoduc pour le croisement n° 6", 4, "Haute"]],
+  documents: [["Décision d'approbation des plans", "Autorisations", "1", 480], ["Plan de tracé, secteur 2", "Plans", "E", 35], ["Rapport de suivi pédologique", "Rapports", "6", 15], ["Tableau des servitudes", "Autre", "12", 9], ["Procès-verbal de réception des forages dirigés", "PV de séance", "1", 160]],
+  pilotage: [
+    { ilYA: 38, lieu: "Poste des Granges", invites: [["K. Brülhart", "Ingénieurs-conseils en électricité SA"]], points: [
+      { titre: "Avancement", texte: "Secteur 1 terminé et câblé. Secteur 2 ouvert à 60 %. Les deux forages dirigés sont reçus sans défaut.", clos: true },
+      { titre: "Rocher au Bois-Murat", texte: "Avenant de 228'000 CHF approuvé pour le brise-roche sur 640 m ; financement par la réserve.", nature: "Décision", montant: 228_000, statut: "Approuvée", clos: true },
+      { titre: "Parcelle 742", texte: "Le comité décide d'engager la procédure d'expropriation et d'étudier la variante par le chemin communal.", nature: "Décision", statut: "Approuvée", condition: "Chiffrage de la variante de tracé", clos: true },
+    ] },
+    { ilYA: 9, lieu: "Poste des Granges", invites: [["K. Brülhart", "Ingénieurs-conseils en électricité SA"], ["D. Rey", "Travaux Publics Gruyère SA"]], points: [
+      { titre: "Avancement", texte: "Secteur 2 à 85 %. Remise en culture du secteur 1 validée par le pédologue sur 14 parcelles sur 17.", clos: true },
+      { titre: "Retard de livraison des câbles", texte: "Deux tourets en retard de six semaines. L'ordre de tirage est adapté ; la mise en service n'est pas menacée à ce stade.", clos: true },
+      { titre: "Variante de tracé à la parcelle 742", texte: "La variante coûte 95'000 CHF de plus. Décision reportée à l'issue de l'audience de conciliation.", nature: "Décision", montant: 95_000, statut: "Reportée" },
+      { titre: "Sondages du secteur 3", texte: "Sondages à la pelle tous les 100 m avant l'ouverture des fouilles.", nature: "Tâche", dans: 15, responsable: "pf-monney" },
+    ] },
+  ],
+  notes: [["Responsable de projet", "Audience de conciliation pour la parcelle 742 fixée dans cinq semaines.", "chef", 6], ["Finance / ComInv", "La réserve est ramenée à 472'000 CHF après l'avenant du Bois-Murat ; elle ne couvre pas un second secteur rocheux.", "pf-fin", 12]],
+  construction: {
+    lots: [["L1", "Génie civil", ["201", "17"], "pf-monney", "52 Exécution de l'ouvrage"], ["L2", "Câbles et accessoires", ["331", "332"], "pf-monney", "52 Exécution de l'ouvrage"], ["L3", "Démontage de la ligne aérienne", ["11"], "pf-keller", "41 Appels d'offres"], ["L0", "Honoraires et frais", ["29", "51"], "pf-keller", "52 Exécution de l'ouvrage"]],
+    budget: [["201", "Fouilles, batteries de tubes et chambres de tirage", 7_400_000], ["17", "Forages dirigés sous la rivière et l'autoroute", 1_900_000], ["331", "Câbles 60 kV : fourniture", 5_600_000], ["332", "Tirage, jonctions et extrémités", 2_450_000], ["11", "Démontage de la ligne aérienne", 1_350_000], ["293", "Honoraires ingénieurs électricien et civil", 1_450_000], ["51", "Autorisations et indemnités de culture", 650_000], ["583", "Réserve pour imprévus", 700_000]],
+    marches: [
+      { cle: "gc", objet: "Fouilles, batteries de tubes et chambres de tirage", cfc: "201", lot: "L1", type: "Contrat d'entreprise", entreprise: "e-gc3", concurrents: [["e-gc1", 2.9], ["e-gc2", 5.4]], etat: "En cours", signe: -330, debut: -280, fin: 150, facture: 0.64, metres: true,
+        positions: [["201.111.101", "Fouille pour batterie de tubes, y compris remblayage", "m", 9_600, 410], ["201.211.101", "Batterie de six tubes PE 200, enrobage béton", "m", 9_600, 196], ["201.311.101", "Chambre de tirage préfabriquée", "pce", 24, 31_500], ["201.411.101", "Décapage séparé et remise en culture", "m2", 38_000, 11.5]],
+        avenants: [["Brise-roche sur 640 m, secteur du Bois-Murat", 228_000, "Approuvé", "Imprévu : rocher affleurant non signalé par l'étude géotechnique.", 44, 12]],
+        regies: [["Sondages à la main au croisement du gazoduc n° 4", 27, "Facturé", [["Main-d'œuvre", "Ouvrier de la construction", 18, "h", 78], ["Main-d'œuvre", "Chef d'équipe", 9, "h", 96]], "En présence de l'exploitant du gazoduc."], ["Déplacement d'un drain agricole, parcelle 688", 11, "Validé", [["Main-d'œuvre", "Ouvrier de la construction", 8, "h", 78], ["Engin", "Pelle 8 t avec machiniste", 4, "h", 148], ["Matériel", "Drain PVC DN 100", 35, "m", 12]]]] },
+      { cle: "for", objet: "Forages dirigés sous la rivière et l'autoroute", cfc: "17", lot: "L1", type: "Contrat d'entreprise", entreprise: "e-for", concurrents: [["e-gc1", 8]], etat: "Réceptionné", montant: 1_780_000, signe: -340, debut: -300, fin: -170, facture: 1,
+        reception: { objet: "Forages dirigés sous la rivière et l'autoroute", ilYA: 160, type: "Finale", resultat: "Acceptée", lieu: "Rive droite, fosse de sortie", participants: "T. Keller (maître de l'ouvrage), D. Monney (direction des travaux), J. Dafflon (Forages et Sondages SA), représentant de l'office des routes", documents: "Relevés de trajectoire des deux forages\nProcès-verbaux de calibrage des tubes\nPlans conformes à l'exécution" } },
+      { cle: "cab", objet: "Câbles 60 kV : fourniture de douze tourets", cfc: "331", lot: "L2", type: "Fourniture", entreprise: "e-cab", concurrents: [["e-elec2", 3.3]], etat: "En cours", montant: 5_380_000, signe: -350, debut: -320, fin: 60, facture: 0.7, procedure: "Ouverte" },
+      { cle: "tir", objet: "Tirage des câbles, jonctions et extrémités", cfc: "332", lot: "L2", type: "Contrat d'entreprise", entreprise: "e-elec2", concurrents: [["e-elec1", 4.1]], etat: "En cours", montant: 2_310_000, signe: -200, debut: -90, fin: 250, facture: 0.35 },
+      { cle: "dem", objet: "Démontage de la ligne aérienne et de 38 pylônes", cfc: "11", lot: "L3", type: "Contrat d'entreprise", entreprise: "e-lig", etat: "Préparation", estime: 1_300_000, montant: 1_300_000, signe: 150, debut: 300, fin: 420 },
+      { cle: "ing", objet: "Mandat d'ingénieurs électricien et civil", cfc: "293", lot: "L0", type: "Mandat", entreprise: "e-ing3", concurrents: [["e-ing2", 5]], etat: "En cours", montant: 1_380_000, signe: -700, debut: -680, fin: 420, facture: 0.6, conditions: { reglement: "SIA 108 (ingénieurs mécaniciens, électriciens et CVC)", phases: "31 à 53" } },
+    ],
+    mutations: [["Brise-roche au Bois-Murat (avenant AV-01) financé par la réserve", "583", "201", 228_000, "Validée", 40]],
+    ajustements: [["Risque", "Rocher sur le secteur 3", 300_000, 45, "201", "Même formation géologique que le Bois-Murat sur 1,2 km ; les sondages à la pelle préciseront l'étendue."], ["Estimation interne", "Variante de tracé à la parcelle 742", 95_000, 50, "201", "Contournement par le chemin communal si la servitude n'est pas obtenue."], ["Plus-value attendue", "Indexation du prix du cuivre", 140_000, 60, "331", "Clause d'indexation du contrat de fourniture ; cours du cuivre en hausse de 7 % depuis la commande."]],
+    horsCommande: [["Exploitants agricoles (indemnités de culture)", 86_400, "51", "Indemnités de la première saison, 17 parcelles", 90], ["Inspection des installations à courant fort", 24_000, "51", "Émolument d'approbation des plans", 480]],
+    autorisations: [
+      ["Approbation des plans", "Liaison souterraine 60 kV Les Granges – Praz-Riond", "Inspection fédérale des installations à courant fort", "S-2024-0871", "Délivrée", 720, 480, 6, [["Inspection fédérale des installations à courant fort", "Mise à la terre des écrans de câbles selon le concept approuvé", "Respectée"], ["Office de l'environnement", "Suivi pédologique de chantier par un spécialiste reconnu", "En cours"], ["Office de l'environnement", "Respect des valeurs limites de rayonnement non ionisant : mesure de réception", "À traiter", 290], ["Archéologie cantonale", "Annonce des fouilles du secteur 3 quinze jours à l'avance", "À traiter", 0]]],
+      ["Autorisation spéciale", "Traversée de l'autoroute par forage dirigé", "Office fédéral des routes", "OFROU-2025-144", "Délivrée", 520, 400, 0, [["Office fédéral des routes", "Relevé de tassement de la chaussée pendant un an", "En cours", 200]]],
+      ["Permis de fouille", "Fouilles en bordure de route cantonale, 1,4 km", "Service cantonal des routes", "SPC-2025-390", "Délivrée", 400, 360, 0, [["Police cantonale", "Plan de signalisation du chantier validé avant l'ouverture des fouilles", "Levée"], ["Service cantonal des routes", "Réfection de l'accotement selon la norme", "En cours", 160]]],
+    ],
+    servitudes: [["655", "Les Granges", "Exploitation agricole Chatton", "Servitude de conduite", "Inscrite au registre foncier", 9_600, "320 m"], ["688", "Les Granges", "M. Yerly", "Servitude de conduite", "Inscrite au registre foncier", 6_300, "210 m"], ["701", "Bois-Murat", "Bourgeoisie", "Servitude de conduite", "Convention signée", 4_800, "640 m en forêt"], ["742", "Praz-Riond", "M. Brodard", "Servitude de conduite", "Refus / expropriation", 5_400, "180 m", "Procédure d'expropriation engagée ; audience de conciliation fixée."], ["758", "Praz-Riond", "Hoirie Castella", "Servitude de conduite", "En négociation", 7_200, "240 m", "Les héritiers demandent une indemnité supérieure au barème."], ["760", "Praz-Riond", "Commune", "Servitude de passage", "Convention signée", 0, "chemin communal, 400 m"]],
+    chantier: {
+      conducteur: "pf-monney", lieuSeance: "Base de chantier de Praz-Riond", invites: [["D. Rey", "Travaux Publics Gruyère SA"], ["S. Aebischer", "Postes & Réseaux SA"], ["K. Brülhart", "Ingénieurs-conseils en électricité SA"]],
+      entreprises: [["Travaux Publics Gruyère SA", 18], ["Postes & Réseaux SA", 6]],
+      travaux: [
+        "Secteur 2 : fouille des profils 52 à 55, 180 m. Pose de la batterie de tubes, profils 49 à 52.",
+        "Secteur 2 : bétonnage de l'enrobage des tubes, profils 49 à 52. Chambre de tirage C14 posée.",
+        "Secteur 2 : remblayage par couches, profils 46 à 49. Sondages à la main au croisement du gazoduc n° 5.",
+        "Sols trop humides : arrêt des fouilles en zone agricole sur avis du pédologue. Travaux reportés sur le chemin communal.",
+        "Secteur 2 : fouille des profils 55 à 58, sur chemin. Calibrage des tubes, profils 40 à 49.",
+        "Secteur 2 : reprise en zone agricole, remise en place de la terre végétale, profils 40 à 46.",
+        "Secteur 2 : pose de la batterie de tubes, profils 55 à 58. Livraison de deux tourets de câble.",
+        "Secteur 1 : montage de la jonction J3. Secteur 2 : enrobage béton, profils 55 à 58.",
+        "Secteur 2 : chambre de tirage C15, remblayage, profils 52 à 55. Contrôle du pédologue.",
+      ],
+      evenements: [[2, "Visite", "Exploitant du gazoduc présent au croisement n° 5 : gazoduc dégagé à la main, protégé par demi-coquilles."], [3, "Arrêt", "Travaux arrêtés en zone agricole : humidité du sol supérieure au seuil fixé."], [6, "Livraison", "Tourets n° 7 et 8, 2 × 820 m de câble 60 kV."], [8, "Visite", "Contrôle du pédologue : remise en place des horizons conforme."]],
+      seances: [
+        [{ titre: "Avancement", texte: "Secteur 2 ouvert jusqu'au profil 52. Tubes calibrés jusqu'au profil 40.", clos: true }, { titre: "Croisement du gazoduc n° 5", texte: "Sondages à la main en présence de l'exploitant.", nature: "Tâche", dans: -9, responsableNom: "Travaux Publics Gruyère SA", clos: true }, { titre: "Livraison des tourets 9 et 10", texte: "Retard annoncé de six semaines ; l'ordre de tirage est à revoir.", nature: "Tâche", dans: 7, responsableNom: "Postes & Réseaux SA" }, { titre: "Drain agricole de la parcelle 688", texte: "Drain sectionné lors de la fouille : à rétablir avant le remblayage.", nature: "Tâche", dans: -5, responsableNom: "Travaux Publics Gruyère SA", clos: true }],
+        [{ titre: "Arrêt pour sols humides", texte: "Une journée perdue en zone agricole, compensée par l'avance prise sur le chemin communal.", clos: true }, { titre: "Montage de la jonction J3", texte: "Jonction terminée ; mesure de décharges partielles à programmer.", nature: "Tâche", dans: 9, responsableNom: "Postes & Réseaux SA" }, { titre: "Sondages à la pelle du secteur 3", texte: "Douze sondages à faire avant l'ouverture, pour connaître l'étendue du rocher.", nature: "Tâche", dans: 15 }],
+      ],
+      constats: [
+        ["Environnement", "Remise en place des horizons du sol, parcelles 655 et 688", "Terre végétale et sous-couche remises séparément, sans mélange. Épaisseurs contrôlées en six points par le pédologue.", "Secteur 1, parcelles 655 et 688", "e-gc3", "Remise en place de la terre végétale", 16],
+        ["Sécurité", "Gazoduc dégagé au croisement n° 5", "Gazoduc à 1,35 m de profondeur, 20 cm plus haut que le plan. Distance de 40 cm respectée avec la batterie de tubes.", "Secteur 2, profil 47", "e-gc3", "Gazoduc dégagé à la main", 9],
+        ["Qualité", "Tube écrasé dans la batterie, profil 43", "Le mandrin de calibrage ne passe pas dans le tube n° 4 sur 6 m. Tube à remplacer avant l'enrobage définitif.", "Secteur 2, profil 43", "e-gc3", "Mandrin bloqué dans le tube n° 4", 6, "reserve"],
+        ["Avancement", "Jonction J3 terminée", "Jonction des trois phases montée sous tente, conditions de propreté respectées.", "Secteur 1, chambre C6", "e-elec2", "Jonction J3 dans la chambre C6", 2],
+      ],
+      reserves: [["Couvercle de la chambre C9 non verrouillé", "Secteur 1, chambre C9", "Mineure", "Levée", -6, "e-gc3"], ["Accotement à reprofiler le long de la route cantonale", "Secteur 1, profils 12 à 18", "Mineure", "Ouverte", 25, "e-gc3", "Exigence du permis de fouille."]],
+    },
+  },
+};
+
+/** Poste haute tension : terminé, en clôture, garanties en cours */
+export const POSTE_HT: FicheProjet = {
+  numero: "DDE-2023-0034", cle: "pht", chef: "pf-oberson",
+  complements: { phase: "53 Mise en service, achèvement", phaseGroupe: "Clôture", statut: "Terminé", lieu: "Praz-Riond", maitreOuvrage: "Groupe – Direction Distribution Electricité", sponsorId: "pf-dir-dde", portefeuilleId: "pf-inv", priorite: "Normale", classification: "Renouvellement", donneesType: { typeOuvrage: "Installation énergétique" } },
+  equipe: [["pf-oberson", 30], ["pf-monney", 10]],
+  mandat: {
+    contenu: {
+      motifs: { croissance: true, efficience: false, maintenance: true, legal: false },
+      contexte: "L'ancien poste 60/20 kV de Praz-Riond ne pouvait plus accueillir la production décentralisée de la plaine, et son appareillage en plein air datait de 1971. Le passage du réseau amont à 125 kV imposait un nouveau poste.",
+      benefices: "Puissance de transformation portée de 2 × 20 à 2 × 40 MVA, appareillage sous enveloppe métallique sans entretien lourd, emprise au sol divisée par trois.",
+      perimetre: "Bâtiment du poste, deux transformateurs 125/20 kV, appareillage 125 kV sous enveloppe métallique, cellules 20 kV, contrôle-commande, installations du bâtiment, démontage de l'ancien poste.",
+      exclusions: "Les départs 20 kV vers le réseau de distribution sont repris par l'exploitation.",
+      impactsEnvironnementaux: "Fosses de rétention sous les transformateurs ; bruit réduit par des transformateurs à faibles pertes ; terrain de l'ancien poste rendu à l'agriculture.",
+      impactsSociaux: "Trois coupures planifiées de nuit pour le basculement, annoncées aux communes et aux clients sensibles.",
+      projetsConnexes: "Mise en souterrain de la ligne Les Granges – Praz-Riond.",
+    },
+    objectifs: [["Mettre le poste en service sans interruption non planifiée", "Aucune coupure hors des trois fenêtres annoncées", "Sponsor"], ["Livrer un ouvrage sans réserve ouverte à la clôture", "Toutes les réserves levées", "Direction Distribution Electricité"], ["Tenir le budget", "Coût final inférieur ou égal à 17,2 millions", "Finance"]],
+  },
+  risques: [
+    ["Défaut apparaissant pendant le délai de garantie", "Technique", 2, 3, 60_000, "Le délai de dénonciation des défauts du bâtiment arrive à échéance dans moins de trois mois.", "Vérification commune avant l'échéance, avec l'entreprise de gros œuvre ; contrôle de la sûreté.", "Réduire"],
+    ["Réserve non levée sur l'étanchéité de la toiture", "Technique", 2, 2, 15_000, "Une infiltration ponctuelle a été annoncée comme réparée, sans contrôle sous la pluie.", "Essai d'arrosage avant la levée de la réserve.", "Réduire"],
+    ["Documentation d'exploitation incomplète", "Organisation", 2, 2, 0, "Deux schémas du contrôle-commande ne sont pas à jour après les essais.", "Décompte final du lot bloqué jusqu'à la remise des schémas révisés.", "Réduire"],
+  ],
+  planning: [["Gros œuvre du bâtiment", -1150, -700, 100, "L1"], ["Livraison et mise en place des transformateurs", -700, -560, 100, "L2"], ["Montage de l'appareillage 125 kV", -620, -380, 100, "L2"], ["Cellules 20 kV et contrôle-commande", -480, -260, 100, "L2"], ["Essais et mise en service", -280, -200, 100, "L2"], ["Démontage de l'ancien poste", -190, -110, 100, "L1"], ["Clôture administrative et financière", -100, 40, 80]],
+  jalons: [["Adjudication des transformateurs", -1240], ["Réception du bâtiment", -655], ["Mise sous tension du premier transformateur", -240], ["Mise en service du poste", -200, 12], ["Réception finale des équipements", -180, 12], ["Vérification avant la fin de garantie du bâtiment", 60], ["Clôture du projet", 40]],
+  actions: [["Organiser la vérification commune avant la fin de garantie du bâtiment", 45, "Haute", "À faire", "pf-monney"], ["Obtenir les schémas révisés du contrôle-commande", 12, "Normale", "En cours"], ["Rédiger le rapport de clôture", 25, "Normale", "En cours"], ["Faire l'essai d'arrosage de la toiture", 8, "Normale", "À faire", "pf-monney"]],
+  documents: [["Dossier de l'ouvrage révisé", "Plans", "1", 150], ["Procès-verbaux des essais de mise en service", "Rapports", "1", 200], ["Procès-verbal de réception finale des équipements", "PV de séance", "1", 180], ["Décompte final provisoire", "Rapports", "2", 20], ["Manuel d'exploitation du poste", "Autre", "1", 170]],
+  pilotage: [
+    { ilYA: 190, lieu: "Poste de Praz-Riond", invites: [["K. Brülhart", "Ingénieurs-conseils en électricité SA"]], points: [
+      { titre: "Mise en service", texte: "Le poste est en service depuis dix jours, avec douze jours de retard sur le programme. Aucune coupure non planifiée.", clos: true },
+      { titre: "Réception des équipements", texte: "Réception finale prononcée ; les réserves mineures sont listées au procès-verbal.", nature: "Décision", statut: "Approuvée", clos: true },
+      { titre: "Démontage de l'ancien poste", texte: "Lancement approuvé ; le terrain est rendu à l'agriculture.", nature: "Décision", statut: "Approuvée", clos: true },
+    ] },
+    { ilYA: 20, lieu: "Siège, salle Distribution", points: [
+      { titre: "Bilan financier", texte: "Coût final prévisionnel de 17,02 millions, soit 180'000 CHF sous le budget. Un décompte final reste en contrôle.", clos: true },
+      { titre: "Clôture du projet", texte: "Le comité approuve la clôture, sous réserve du décompte du contrôle-commande et de la levée de la dernière réserve.", nature: "Décision", statut: "Approuvée", condition: "Dernière réserve levée et schémas révisés remis" },
+      { titre: "Fin de garantie du bâtiment", texte: "Vérification commune à organiser avant l'échéance du délai de dénonciation.", nature: "Tâche", dans: 45, responsable: "pf-monney" },
+      { titre: "Rapport de clôture", texte: "À présenter au PMO, avec les enseignements du projet.", nature: "Tâche", dans: 25 },
+    ] },
+  ],
+  notes: [["PMO", "Enseignement à reprendre : adjuger les transformateurs dix-huit mois avant le gros œuvre a sécurisé le calendrier.", "pf-pmo", 18], ["Finance / ComInv", "Solde de réserve de 200'000 CHF non utilisé, à libérer à la clôture.", "pf-fin", 19]],
+  construction: {
+    lots: [["L1", "Bâtiment", ["211", "23"], "pf-monney", "53 Mise en service, achèvement"], ["L2", "Équipements haute tension", ["331", "332", "333"], "pf-oberson", "53 Mise en service, achèvement"], ["L0", "Honoraires et frais", ["29", "51"], "pf-oberson", "53 Mise en service, achèvement"]],
+    budget: [["211", "Bâtiment du poste et fosses des transformateurs", 3_900_000], ["331", "Transformateurs 125/20 kV, 2 × 40 MVA", 4_800_000], ["332", "Appareillage 125 kV sous enveloppe métallique", 3_700_000], ["333", "Cellules 20 kV et contrôle-commande", 2_600_000], ["23", "Installations du bâtiment", 620_000], ["293", "Honoraires", 1_150_000], ["51", "Autorisations et raccordement au réseau amont", 230_000], ["583", "Réserve pour imprévus", 200_000]],
+    marches: [
+      { cle: "go", objet: "Bâtiment du poste et fosses des transformateurs", cfc: "211", lot: "L1", type: "Contrat d'entreprise", entreprise: "e-gc2", concurrents: [["e-gc1", 3.2], ["e-gc3", 6.8]], etat: "Clôturé", signe: -1200, debut: -1150, fin: -700, metres: true,
+        positions: [["211.111.101", "Béton armé des radiers, murs et dalles", "m3", 2_900, 640], ["211.211.101", "Armatures B500B", "t", 380, 2_350], ["211.311.101", "Coffrages", "m2", 7_400, 88], ["211.411.101", "Fosse de rétention étanche", "pce", 2, 96_000], ["211.511.101", "Installation de chantier", "gl", 1, 149_800]],
+        regies: [["Dévoiement d'un drain non répertorié sous le radier", 1100, "Facturé", [["Main-d'œuvre", "Ouvrier de la construction", 22, "h", 76], ["Engin", "Pelle 14 t avec machiniste", 9, "h", 155], ["Matériel", "Tuyau PVC DN 200", 48, "m", 21]], "Drain agricole découvert à l'ouverture de la fouille."], ["Carottages supplémentaires pour le passage des câbles 20 kV", 760, "Facturé", [["Main-d'œuvre", "Foreur", 12, "h", 94], ["Matériel", "Couronnes diamantées", 1, "gl", 380]]]],
+        avenants: [["Agrandissement de la fosse de rétention", 118_000, "Approuvé", "Exigence de l'autorité : volume de rétention porté à 100 % de l'huile des deux transformateurs.", 980, 10]],
+        reception: { objet: "Bâtiment du poste et fosses des transformateurs", ilYA: 655, type: "Finale", resultat: "Acceptée avec réserves", lieu: "Poste de Praz-Riond", participants: "S. Oberson (maître de l'ouvrage), D. Monney (direction des travaux), A. Carron (Constructions Sarine SA)", documents: "Plans conformes à l'exécution\nProcès-verbal d'essai d'étanchéité des fosses\nAttestations des matériaux", surete: "Cautionnement solidaire de 386'000 CHF, valable jusqu'à la fin du délai de dénonciation" },
+        reserves: [["Infiltration ponctuelle en toiture, angle nord-est", "Toiture, angle nord-est", "Majeure", "Levée annoncée", 20, "Réparation annoncée par l'entreprise ; essai d'arrosage à faire avant la levée."], ["Fissure de retrait dans la dalle du local 20 kV", "Local 20 kV", "Mineure", "Levée", -560], ["Porte coupe-feu mal réglée", "Local de commande", "Mineure", "Levée", -600]] },
+      { cle: "tra", objet: "Transformateurs 125/20 kV, 2 × 40 MVA", cfc: "331", lot: "L2", type: "Fourniture", entreprise: "e-trafo", concurrents: [["e-elec2", 6.5]], procedure: "Ouverte", etat: "Clôturé", montant: 4_690_000, signe: -1240, debut: -1200, fin: -560,
+        reception: { objet: "Transformateurs T1 et T2", ilYA: 180, type: "Finale", resultat: "Acceptée", lieu: "Poste de Praz-Riond", participants: "S. Oberson (maître de l'ouvrage), K. Brülhart (ingénieur), U. Meier (Transformateurs Helvétiques SA)", documents: "Procès-verbaux des essais en usine et sur site\nAnalyses de l'huile\nNotices d'exploitation", surete: "Garantie bancaire de 469'000 CHF, valable jusqu'à la fin du délai de dénonciation" } },
+      { cle: "gis", objet: "Appareillage 125 kV sous enveloppe métallique", cfc: "332", lot: "L2", type: "Contrat d'entreprise", entreprise: "e-elec2", concurrents: [["e-elec1", 2.2]], etat: "Clôturé", montant: 3_655_000, signe: -900, debut: -620, fin: -380,
+        reception: { objet: "Appareillage 125 kV", ilYA: 180, type: "Finale", resultat: "Acceptée avec réserves", lieu: "Poste de Praz-Riond, halle 125 kV", participants: "S. Oberson (maître de l'ouvrage), K. Brülhart (ingénieur), S. Aebischer (Postes & Réseaux SA)", documents: "Procès-verbaux des essais diélectriques\nMesures de décharges partielles\nSchémas révisés" },
+        reserves: [["Étiquetage incomplet des travées", "Halle 125 kV", "Mineure", "Levée", -150], ["Fuite de gaz isolant inférieure au seuil sur la travée 3", "Halle 125 kV, travée 3", "Majeure", "Levée", -120, "Joint remplacé ; mesure de contrôle conforme après trois mois."]] },
+      { cle: "cc", objet: "Cellules 20 kV et contrôle-commande", cfc: "333", lot: "L2", type: "Contrat d'entreprise", entreprise: "e-elec1", concurrents: [["e-elec2", 3.7]], etat: "Réceptionné", montant: 2_540_000, signe: -800, debut: -480, fin: -200, facture: 1,
+        reception: { objet: "Cellules 20 kV et contrôle-commande", ilYA: 180, type: "Finale", resultat: "Acceptée avec réserves", lieu: "Poste de Praz-Riond, local 20 kV", participants: "S. Oberson (maître de l'ouvrage), K. Brülhart (ingénieur), F. Chappuis (Électro-Montage Romand SA)", documents: "Procès-verbaux des essais fonctionnels\nListe des points de télécommande contrôlés" },
+        reserves: [["Schémas du contrôle-commande non mis à jour après les essais", "Local de commande", "Mineure", "Ouverte", 12, "Deux schémas à réviser ; le décompte final est retenu jusqu'à leur remise."]] },
+      { cle: "bat", objet: "Installations du bâtiment : électricité, ventilation, détection", cfc: "23", lot: "L1", type: "Contrat d'entreprise", entreprise: "e-reg", etat: "Clôturé", montant: 598_000, signe: -760, debut: -700, fin: -300, procedure: "Sur invitation" },
+      { cle: "ing", objet: "Mandat d'ingénieurs électricien et civil", cfc: "293", lot: "L0", type: "Mandat", entreprise: "e-ing3", etat: "Clôturé", montant: 1_120_000, signe: -1400, debut: -1380, fin: -100, procedure: "Sur invitation", conditions: { reglement: "SIA 108 (ingénieurs mécaniciens, électriciens et CVC)", phases: "31 à 53" } },
+    ],
+    mutations: [["Fosse de rétention agrandie (avenant AV-01)", "583", "211", 118_000, "Validée", 975]],
+    horsCommande: [["Gestionnaire du réseau amont", 142_000, "51", "Participation au raccordement 125 kV", 420], ["Inspection des installations à courant fort", 31_000, "51", "Émoluments d'approbation et de contrôle", 260]],
+    autorisations: [
+      ["Approbation des plans", "Nouveau poste 125/20 kV de Praz-Riond", "Inspection fédérale des installations à courant fort", "S-2022-0514", "Délivrée", 1500, 1290, 1, [["Office de l'environnement", "Mesure du bruit après la mise en service", "Respectée"], ["Office de l'environnement", "Volume de rétention égal à 100 % de l'huile", "Respectée"], ["Inspection", "Contrôle de réception de l'installation", "Levée"]]],
+      ["Permis de construire", "Bâtiment du poste", "Préfecture", "PC-2022-0788", "Délivrée", 1480, 1300, 0, [["Commune", "Remise en état du terrain de l'ancien poste", "Respectée"]]],
+    ],
+    servitudes: [["760", "Praz-Riond", "Commune", "Servitude de passage", "Inscrite au registre foncier", 0, "chemin d'accès, 120 m"], ["771", "Praz-Riond", "M. Brodard", "Acquisition de terrain", "Inscrite au registre foncier", 96_000, "1'600 m2"]],
+    chantier: {
+      conducteur: "pf-monney", lieuSeance: "Poste de Praz-Riond, local de commande", finIlYA: 110, invites: [["A. Carron", "Constructions Sarine SA"], ["S. Aebischer", "Postes & Réseaux SA"]],
+      entreprises: [["Constructions Sarine SA", 5], ["Postes & Réseaux SA", 3]],
+      travaux: [
+        "Ancien poste : dépose des sectionneurs et des jeux de barres 60 kV.",
+        "Ancien poste : vidange et évacuation des deux anciens transformateurs par convoi exceptionnel.",
+        "Ancien poste : démolition des massifs en béton, tri des ferrailles.",
+        "Ancien poste : dépose de la clôture, évacuation des graviers.",
+        "Ancien poste : sous-solage et apport de terre végétale sur 2'400 m2.",
+        "Ancien poste : ensemencement, repli des installations de chantier. Fin des travaux.",
+      ],
+      evenements: [[1, "Livraison", "Convoi exceptionnel pour l'évacuation des transformateurs, avec escorte."], [5, "Visite", "État des lieux de fin de chantier avec la commune et l'exploitant agricole."]],
+      seances: [
+        [{ titre: "Démontage de l'ancien poste", texte: "Dépose des équipements terminée, démolition des massifs en cours.", clos: true }, { titre: "Analyse des sols", texte: "Aucune trace d'huile sous les anciens transformateurs.", clos: true }, { titre: "Remise en état du terrain", texte: "Terre végétale à apporter sur 30 cm, selon la condition du permis.", nature: "Tâche", dans: -115, responsableNom: "Constructions Sarine SA", clos: true }],
+        [{ titre: "Fin des travaux", texte: "Terrain remis à l'exploitant agricole. Dernière séance de chantier.", nature: "Décision", statut: "Approuvée", clos: true }, { titre: "Réserves ouvertes", texte: "Restent l'infiltration en toiture et les schémas du contrôle-commande.", nature: "Tâche", dans: 12 }],
+      ],
+      constats: [
+        ["État des lieux", "Remise du terrain de l'ancien poste à l'exploitant agricole", "Terre végétale sur 30 cm, ensemencement fait, bornes remises en place. Procès-verbal signé par l'exploitant.", "Ancien poste, parcelle 771", undefined, "Terrain remis en culture", 112],
+        ["Qualité", "Infiltration en toiture, angle nord-est", "Trace d'humidité sur 0,5 m2 au plafond de la halle après un orage. Réserve rattachée à la réception du bâtiment.", "Halle 125 kV, angle nord-est", "e-gc2", "Trace d'humidité au plafond", 150],
+      ],
+    },
+  },
+};

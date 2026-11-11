@@ -6,13 +6,15 @@ const dateFmt = new Intl.DateTimeFormat("fr-CH", { day: "2-digit", month: "2-dig
 export const formatCHF = (v: number) => chf.format(Math.round(v || 0));
 export const formatCHFPrecis = (v: number) => chf2.format(v || 0);
 export const formatNombre = (v: number) => nombre.format(v || 0);
-export const formatPct = (v: number, decimales = 1) => `${(v || 0).toFixed(decimales)} %`;
+/** Espace insécable : un pourcentage ou une unité ne passe jamais seul à la ligne */
+const INSECABLE = "\u00a0";
+export const formatPct = (v: number, decimales = 1) => `${(v || 0).toFixed(decimales)}${INSECABLE}%`;
 
 /** Montant compact pour les tableaux de bord : 1,2 Mio / 350 k */
 export function formatCompact(v: number): string {
   const a = Math.abs(v);
-  if (a >= 1_000_000) return `${(v / 1_000_000).toLocaleString("fr-CH", { maximumFractionDigits: 2 })} Mio`;
-  if (a >= 10_000) return `${Math.round(v / 1000).toLocaleString("fr-CH")} k`;
+  if (a >= 1_000_000) return `${(v / 1_000_000).toLocaleString("fr-CH", { maximumFractionDigits: 2 })}${INSECABLE}Mio`;
+  if (a >= 10_000) return `${Math.round(v / 1000).toLocaleString("fr-CH")}${INSECABLE}k`;
   return formatNombre(v);
 }
 

@@ -156,7 +156,7 @@ export function blocsSituation(projet: Projet, contrat: Contrat, s: Situation, p
     { type: "sousTitre", texte: "1. Métré" },
     { type: "paragraphe", texte: `Quantités relevées en commun par la direction des travaux et l'entrepreneur (${sia("metre")}). Les relevés contestés figurent au métré mais n'entrent pas dans les montants.` },
     // Montants sans l'unité monétaire, donnée une fois sous le tableau : les colonnes restent lisibles en portrait
-    { type: "tableau", entetes: ["Position", "Désignation", "Un.", "Prix unit.", "Ant.", "Mois", "Cumul", "Montant du mois", "Montant cumulé"], largeurs: [1.5, 2.2, 0.7, 1.35, 0.9, 0.85, 0.9, 1.3, 1.4],
+    { type: "tableau", entetes: ["Position", "Désignation", "Un.", "Prix unit.", "Ant.", "Mois", "Cumul", "Montant du mois", "Montant cumulé"], largeurs: [1.45, 1.85, 0.6, 1.2, 0.8, 0.8, 0.8, 1.6, 1.6],
       lignes: [
         ...s.lignes.map((l) => [l.position, l.libelle + (l.metres.some((m) => m.statut === "Contesté") ? "\n(relevé contesté ce mois)" : ""), l.unite, sansUnite(l.prixUnitaire), nombre(l.anterieur), nombre(l.periode), nombre(l.cumul), sansUnite(l.montantPeriode), sansUnite(l.montantCumul)]),
         ["", "Total", "", "", "", "", "", sansUnite(s.montantPeriode), sansUnite(s.montantCumul)],
