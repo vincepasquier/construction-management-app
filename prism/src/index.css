@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Segoe UI Variable Text", "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --color-brand-50: #eef6fc;
+  --color-brand-100: #d8ebf8;
+  --color-brand-500: #2586cf;
+  --color-brand-600: #136bb0;
+  --color-brand-700: #0f568e;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html, body, #root { height: 100%; }
+body {
+  @apply bg-slate-50 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+}
+
+.num { font-variant-numeric: tabular-nums; }
+
+/* Barres de défilement discrètes */
+* { scrollbar-width: thin; scrollbar-color: rgb(148 163 184 / .5) transparent; }
+
+@keyframes apparition { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.apparition { animation: apparition .18s ease-out; }
+
+/* Rendu Markdown des réponses de l'assistant */
+.prose-ia { line-height: 1.6; }
+.prose-ia > * + * { margin-top: .6em; }
+.prose-ia h1, .prose-ia h2, .prose-ia h3 { font-weight: 600; color: var(--color-slate-900); margin-top: 1em; }
+.dark .prose-ia h1, .dark .prose-ia h2, .dark .prose-ia h3 { color: white; }
+.prose-ia h1 { font-size: 1.05rem; } .prose-ia h2 { font-size: 1rem; } .prose-ia h3 { font-size: .9rem; }
+.prose-ia ul { list-style: disc; padding-left: 1.25rem; }
+.prose-ia ol { list-style: decimal; padding-left: 1.25rem; }
+.prose-ia li + li { margin-top: .2em; }
+.prose-ia strong { font-weight: 600; color: var(--color-slate-900); }
+.dark .prose-ia strong { color: white; }
+.prose-ia code { font-size: .85em; background: var(--color-slate-100); padding: .1em .35em; border-radius: 4px; }
+.dark .prose-ia code { background: var(--color-slate-800); }
+.prose-ia table { display: block; overflow-x: auto; border-collapse: collapse; font-size: .8rem; }
+.prose-ia th, .prose-ia td { border: 1px solid var(--color-slate-200); padding: .3em .55em; text-align: left; white-space: nowrap; }
+.dark .prose-ia th, .dark .prose-ia td { border-color: var(--color-slate-700); }
+.prose-ia th { background: var(--color-slate-50); font-weight: 600; }
+.dark .prose-ia th { background: var(--color-slate-800); }
+.prose-ia hr { border-color: var(--color-slate-200); }
+
+/* Organigramme : arbre avec traits de liaison */
+.org ul { display: flex; justify-content: center; padding-top: 22px; position: relative; }
+.org li { list-style: none; text-align: center; position: relative; padding: 22px 6px 0; display: flex; flex-direction: column; align-items: center; }
+.org li::before, .org li::after { content: ""; position: absolute; top: 0; right: 50%; width: 50%; height: 22px; border-top: 1.5px solid var(--color-slate-300); }
+.org li::after { right: auto; left: 50%; border-left: 1.5px solid var(--color-slate-300); }
+.org li:only-child::before, .org li:only-child::after { display: none; }
+.org li:only-child { padding-top: 0; }
+.org li:first-child::before, .org li:last-child::after { border: 0 none; }
+.org li:last-child::before { border-right: 1.5px solid var(--color-slate-300); border-radius: 0 6px 0 0; }
+.org li:first-child::after { border-radius: 6px 0 0 0; }
+.org ul ul::before { content: ""; position: absolute; top: 0; left: 50%; height: 22px; border-left: 1.5px solid var(--color-slate-300); }
+.org > ul { padding-top: 0; }
+.dark .org li::before, .dark .org li::after, .dark .org ul ul::before { border-color: var(--color-slate-600); }
+
+/* Impression : seule la zone marquée est imprimée */
+@media print {
+  body * { visibility: hidden; }
+  .zone-impression, .zone-impression * { visibility: visible; }
+  .zone-impression { position: absolute; inset: 0; overflow: visible !important; }
+  .pas-impression { display: none !important; }
+}
+
+/* Panneau latéral et notifications */
+@keyframes glisser { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.glisser { animation: glisser .16s ease-out; }
+@media (prefers-reduced-motion: reduce) { .glisser, .apparition { animation: none; } }
+
+/* Saisie en ligne dans les tableaux */
+.cellule-saisie { width: 100%; background: transparent; padding: .25rem .4rem; border-radius: .375rem; outline: none; }
+.cellule-saisie:hover { background: rgb(148 163 184 / .12); }
+.cellule-saisie:focus { background: white; box-shadow: 0 0 0 2px var(--color-brand-500); }
+.dark .cellule-saisie:focus { background: var(--color-slate-900); }
+
+@media print {
+  @page { margin: 14mm; }
+  .zone-impression { color: black; background: white; }
+}
